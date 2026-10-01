@@ -52,3 +52,17 @@ test('shopify store: hold is applied to OPEN fulfillment orders only', async () 
   await shopifyStore({ shop: 'x', token: 't', fetchImpl }).applyHold('5', 'why');
   assert.deepEqual(holds, ['fo1']);
 });
+
+const { tokenProvider } = require('../lib/shopify-auth');
+test('client-credentials token is fetched once and cached until near expiry', async () => {
+  let calls = 0, t = 0;
+  const fetchImpl = async (url, opts) => { calls++; assert.ok(url.endsWith('/admin/oauth/access_token')); assert.equal(JSON.parse(opts.body).grant_type, 'client_credentials');
+    return { ok: true, json: async () => ({ access_token: 'tok' + calls, expires_in: 86399 }) }; };
+  const get = tokenProvider({ shop: 'x.myshopify.com', staticToken: '', clientId: 'id', clientSecret: 'sec', fetchImpl, now: () => t });
+  assert.equal(await get(), 'tok1'); assert.equal(await get(), 'tok1');
+  t = 86400 * 1000; assert.equal(await get(), 'tok2');
+});
+test('static token wins and missing credentials fail clearly', async () => {
+  assert.equal(await tokenProvider({ staticToken: 'abc' })(), 'abc');
+  await assert.rejects(tokenProvider({ staticToken: '', clientId: '', clientSecret: '' })(), /SHOPIFY_CLIENT_ID/);
+});

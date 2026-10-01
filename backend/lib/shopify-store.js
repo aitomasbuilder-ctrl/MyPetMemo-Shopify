@@ -2,6 +2,7 @@
 // Persists per-order fulfillment state in an ORDER METAFIELD (mypetmemo.fulfillment, JSON),
 // so it is visible in the Shopify admin and needs no separate database.
 // claim() uses compareDigest, so two concurrent webhooks cannot both win the lock.
+const { tokenProvider } = require('./shopify-auth');
 const NS = 'mypetmemo', KEY = 'fulfillment';
 const API_VERSION = process.env.SHOPIFY_API_VERSION || '2025-07';
 
@@ -9,12 +10,13 @@ const Q_STATE = `query OrderState($id: ID!) { order(id: $id) { id name metafield
 const M_SET = `mutation SetState($metafields: [MetafieldsSetInput!]!) { metafieldsSet(metafields: $metafields) { metafields { id compareDigest } userErrors { field message code } } }`;
 const M_HOLD = `mutation Hold($id: ID!, $hold: FulfillmentOrderHoldInput!) { fulfillmentOrderHold(id: $id, fulfillmentHold: $hold) { fulfillmentHold { id } userErrors { field message } } }`;
 
-function shopifyStore({ shop = process.env.SHOPIFY_SHOP_DOMAIN, token = process.env.SHOPIFY_ADMIN_TOKEN, fetchImpl = fetch } = {}) {
-  if (!shop || !token) throw new Error('SHOPIFY_SHOP_DOMAIN and SHOPIFY_ADMIN_TOKEN are required');
+function shopifyStore({ shop = process.env.SHOPIFY_SHOP_DOMAIN, token, getToken, fetchImpl = fetch } = {}) {
+  if (!shop) throw new Error('SHOPIFY_SHOP_DOMAIN is required');
+  const tokenFn = getToken || (token ? async () => token : tokenProvider({ shop, fetchImpl }));
   const gid = id => `gid://shopify/Order/${id}`;
   const gql = async (query, variables) => {
     const res = await fetchImpl(`https://${shop}/admin/api/${API_VERSION}/graphql.json`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token }, body: JSON.stringify({ query, variables })
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': await tokenFn() }, body: JSON.stringify({ query, variables })
     });
     if (!res.ok) throw new Error(`Shopify ${res.status}`);
     const json = await res.json();
