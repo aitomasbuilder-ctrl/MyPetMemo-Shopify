@@ -11,6 +11,7 @@ async function processPaidOrder(order, { store, printify, mode = 'draft' }) {
     // Not ours / not eligible: hold and surface the reason (but never touch Printify).
     if (gate.reasons.length === 1 && gate.reasons[0] === 'no_ornament_lines') return { action: 'ignored' };
     await store.set(id, { status: 'error', error: gate.reasons.join(', '), hold: true });
+    if (store.applyHold) await store.applyHold(id, gate.reasons.join(', '));
     return { action: 'blocked', reasons: gate.reasons };
   }
   const existing = await store.get(id);
@@ -27,6 +28,7 @@ async function processPaidOrder(order, { store, printify, mode = 'draft' }) {
     return { action: 'draft_created', printify_order_id: draft.id };
   } catch (err) {
     await store.set(id, { status: 'error', error: String(err.message).slice(0, 500), hold: true, claimed: false });
+    if (store.applyHold) await store.applyHold(id, err.message);
     return { action: 'error', error: err.message };
   }
 }

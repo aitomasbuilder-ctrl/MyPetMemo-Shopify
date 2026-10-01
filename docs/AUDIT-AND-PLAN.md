@@ -13,6 +13,6 @@ Product page (Teeinblue: upload, bg removal, AI effect, preview) -> customer app
 
 ## Stages
 1. [done] Variant mapping, order gate, status model, Printify draft client, duplicate lock (`backend/`, 14 tests).
-2. Webhook endpoint + HMAC verification + persistent store + Shopify fulfillment hold/metafield status.
+2. [done] `api/orders-paid.js` webhook (HMAC verified), status/lock stored in order metafield `mypetmemo.fulfillment` (compareDigest lock), admin fulfillment hold on error. 19 tests. GraphQL validated against the Shopify schema.
 3. Theme: Teeinblue app block on ornament product, approval step, analytics events.
 4. Image quality checks, per-shape Teeinblue templates, end-to-end test with sample photo.
