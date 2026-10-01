@@ -1,0 +1,31 @@
+{
+  "printify": {
+    "shop_id": 29091709,
+    "product_id": "6ab9495eed7ba09113043c9d",
+    "blueprint_id": 1359,
+    "print_provider_id": 28,
+    "print_provider": "District Photo",
+    "print_position": "front",
+    "dpi": 236
+  },
+  "shopify_product_id": "9612228264038",
+  "shapes": {
+    "Medallion": { "width": 1275, "height": 956 },
+    "Scalloped": { "width": 1299, "height": 924 },
+    "Square": { "width": 999, "height": 999 }
+  },
+  "variants": [
+    { "shopify_variant_id": "48957877813350", "printify_variant_id": 102555, "shape": "Medallion", "quantity": 1 },
+    { "shopify_variant_id": "48957877846118", "printify_variant_id": 102556, "shape": "Medallion", "quantity": 5 },
+    { "shopify_variant_id": "48957877878886", "printify_variant_id": 102557, "shape": "Medallion", "quantity": 10 },
+    { "shopify_variant_id": "48957877911654", "printify_variant_id": 102558, "shape": "Scalloped", "quantity": 1 },
+    { "shopify_variant_id": "48957877944422", "printify_variant_id": 102559, "shape": "Scalloped", "quantity": 5 },
+    { "shopify_variant_id": "48957877977190", "printify_variant_id": 102560, "shape": "Scalloped", "quantity": 10 },
+    { "shopify_variant_id": "48957878009958", "printify_variant_id": 102561, "shape": "Square", "quantity": 1 },
+    { "shopify_variant_id": "48957878042726", "printify_variant_id": 102562, "shape": "Square", "quantity": 5 },
+    { "shopify_variant_id": "48957878075494", "printify_variant_id": 102563, "shape": "Square", "quantity": 10 },
+    { "shopify_variant_id": "48957878108262", "printify_variant_id": 102564, "shape": "Medallion", "quantity": 20 },
+    { "shopify_variant_id": "48957878141030", "printify_variant_id": 102565, "shape": "Scalloped", "quantity": 20 },
+    { "shopify_variant_id": "48957878173798", "printify_variant_id": 102566, "shape": "Square", "quantity": 20 }
+  ]
+}
