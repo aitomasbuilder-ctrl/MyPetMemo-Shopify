@@ -66,3 +66,9 @@ test('static token wins and missing credentials fail clearly', async () => {
   assert.equal(await tokenProvider({ staticToken: 'abc' })(), 'abc');
   await assert.rejects(tokenProvider({ staticToken: '', clientId: '', clientSecret: '' })(), /SHOPIFY_CLIENT_ID/);
 });
+
+test('hmac accepts any one of several comma-separated secrets', () => {
+  const sig = crypto.createHmac('sha256', 'two').update('body').digest('base64');
+  assert.ok(verifyShopifyHmac('body', sig, 'one, two'));
+  assert.ok(!verifyShopifyHmac('body', sig, 'one,three'));
+});
