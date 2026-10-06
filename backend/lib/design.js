@@ -13,6 +13,8 @@ const HEX = /^#[0-9a-f]{6}$/i;
 const SHA = /^[0-9a-f]{64}$/;
 const ID = /^\d{1,20}$/;
 const NAME_MAX = 24;
+const CAPTION_MAX = 32;   // per line (year, dates or a short message under the name)
+const CAPTION_LINES = 2;
 const SHAPES = new Set(['circle', 'heart', 'star', 'snowflake']); // ornament outlines (preview only; Printify cuts the blank)
 
 class DesignError extends Error {
@@ -75,12 +77,37 @@ function normaliseName(n) {
   };
 }
 
+function cleanText(t) { return String(t || '').normalize('NFC').replace(/\s+/g, ' ').trim(); }
+
+/** Optional small lines under the name (a year, dates, a short message). Positioned explicitly by the storefront. */
+function normaliseCaption(c) {
+  if (!c || !Array.isArray(c.lines)) return null;
+  const lines = c.lines.map(cleanText).filter(Boolean);
+  if (!lines.length) return null;
+  if (lines.length > CAPTION_LINES) throw new DesignError('caption_lines', `at most ${CAPTION_LINES} caption lines`);
+  const font = String(c.font || 'fredoka');
+  if (!FONTS[font]) throw new DesignError('font_unknown');
+  for (const line of lines) {
+    if (Array.from(line).length > CAPTION_MAX) throw new DesignError('caption_too_long', `each line can have at most ${CAPTION_MAX} characters`);
+    const missing = missingCharacters(line, font);
+    if (missing.length) throw new DesignError('caption_characters', `These characters can't be printed in this font: ${missing.join(' ')}`);
+  }
+  return {
+    lines, font,
+    cx: num(c.cx, -0.5, 1.5, 'caption.cx'), cy: num(c.cy, -0.5, 1.5, 'caption.cy'),
+    size: num(c.size, 0.01, 0.3, 'caption.size'), rot: num(c.rot || 0, -180, 180, 'caption.rot'),
+    fill: str(String(c.fill || '#ffffff').toLowerCase(), HEX, 'caption.fill'),
+    stroke: str(String(c.stroke || '#2a2230').toLowerCase(), HEX, 'caption.stroke')
+  };
+}
+
 /** Validates client input and returns the canonical design (fixed key order, rounded numbers). */
 function normalise(input, { hosts = defaultHosts() } = {}) {
   if (!input || typeof input !== 'object') throw new DesignError('design_missing');
   const a = input.artwork || {};
   const family = input.family === 'ornament' ? 'ornament' : 'blanket';
   const shape = family === 'ornament' ? (SHAPES.has(input.shape) ? input.shape : 'circle') : undefined;
+  const caption = normaliseCaption(input.caption);
   return {
     v: VERSION,
     family,
@@ -95,6 +122,7 @@ function normalise(input, { hosts = defaultHosts() } = {}) {
       w: num(input.pet && input.pet.w, 0.05, 3, 'pet.w'), rot: num((input.pet && input.pet.rot) || 0, -180, 180, 'pet.rot')
     },
     name: normaliseName(input.name),
+    ...(caption ? { caption } : {}),
     artwork: { sha256: str(String(a.sha256 || '').toLowerCase(), SHA, 'artwork.sha256'), w: Math.round(num(a.w, 64, 20000, 'artwork.w')), h: Math.round(num(a.h, 64, 20000, 'artwork.h')) }
   };
 }

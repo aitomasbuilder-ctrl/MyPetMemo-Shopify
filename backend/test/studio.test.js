@@ -252,3 +252,36 @@ test('backgrounds: theme copy is identical to the backend copy', () => {
   if (!fs.existsSync(theme)) return;
   assert.equal(fs.readFileSync(theme, 'utf8'), fs.readFileSync(path.join(__dirname, '..', 'shared', 'pet-backgrounds.js'), 'utf8'));
 });
+
+test('caption: optional year or dates and message lines are validated and drawn under the name', async () => {
+  const art = await artworkPng();
+  const base = input(art, { family: 'ornament', shape: 'circle', print: { w: 1200, h: 1200 }, background: { id: 'white' } });
+  assert.equal('caption' in design.normalise(base, { hosts }), false, 'no caption by default');
+  assert.equal('caption' in design.normalise({ ...base, caption: { lines: ['  ', ''] } }, { hosts }), false, 'empty lines are dropped');
+  const cap = { lines: [' 2012  –  2026 ', 'Forever in my heart'], cx: 0.5, cy: 0.9, size: 0.05, font: 'fredoka', fill: '#FFFFFF', stroke: '#2A2230' };
+  const d = design.normalise({ ...base, caption: cap }, { hosts });
+  assert.deepEqual(d.caption.lines, ['2012 – 2026', 'Forever in my heart']);
+  assert.equal(d.caption.fill, '#ffffff');
+  assert.notEqual(design.designId(d), design.designId(design.normalise({ ...base, caption: { ...cap, lines: ['2026'] } }, { hosts })));
+  assert.throws(() => design.normalise({ ...base, caption: { ...cap, lines: ['a', 'b', 'c'] } }, { hosts }), e => e.code === 'caption_lines');
+  assert.throws(() => design.normalise({ ...base, caption: { ...cap, lines: ['x'.repeat(33)] } }, { hosts }), e => e.code === 'caption_too_long');
+  const r = await renderDesign({ design: d, artwork: art, width: 600, height: 600 });
+  const { data, info } = await sharp(r.buffer).raw().toBuffer({ resolveWithObject: true });
+  const dark = (y0, y1) => { let n = 0; for (let x = 100; x < 500; x++) for (let y = y0; y < y1; y++) { const i = (y * info.width + x) * info.channels; if (data[i] < 80 && data[i + 1] < 80 && data[i + 2] < 80) n++; } return n; };
+  // two lines centred at 0.9 * 600 = 540 with spacing 1.25 * 30 px → around y 521 and 559
+  assert.ok(dark(505, 535) > 50, 'first caption line drawn');
+  assert.ok(dark(545, 575) > 50, 'second caption line drawn');
+  assert.ok(dark(420, 470) < 5, 'nothing between the pet and the caption');
+});
+
+test('backgrounds: new Christmas and memorial designs exist and render to valid SVG', async () => {
+  const backgrounds = require('../shared/pet-backgrounds');
+  for (const id of ['snowflakes', 'winter-snow', 'candy-cane', 'holiday-plaid', 'twinkle-lights', 'christmas-red', 'evergreen',
+    'soft-clouds', 'watercolor-sky', 'watercolor-blush', 'watercolor-lavender', 'watercolor-sage', 'watercolor-sunset']) {
+    const bg = backgrounds.byId[id];
+    assert.ok(bg, `${id} exists`);
+    const png = await sharp(Buffer.from(backgrounds.svg(bg, 300, 300))).png().toBuffer();
+    assert.equal((await sharp(png).metadata()).width, 300, id);
+    assert.equal(backgrounds.svg(bg, 300, 300), backgrounds.svg(bg, 300, 300), `${id} is deterministic`);
+  }
+});

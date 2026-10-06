@@ -1,0 +1,67 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-pet-category",
+      "settings": {
+        "family": "auto",
+        "eyebrow": "CHOOSE YOUR DESIGN",
+        "heading": "",
+        "intro": "",
+        "noun": "",
+        "button_label": "",
+        "tag": "MAKE IT PERSONAL",
+        "show_chips": true
+      }
+    },
+    "how": {
+      "type": "how-it-works",
+      "blocks": {
+        "0": {
+          "type": "step",
+          "settings": {
+            "heading": "Choose your design",
+            "text": "Pick the blanket or ornament that fits the moment.",
+            "icon": "gift"
+          }
+        },
+        "1": {
+          "type": "step",
+          "settings": {
+            "heading": "Upload your pet",
+            "text": "A clear photo from your phone is all you need.",
+            "icon": "upload"
+          }
+        },
+        "2": {
+          "type": "step",
+          "settings": {
+            "heading": "Personalize and preview",
+            "text": "Add a name, choose a background and see your design before you buy.",
+            "icon": "sparkles"
+          }
+        },
+        "3": {
+          "type": "step",
+          "settings": {
+            "heading": "Made for you",
+            "text": "We print the exact design you approved and ship it to your door.",
+            "icon": "heart"
+          }
+        }
+      },
+      "block_order": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "settings": {
+        "heading": "A little personal goes a long way."
+      }
+    }
+  },
+  "order": [
+    "main",
+    "how"
+  ]
+}

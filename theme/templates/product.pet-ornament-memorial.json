@@ -1,0 +1,311 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-pet-studio",
+      "blocks": {
+        "bg_1": {
+          "type": "background",
+          "settings": {
+            "name": "Christmas Red Green",
+            "color": "#8f1d22",
+            "image": "shopify://shop_images/mpm-bg-christmas-red-green.jpg"
+          }
+        },
+        "bg_2": {
+          "type": "background",
+          "settings": {
+            "name": "Icy Snowflakes",
+            "color": "#b9dbf2",
+            "image": "shopify://shop_images/mpm-bg-icy-snowflakes.jpg"
+          }
+        },
+        "bg_3": {
+          "type": "background",
+          "settings": {
+            "name": "Nordic Knit",
+            "color": "#6e1a24",
+            "image": "shopify://shop_images/mpm-bg-nordic-knit.jpg"
+          }
+        },
+        "bg_4": {
+          "type": "background",
+          "settings": {
+            "name": "Buffalo Plaid",
+            "color": "#8e1218",
+            "image": "shopify://shop_images/mpm-bg-buffalo-plaid.jpg"
+          }
+        },
+        "bg_5": {
+          "type": "background",
+          "settings": {
+            "name": "Candy Stripe",
+            "color": "#d0202f",
+            "image": "shopify://shop_images/mpm-bg-candy-stripe.jpg"
+          }
+        },
+        "bg_6": {
+          "type": "background",
+          "settings": {
+            "name": "Fair Isle Sweater",
+            "color": "#e9dcc4",
+            "image": "shopify://shop_images/mpm-bg-fair-isle.jpg"
+          }
+        },
+        "bg_7": {
+          "type": "background",
+          "settings": {
+            "name": "Frosted Mint",
+            "color": "#cfe7df",
+            "image": "shopify://shop_images/mpm-bg-frosted-mint.jpg"
+          }
+        },
+        "bg_8": {
+          "type": "background",
+          "settings": {
+            "name": "Gingerbread",
+            "color": "#e2b77f",
+            "image": "shopify://shop_images/mpm-bg-gingerbread.jpg"
+          }
+        },
+        "bg_9": {
+          "type": "background",
+          "settings": {
+            "name": "Midnight Snow",
+            "color": "#111a2d",
+            "image": "shopify://shop_images/mpm-bg-midnight-snow.jpg"
+          }
+        },
+        "bg_10": {
+          "type": "background",
+          "settings": {
+            "name": "Royal Blue Snow",
+            "color": "#1f3f93",
+            "image": "shopify://shop_images/mpm-bg-royal-blue-snow.jpg"
+          }
+        },
+        "bg_11": {
+          "type": "background",
+          "settings": {
+            "name": "Holly on Cream",
+            "color": "#f7f2e8",
+            "image": "shopify://shop_images/mpm-bg-holly-cream.jpg"
+          }
+        },
+        "bg_12": {
+          "type": "background",
+          "settings": {
+            "name": "Blush Snowflakes",
+            "color": "#ecc4c2",
+            "image": "shopify://shop_images/mpm-bg-blush-snowflakes.jpg"
+          }
+        },
+        "bg_13": {
+          "type": "background",
+          "settings": {
+            "name": "Evergreen",
+            "color": "#1d3b2a",
+            "image": "shopify://shop_images/mpm-bg-evergreen.jpg"
+          }
+        },
+        "bg_14": {
+          "type": "background",
+          "settings": {
+            "name": "String Lights",
+            "color": "#2b2f3d",
+            "image": "shopify://shop_images/mpm-bg-string-lights.jpg"
+          }
+        },
+        "bg_15": {
+          "type": "background",
+          "settings": {
+            "name": "Sage Berries",
+            "color": "#b9c8b4",
+            "image": "shopify://shop_images/mpm-bg-sage-berries.jpg"
+          }
+        },
+        "bg_16": {
+          "type": "background",
+          "settings": {
+            "name": "Gold Stars",
+            "color": "#14234d",
+            "image": "shopify://shop_images/mpm-bg-gold-star-navy.jpg"
+          }
+        }
+      },
+      "block_order": [
+        "bg_1",
+        "bg_2",
+        "bg_3",
+        "bg_4",
+        "bg_5",
+        "bg_6",
+        "bg_7",
+        "bg_8",
+        "bg_9",
+        "bg_10",
+        "bg_11",
+        "bg_12",
+        "bg_13",
+        "bg_14",
+        "bg_15",
+        "bg_16"
+      ],
+      "settings": {
+        "heading": "",
+        "subheading": "Upload a photo of your pet. We turn it into a gentle illustrated portrait on soft clouds or watercolor, with their name, dates and a few words of your own. Preview it before you buy.",
+        "review_noun": "reviews",
+        "pattern_ids": "soft-clouds,watercolor-sky,watercolor-lavender,watercolor-blush,watercolor-sage,watercolor-sunset,clouds,starry-night,florals,cream,sky,lilac,blush,sage,white",
+        "default_background": "soft-clouds",
+        "swatches_visible": 11,
+        "name_placeholder": "e.g. Buddy",
+        "name_max": 12,
+        "max_upload_mb": 20,
+        "min_photo_side": 500,
+        "email_capture": false,
+        "email_label": "Email (optional), so we can contact you about your design",
+        "consent_label": "Send me news and offers from MyPetMemo",
+        "ai_endpoint": "https://mypetmemo-portrait.aitomasbuilder.workers.dev/generate",
+        "generation_limit": 8,
+        "progress_seconds": 0,
+        "approve_endpoint": "https://mypetmemo-shopify.vercel.app/api/designs",
+        "template_endpoint": "https://mypetmemo-shopify.vercel.app/api/print-template",
+        "print_dpi": 150,
+        "safe_inset": 6,
+        "redirect_to_cart": true,
+        "shipping_text": "",
+        "benefit_preview": "Preview before you buy",
+        "benefit_photo": "Made from your actual pet photo",
+        "family": "ornament",
+        "fallback_print_size": "1200x1200",
+        "extra_fields": "memorial",
+        "dates_label": "Add dates (optional)",
+        "dates_placeholder": "e.g. 2012 – 2026",
+        "message_label": "Add a message (optional)",
+        "message_placeholder": "Write your own or pick one above",
+        "message_suggestions": "Forever in my heart,Always by my side,Forever loved,Until we meet again,Run free"
+      }
+    },
+    "steps": {
+      "type": "pet-studio-steps",
+      "blocks": {
+        "s1": {
+          "type": "step",
+          "settings": {
+            "title": "Upload your pet photo",
+            "text": "Choose a clear photo of one pet with its face visible."
+          }
+        },
+        "s2": {
+          "type": "step",
+          "settings": {
+            "title": "Generate and personalize the artwork",
+            "text": "We turn the photo into an illustrated portrait. Pick a background, add a name, dates and a short message and adjust the layout."
+          }
+        },
+        "s3": {
+          "type": "step",
+          "settings": {
+            "title": "Approve your preview and order",
+            "text": "Pick the ornament shape, check the preview and add it to your cart. We print the design you approved."
+          }
+        }
+      },
+      "block_order": [
+        "s1",
+        "s2",
+        "s3"
+      ],
+      "settings": {
+        "heading": "From photo to ceramic ornament",
+        "subheading": "You see exactly what we print before you order."
+      }
+    },
+    "photos": {
+      "type": "photo-guide",
+      "settings": {}
+    },
+    "faq": {
+      "type": "faq",
+      "blocks": {
+        "0": {
+          "type": "question",
+          "settings": {
+            "question": "Which pets are welcome?",
+            "answer": "<p>Dogs, cats, and the other animals you call family. Use a clear photo with one pet and its full face visible.</p>"
+          }
+        },
+        "1": {
+          "type": "question",
+          "settings": {
+            "question": "How does personalization work?",
+            "answer": "<p>Upload a photo of your pet. We turn it into an illustrated portrait with the background removed. Choose a background, add a name, dates and a short message, adjust the layout, pick the ornament shape, then approve your preview and add it to your cart.</p>"
+          }
+        },
+        "2": {
+          "type": "question",
+          "settings": {
+            "question": "Will my ornament look like the preview?",
+            "answer": "<p>Yes. We print the exact design you approve: the same portrait, background, name and placement. The outline in the preview shows where the ornament ends, so keep your pet and name inside it. Colors can look slightly different on ceramic than on a screen.</p>"
+          }
+        },
+        "3": {
+          "type": "question",
+          "settings": {
+            "question": "What makes a great pet photo?",
+            "answer": "<p>Bright, even light and a sharp image work best. Keep the camera at your pet’s eye level with the full face and ears visible, and nothing covering your pet.</p>"
+          }
+        },
+        "4": {
+          "type": "question",
+          "settings": {
+            "question": "Can I change my design after adding it to the cart?",
+            "answer": "<p>Yes, until you check out. Edit it on this page and add the new version, then remove the old one from your cart. Each version gets its own design ID.</p>"
+          }
+        },
+        "5": {
+          "type": "question",
+          "settings": {
+            "question": "What if I need to change an order?",
+            "answer": "<p>Contact us as soon as you notice a mistake and include your order number. Changes depend on whether production has already started.</p>"
+          }
+        },
+        "6": {
+          "type": "question",
+          "settings": {
+            "question": "What if an item arrives damaged or incorrect?",
+            "answer": "<p>Contact us with your order number and clear photos. We review production defects, printing issues, and incorrect items under the store’s refund and replacement policy.</p>"
+          }
+        },
+        "7": {
+          "type": "question",
+          "settings": {
+            "question": "Which shapes can I choose?",
+            "answer": "<p>Star, circle, heart and snowflake. The preview changes to the shape you pick, and the design moves to fit it until you adjust it yourself.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "0",
+        "1",
+        "2",
+        "7",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "settings": {}
+    },
+    "guarantee": {
+      "type": "guarantee",
+      "settings": {}
+    }
+  },
+  "order": [
+    "main",
+    "steps",
+    "photos",
+    "faq",
+    "guarantee"
+  ]
+}

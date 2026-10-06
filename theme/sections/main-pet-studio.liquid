@@ -119,6 +119,31 @@
         <p class="mps__field-error" data-name-error hidden></p>
       </div>
 
+      {%- if section.settings.extra_fields == 'year' -%}
+        <div class="mps__group">
+          <label class="mps__label" for="PetYear-{{ section.id }}">{{ section.settings.year_label | escape }}</label>
+          <input class="mps__input" type="text" id="PetYear-{{ section.id }}" maxlength="16" autocomplete="off" spellcheck="false" data-extra="year" placeholder="{{ section.settings.year_placeholder | escape }}">
+        </div>
+      {%- elsif section.settings.extra_fields == 'memorial' -%}
+        <div class="mps__group">
+          <label class="mps__label" for="PetDates-{{ section.id }}">{{ section.settings.dates_label | escape }}</label>
+          <input class="mps__input" type="text" id="PetDates-{{ section.id }}" maxlength="24" autocomplete="off" spellcheck="false" data-extra="dates" placeholder="{{ section.settings.dates_placeholder | escape }}">
+        </div>
+        <div class="mps__group">
+          <label class="mps__label" for="PetMessage-{{ section.id }}">{{ section.settings.message_label | escape }}</label>
+          {%- assign suggestions = section.settings.message_suggestions | split: ',' -%}
+          {%- if suggestions.size > 0 -%}
+            <div class="mps__suggestions" role="group" aria-label="Message ideas">
+              {%- for suggestion in suggestions -%}
+                {%- assign text = suggestion | strip -%}
+                {%- if text != blank -%}<button type="button" class="mps__chip" data-suggest="{{ text | escape }}" aria-pressed="false">{{ text | escape }}</button>{%- endif -%}
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+          <input class="mps__input" type="text" id="PetMessage-{{ section.id }}" maxlength="28" autocomplete="off" data-extra="message" placeholder="{{ section.settings.message_placeholder | escape }}">
+        </div>
+      {%- endif -%}
+
       <div class="mps__edit" data-edit-row hidden>
         <div class="mps__edit-buttons">
           <button type="button" class="mps__btn mps__btn--outline" data-adjust aria-expanded="false">
@@ -282,6 +307,7 @@
       "productId": {{ product.id | json }},
       "productHandle": {{ product.handle | json }},
       "family": {{ section.settings.family | json }},
+      "extraFields": {{ section.settings.extra_fields | json }},
       "fallbackPrint": {% assign fb = section.settings.fallback_print_size | downcase | split: 'x' %}{% if fb.size == 2 %}{"width": {{ fb[0] | strip | plus: 0 }}, "height": {{ fb[1] | strip | plus: 0 }}}{% else %}null{% endif %},
       "moneyFormat": {{ shop.money_format | json }},
       "cartUrl": {{ routes.cart_url | json }},
@@ -328,6 +354,15 @@
     { "type": "text", "id": "name_placeholder", "label": "Placeholder", "default": "e.g. Buddy" },
     { "type": "range", "id": "name_max", "label": "Max characters", "min": 6, "max": 24, "step": 1, "default": 14 },
     { "type": "header", "content": "Photo upload" },
+    { "type": "header", "content": "Extra text under the name" },
+    { "type": "select", "id": "extra_fields", "label": "Fields", "default": "none", "options": [{ "value": "none", "label": "None" }, { "value": "year", "label": "Year (Christmas)" }, { "value": "memorial", "label": "Dates and message (memorial)" }] },
+    { "type": "text", "id": "year_label", "label": "Year label", "default": "Add a year (optional)" },
+    { "type": "text", "id": "year_placeholder", "label": "Year placeholder", "default": "e.g. 2026 or Christmas 2026" },
+    { "type": "text", "id": "dates_label", "label": "Dates label", "default": "Add dates (optional)" },
+    { "type": "text", "id": "dates_placeholder", "label": "Dates placeholder", "default": "e.g. 2012 – 2026" },
+    { "type": "text", "id": "message_label", "label": "Message label", "default": "Add a message (optional)" },
+    { "type": "text", "id": "message_placeholder", "label": "Message placeholder", "default": "Write your own or pick one above" },
+    { "type": "text", "id": "message_suggestions", "label": "Message ideas (comma-separated)", "default": "Forever in my heart,Always by my side,Forever loved,Until we meet again,Run free" },
     { "type": "range", "id": "max_upload_mb", "label": "Max photo size (MB)", "min": 5, "max": 30, "step": 1, "default": 20 },
     { "type": "range", "id": "min_photo_side", "label": "Min photo size (shortest side, px)", "min": 300, "max": 1200, "step": 50, "default": 500 },
     { "type": "checkbox", "id": "email_capture", "label": "Ask for an email (optional field)", "default": false },

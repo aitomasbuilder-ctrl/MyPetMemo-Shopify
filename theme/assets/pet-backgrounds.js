@@ -108,6 +108,94 @@
     return pattern('p', t, t, body);
   }
 
+  // Six-armed snowflake drawn with strokes, centred on 0,0 with radius 1.
+  var FLAKE = 'M0-1V1M-0.87-0.5L0.87 0.5M-0.87 0.5L0.87-0.5M-0.18-0.82L0-0.62 0.18-0.82M-0.18 0.82L0 0.62 0.18 0.82' +
+    'M-0.8-0.25L-0.54-0.31-0.62-0.56M0.8 0.25L0.54 0.31 0.62 0.56M-0.8 0.25L-0.54 0.31-0.62 0.56M0.8-0.25L0.54-0.31 0.62-0.56';
+  function flake(x, y, s, r, color, width) {
+    return '<path d="' + FLAKE + '" transform="' + at(x, y, s, r) + '" fill="none" stroke="' + color + '" stroke-width="' + width + '" stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+
+  function snowflakes(bg, colors, tile) {
+    return function () {
+      var t = tile, body = '<rect width="' + t + '" height="' + t + '" fill="' + bg + '"/>';
+      [[0.25, 0.25, 0.16, 0], [0.75, 0.72, 0.16, 15], [0.78, 0.2, 0.08, 30], [0.2, 0.78, 0.09, 10], [0.5, 0.48, 0.05, 20]].forEach(function (p, i) {
+        body += flake(p[0] * t, p[1] * t, p[2] * t, p[3], colors[i % colors.length], 0.09);
+      });
+      [[0.05, 0.5], [0.5, 0.05], [0.95, 0.42], [0.42, 0.93], [0.62, 0.36], [0.36, 0.6]].forEach(function (p) {
+        body += '<circle cx="' + f(p[0] * t) + '" cy="' + f(p[1] * t) + '" r="' + f(t * 0.012) + '" fill="' + colors[0] + '"/>';
+      });
+      return pattern('p', t, t, body);
+    };
+  }
+
+  function candyStripes() {
+    var t = 120, body = '<rect width="' + t + '" height="' + t + '" fill="#ffffff"/>';
+    body += '<rect width="' + f(t * 0.38) + '" height="' + t + '" fill="#c8202f"/>';
+    body += '<rect x="' + f(t * 0.5) + '" width="' + f(t * 0.1) + '" height="' + t + '" fill="#2f7d4f"/>';
+    return '<defs><pattern id="p" patternUnits="userSpaceOnUse" width="' + t + '" height="' + t + '" patternTransform="rotate(45)">' + body + '</pattern></defs>';
+  }
+
+  function plaid() {
+    var t = 200, body = '<rect width="' + t + '" height="' + t + '" fill="#a51d2b"/>';
+    var bands = [[0, 0.3, '#14472f', 0.85], [0.42, 0.06, '#0d2b1d', 0.9], [0.62, 0.03, '#f2c14e', 0.9], [0.8, 0.1, '#14472f', 0.6]];
+    bands.forEach(function (b) {
+      body += '<rect y="' + f(b[0] * t) + '" width="' + t + '" height="' + f(b[1] * t) + '" fill="' + b[2] + '" opacity="' + b[3] + '"/>';
+      body += '<rect x="' + f(b[0] * t) + '" width="' + f(b[1] * t) + '" height="' + t + '" fill="' + b[2] + '" opacity="' + (b[3] * 0.7) + '"/>';
+    });
+    return pattern('p', t, t, body);
+  }
+
+  function twinkleLights() {
+    var t = 260, body = '<rect width="' + t + '" height="' + t + '" fill="#173b2c"/>';
+    var colors = ['#f6c84c', '#ffe9a8', '#e8604c', '#f6c84c', '#ffffff'];
+    [[0.12, 0.2, 0.05], [0.42, 0.1, 0.035], [0.75, 0.25, 0.06], [0.3, 0.48, 0.045], [0.62, 0.58, 0.05],
+      [0.9, 0.6, 0.035], [0.15, 0.82, 0.055], [0.48, 0.86, 0.03], [0.82, 0.9, 0.045]].forEach(function (p, i) {
+      var x = f(p[0] * t), y = f(p[1] * t), r = p[2] * t;
+      body += '<circle cx="' + x + '" cy="' + y + '" r="' + f(r * 2.2) + '" fill="' + colors[i % colors.length] + '" opacity="0.14"/>';
+      body += '<circle cx="' + x + '" cy="' + y + '" r="' + f(r) + '" fill="' + colors[i % colors.length] + '" opacity="0.9"/>';
+    });
+    return pattern('p', t, t, body);
+  }
+
+  // Deterministic pseudo-random numbers, so the preview and the print file get the same blobs.
+  function seeded(seed) {
+    var s = seed;
+    return function () { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+  }
+
+  /** Soft watercolor wash: translucent blobs with feathered edges on a light paper color (the tile wraps seamlessly). */
+  function watercolor(paper, colors, seed) {
+    return function () {
+      var t = 700, rnd = seeded(seed), body = '<rect width="' + t + '" height="' + t + '" fill="' + paper + '"/>';
+      var grads = colors.map(function (c, i) {
+        return '<radialGradient id="w' + i + '"><stop offset="0" stop-color="' + c + '" stop-opacity="1"/><stop offset="0.55" stop-color="' + c + '" stop-opacity="0.75"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></radialGradient>';
+      }).join('');
+      for (var i = 0; i < 22; i++) {
+        var x = rnd() * t, y = rnd() * t, rx = t * (0.16 + rnd() * 0.22), ry = rx * (0.6 + rnd() * 0.4);
+        var rot = f(rnd() * 180), op = f(0.22 + rnd() * 0.3);
+        // draw the blob and its wrapped copies so the tile edges match
+        for (var dx = -1; dx <= 1; dx++) for (var dy = -1; dy <= 1; dy++) {
+          var cx = x + dx * t, cy = y + dy * t;
+          if (cx + rx < 0 || cx - rx > t || cy + rx < 0 || cy - rx > t) continue;
+          body += '<ellipse cx="' + f(cx) + '" cy="' + f(cy) + '" rx="' + f(rx) + '" ry="' + f(ry) + '" transform="rotate(' + rot + ' ' + f(cx) + ' ' + f(cy) + ')" fill="url(#w' + (i % colors.length) + ')" opacity="' + op + '"/>';
+        }
+      }
+      return '<defs>' + grads + '</defs>' + pattern('p', t, t, body);
+    };
+  }
+
+  function softClouds() {
+    var t = 420, body = '<rect width="' + t + '" height="' + t + '" fill="#e4eff9"/>';
+    [[0.27, 0.3, 1.1, 0.95], [0.75, 0.75, 1.3, 0.9], [0.82, 0.18, 0.6, 0.8], [0.15, 0.85, 0.55, 0.75]].forEach(function (c) {
+      var x = c[0] * t, y = c[1] * t, s = c[2] * t * 0.1;
+      [[-1.1, 0.25, 0.8], [0, 0, 1.15], [1.1, 0.25, 0.85], [0.5, 0.45, 0.75], [-0.5, 0.45, 0.75]].forEach(function (b) {
+        body += '<circle cx="' + f(x + b[0] * s) + '" cy="' + f(y + b[1] * s) + '" r="' + f(b[2] * s * 1.25) + '" fill="#ffffff" opacity="0.35"/>';
+        body += '<circle cx="' + f(x + b[0] * s) + '" cy="' + f(y + b[1] * s) + '" r="' + f(b[2] * s) + '" fill="#ffffff" opacity="' + c[3] + '"/>';
+      });
+    });
+    return pattern('p', t, t, body);
+  }
+
   function gradient(a, b, angle) {
     return function () {
       return '<defs><linearGradient id="p" gradientTransform="rotate(' + (angle || 90) + ' .5 .5)"><stop offset="0" stop-color="' + a + '"/><stop offset="1" stop-color="' + b + '"/></linearGradient></defs>';
@@ -129,6 +217,19 @@
     { id: 'ocean', name: 'Ocean', kind: 'gradient', color: '#a1c4fd', draw: gradient('#c2e9fb', '#6f9ce8') },
     { id: 'lavender', name: 'Lavender', kind: 'gradient', color: '#cdb8f5', draw: gradient('#f1e4ff', '#a98ee6') },
     { id: 'mint', name: 'Mint', kind: 'gradient', color: '#bfe8d6', draw: gradient('#e9fbf2', '#8fd3b6') },
+    { id: 'snowflakes', name: 'Snowflakes', kind: 'pattern', color: '#1f3b66', draw: snowflakes('#1f3b66', ['#ffffff', '#cfe3f7'], 230) },
+    { id: 'winter-snow', name: 'Winter Snow', kind: 'pattern', color: '#e6f1f8', draw: snowflakes('#e6f1f8', ['#9cc3e4', '#ffffff'], 230) },
+    { id: 'candy-cane', name: 'Candy Cane', kind: 'pattern', color: '#c8202f', draw: candyStripes },
+    { id: 'holiday-plaid', name: 'Holiday Plaid', kind: 'pattern', color: '#a51d2b', draw: plaid },
+    { id: 'twinkle-lights', name: 'Twinkle Lights', kind: 'pattern', color: '#173b2c', draw: twinkleLights },
+    { id: 'soft-clouds', name: 'Soft Clouds', kind: 'pattern', color: '#e4eff9', draw: softClouds },
+    { id: 'watercolor-sky', name: 'Watercolor Sky', kind: 'pattern', color: '#dbe9f6', draw: watercolor('#f5f9fc', ['#8fb8e0', '#b9d4ee', '#c9c1ea'], 11) },
+    { id: 'watercolor-blush', name: 'Watercolor Blush', kind: 'pattern', color: '#f6dfe0', draw: watercolor('#fdf8f6', ['#eeb3b8', '#f4cdb7', '#e7c3d8'], 23) },
+    { id: 'watercolor-lavender', name: 'Watercolor Lavender', kind: 'pattern', color: '#e6dcf3', draw: watercolor('#faf8fd', ['#b9a6e0', '#d6c8ee', '#a9c3e6'], 37) },
+    { id: 'watercolor-sage', name: 'Watercolor Sage', kind: 'pattern', color: '#dfe8dc', draw: watercolor('#f8faf6', ['#a9c4a0', '#cfdcc4', '#c9d9e0'], 51) },
+    { id: 'watercolor-sunset', name: 'Watercolor Sunset', kind: 'pattern', color: '#f8e1cf', draw: watercolor('#fefaf5', ['#f3b38c', '#f2c8a0', '#e8a9b6'], 67) },
+    { id: 'christmas-red', name: 'Christmas Red', kind: 'solid', color: '#b3202a' },
+    { id: 'evergreen', name: 'Evergreen', kind: 'solid', color: '#1f4d36' },
     { id: 'cream', name: 'Cream', kind: 'solid', color: '#f7f1e6' },
     { id: 'blush', name: 'Blush', kind: 'solid', color: '#f8d7da' },
     { id: 'sky', name: 'Sky Blue', kind: 'solid', color: '#cfe8f7' },

@@ -242,3 +242,10 @@
   .mps__dialog-body { grid-template-columns: 1fr; padding: 12px; }
 }
 @media (min-width: 900px) { .mps__sticky { display: none !important; } }
+
+/* message ideas (memorial ornaments) */
+.mps__suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.mps__chip { border: 1.5px solid var(--mps-line); background: #fff; color: var(--mps-text); border-radius: 999px; padding: 8px 14px; font: 600 14px/1.2 Montserrat, sans-serif; cursor: pointer; }
+.mps__chip:hover { border-color: #8b92a3; }
+.mps__chip[aria-pressed="true"] { border-color: var(--mps-navy); background: var(--mps-navy); color: #fff; }
+.mps__chip:focus-visible { outline: 2px solid #3b8beb; outline-offset: 2px; }
