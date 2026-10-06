@@ -19,5 +19,5 @@ test('unapproved blocked', () => assert.ok(checkOrder(order({ line_items: [line(
 test('missing print file blocked', () => assert.ok(checkOrder(order({ line_items: [line({}, { _print_file_url: '' })] })).reasons.includes('print_file_missing:1')));
 test('unmapped variant blocked', () => assert.ok(checkOrder(order({ line_items: [line({ variant_id: 1 })] })).reasons[0].startsWith('variant_unmapped')));
 test('shape mismatch blocked', () => assert.ok(checkOrder(order({ line_items: [line({}, { _shape: 'Square' })] })).reasons.includes('shape_mismatch:1')));
-test('non-ornament order is not ours', () => assert.ok(checkOrder(order({ line_items: [line({ product_id: 5 })] })).reasons.includes('no_ornament_lines')));
+test('non-ornament order is not ours', () => assert.ok(checkOrder(order({ line_items: [line({ product_id: 5 })] })).reasons.includes('no_personalized_lines')));
 test('garbage input does not throw', () => assert.equal(checkOrder(null).ok, false));

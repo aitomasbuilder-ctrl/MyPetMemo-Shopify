@@ -1,0 +1,375 @@
+{%- comment -%}
+  MyPetMemo pet studio (personalized blankets).
+  Live preview on the left, product information and personalization on the right.
+  Prices, sizes, availability, media and ratings all come from Shopify. Backgrounds are the
+  built-in patterns in pet-backgrounds.js plus any image backgrounds added as blocks.
+{%- endcomment -%}
+{%- assign current_variant = product.selected_or_first_available_variant -%}
+{%- assign rating = product.metafields.reviews.rating.value -%}
+{%- assign rating_count = product.metafields.reviews.rating_count.value -%}
+{%- assign short_title = product.title | split: ' – ' | first | split: ' - ' | first -%}
+{%- assign default_bg = section.settings.default_background -%}
+{%- if product.metafields.mypetmemo.default_background != blank -%}
+  {%- assign default_bg = product.metafields.mypetmemo.default_background.value -%}
+{%- elsif default_bg == blank and product.handle contains 'christmas' -%}
+  {%- assign default_bg = 'christmas-trees' -%}
+{%- elsif default_bg == blank and product.handle contains 'memorial' -%}
+  {%- assign default_bg = 'clouds' -%}
+{%- endif -%}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Montserrat:wght@500;600;700;800&family=Pacifico&family=Playfair+Display:wght@700&display=swap">
+{{ 'pet-studio.css' | asset_url | stylesheet_tag }}
+
+<section class="mps" data-pet-studio data-section-id="{{ section.id }}">
+  <div class="mps__layout">
+    <div class="mps__stage-col">
+      <div class="mps__stage" data-stage data-dropzone>
+        <canvas class="mps__canvas" data-canvas tabindex="0" role="img"
+          aria-label="Blanket preview. Use Adjust to move, resize or rotate your pet and the name."></canvas>
+
+        <div class="mps__gallery" data-gallery hidden>
+          <div class="mps__gallery-main" data-gallery-main></div>
+          <button type="button" class="mps__gallery-nav mps__gallery-nav--prev" data-gallery-prev aria-label="Previous photo">&#8249;</button>
+          <button type="button" class="mps__gallery-nav mps__gallery-nav--next" data-gallery-next aria-label="Next photo">&#8250;</button>
+          <div class="mps__gallery-thumbs" data-gallery-thumbs></div>
+        </div>
+
+        <div class="mps__progress" data-progress hidden aria-live="polite">
+          <div class="mps__spinner" aria-hidden="true"></div>
+          <p class="mps__progress-title" data-progress-title>Creating your design…</p>
+          <p class="mps__progress-step" data-progress-step></p>
+          <div class="mps__bar"><span data-progress-bar></span></div>
+        </div>
+        <div class="mps__drop-hint" data-drop-hint hidden><span>Drop your photo here</span></div>
+      </div>
+      {%- if product.media.size > 0 -%}
+        <button type="button" class="mps__photos-toggle" data-gallery-toggle
+          data-label-photos="View product photos" data-label-design="Back to your design">View product photos</button>
+      {%- endif -%}
+    </div>
+
+    <div class="mps__info">
+      <h1 class="mps__title">{{ section.settings.heading | default: short_title | escape }}</h1>
+      {%- if section.settings.subheading != blank -%}<p class="mps__subtitle">{{ section.settings.subheading | escape }}</p>{%- endif -%}
+
+      {%- if rating != blank and rating_count != blank and rating_count > 0 -%}
+        <p class="mps__rating">
+          <span class="mps__stars" style="--rating: {{ rating.rating | divided_by: rating.scale_max | times: 100 }}%" aria-hidden="true">★★★★★</span>
+          <strong>{{ rating.rating | round: 2 }}/{{ rating.scale_max | round }}</strong>
+          <span>from {{ rating_count }} {{ section.settings.review_noun | default: 'reviews' | escape }}</span>
+        </p>
+      {%- endif -%}
+
+      <button type="button" class="mps__btn mps__btn--primary mps__btn--block" data-primary>
+        <span data-primary-label>Upload your pet's photo</span><span class="mps__btn-price" data-primary-price hidden> — <s data-compare-price></s> <span data-price></span></span>
+      </button>
+
+      <div class="mps__upload" data-upload-panel>
+        <input class="mps__file" type="file" id="PetPhoto-{{ section.id }}" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" data-file-input>
+        <label class="mps__dropzone" for="PetPhoto-{{ section.id }}" data-dropzone>
+          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3l5 5h-3v6h-4V8H7l5-5zm-8 14h16v4H4v-4z"/></svg>
+          <span><strong>Choose a photo</strong> or drag it here</span>
+          <small>JPG, PNG, WebP or HEIC · up to {{ section.settings.max_upload_mb }} MB</small>
+        </label>
+        <ul class="mps__tips">
+          <li>One pet per photo</li>
+          <li>Face clearly visible, eyes open</li>
+          <li>Good, even lighting</li>
+          <li>Nothing covering your pet</li>
+        </ul>
+      </div>
+
+      <div class="mps__photo-row" data-photo-row hidden>
+        <img class="mps__thumb" data-thumb alt="Your original photo" width="56" height="56">
+        <div class="mps__photo-status">
+          <p data-photo-status>Your photo</p>
+          <button type="button" class="mps__link" data-replace>Replace photo</button>
+        </div>
+      </div>
+
+      <div class="mps__error" data-error hidden role="alert">
+        <p data-error-text></p>
+        <div class="mps__error-actions">
+          <button type="button" class="mps__btn mps__btn--small" data-retry>Try again</button>
+          <button type="button" class="mps__link" data-error-new-photo>Use a different photo</button>
+        </div>
+      </div>
+
+      <div class="mps__group">
+        <h2 class="mps__label">Select background <span class="mps__label-value" data-bg-name></span></h2>
+        <div class="mps__swatches" role="radiogroup" aria-label="Background" data-swatches data-visible="{{ section.settings.swatches_visible }}"></div>
+        <button type="button" class="mps__link mps__see-all" data-see-all aria-expanded="false">See all backgrounds</button>
+        <template data-image-backgrounds>
+          {%- for block in section.blocks -%}
+            {%- if block.type == 'background' and block.settings.image != blank -%}
+              {%- assign bg_name = block.settings.name | default: 'Background' -%}
+              <i data-id="{{ block.settings.slug | default: bg_name | handleize }}" data-name="{{ bg_name | escape }}" data-color="{{ block.settings.color }}"
+                data-image="https:{{ block.settings.image | image_url: width: 5760 }}" data-preview="https:{{ block.settings.image | image_url: width: 1600 }}"
+                data-thumb="https:{{ block.settings.image | image_url: width: 160 }}" {{ block.shopify_attributes }}></i>
+            {%- endif -%}
+          {%- endfor -%}
+        </template>
+      </div>
+
+      <div class="mps__group">
+        <label class="mps__label" for="PetName-{{ section.id }}">Add your pet's name (optional)</label>
+        <input class="mps__input" type="text" id="PetName-{{ section.id }}" maxlength="{{ section.settings.name_max }}" autocomplete="off" spellcheck="false" data-name-input placeholder="{{ section.settings.name_placeholder | escape }}">
+        <p class="mps__field-error" data-name-error hidden></p>
+      </div>
+
+      <div class="mps__edit" data-edit-row hidden>
+        <div class="mps__edit-buttons">
+          <button type="button" class="mps__btn mps__btn--outline" data-adjust aria-expanded="false">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 17v4h4l11-11-4-4L3 17zm17.7-10.3a1 1 0 000-1.4l-2-2a1 1 0 00-1.4 0L15.8 4.8l4 4 .9-2.1z"/></svg>
+            Adjust
+          </button>
+          <button type="button" class="mps__link" data-new-photo>Try a different photo</button>
+        </div>
+        <div class="mps__adjust" data-adjust-panel hidden>
+          <div class="mps__seg" role="radiogroup" aria-label="What to adjust">
+            <button type="button" role="radio" aria-checked="true" data-target="pet">Pet</button>
+            <button type="button" role="radio" aria-checked="false" data-target="name">Name</button>
+          </div>
+          <div class="mps__adjust-grid">
+            <span class="mps__adjust-label">Move</span>
+            <div class="mps__pad">
+              <button type="button" data-nudge="up" aria-label="Move up">↑</button>
+              <button type="button" data-nudge="left" aria-label="Move left">←</button>
+              <button type="button" data-nudge="right" aria-label="Move right">→</button>
+              <button type="button" data-nudge="down" aria-label="Move down">↓</button>
+            </div>
+            <span class="mps__adjust-label">Size</span>
+            <div class="mps__row"><button type="button" data-nudge="smaller" aria-label="Smaller">−</button><button type="button" data-nudge="bigger" aria-label="Bigger">+</button></div>
+            <span class="mps__adjust-label">Rotate</span>
+            <div class="mps__row"><button type="button" data-nudge="ccw" aria-label="Rotate left">⟲</button><button type="button" data-nudge="cw" aria-label="Rotate right">⟳</button></div>
+          </div>
+          <p class="mps__hint">You can also drag on the preview, use the corners to resize and the round handle to rotate.</p>
+          <div class="mps__adjust-actions">
+            <button type="button" class="mps__link" data-reset>Reset</button>
+            <button type="button" class="mps__btn mps__btn--primary mps__btn--small" data-adjust-save>Save</button>
+          </div>
+        </div>
+        <p class="mps__more">Want more control? <button type="button" class="mps__link" data-open-editor>Open the full editor</button></p>
+      </div>
+
+      {%- unless product.has_only_default_variant -%}
+        {%- for option in product.options_with_values -%}
+          <div class="mps__group">
+            <div class="mps__label-row"><h2 class="mps__label">{{ option.name | escape }}</h2>{%- if forloop.first -%}<span class="mps__label-price" data-price-inline></span>{%- endif -%}</div>
+            <div class="mps__options" role="radiogroup" aria-label="{{ option.name | escape }}" data-option-group="{{ option.position }}">
+              {%- for value in option.values -%}
+                <button type="button" class="mps__option" role="radio" aria-checked="false" data-option-value="{{ value | escape }}">
+                  <span class="mps__option-main" data-size-main>{{ value | escape }}</span>
+                  <span class="mps__option-sub" data-size-sub></span>
+                </button>
+              {%- endfor -%}
+            </div>
+            {%- if forloop.first -%}<p class="mps__hint" data-print-info></p>{%- endif -%}
+          </div>
+        {%- endfor -%}
+      {%- endunless -%}
+
+      <button type="button" class="mps__btn mps__btn--primary mps__btn--block mps__btn--cart" data-primary>
+        <span data-primary-label>Upload your pet's photo</span><span class="mps__btn-price" data-primary-price hidden> — <s data-compare-price></s> <span data-price></span></span>
+      </button>
+      <p class="mps__hint mps__approve-note" data-approve-note hidden>Adding to cart approves this design for printing. You can still change it here and add the new version.</p>
+      <p class="mps__status" data-cart-status aria-live="polite"></p>
+
+      {%- if section.settings.email_capture -%}
+        <div class="mps__email">
+          <label class="mps__label mps__label--small" for="PetEmail-{{ section.id }}">{{ section.settings.email_label | escape }}</label>
+          <input class="mps__input mps__input--small" type="email" id="PetEmail-{{ section.id }}" autocomplete="email" data-email-input>
+          <label class="mps__check"><input type="checkbox" data-marketing-consent> <span>{{ section.settings.consent_label | escape }}</span></label>
+        </div>
+      {%- endif -%}
+
+      <ul class="mps__benefits">
+        {%- if section.settings.shipping_text != blank -%}
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 6h11v9H3zM14 9h4l3 3v3h-7zM6.5 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm11 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>{{ section.settings.shipping_text | escape }}</li>
+        {%- endif -%}
+        {%- if section.settings.benefit_preview != blank -%}
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 5C6.5 5 2.7 9.4 2 12c.7 2.6 4.5 7 10 7s9.3-4.4 10-7c-.7-2.6-4.5-7-10-7zm0 11a4 4 0 110-8 4 4 0 010 8z"/></svg>{{ section.settings.benefit_preview | escape }}</li>
+        {%- endif -%}
+        {%- if section.settings.benefit_photo != blank -%}
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.4 5 6.9 5c2 0 3.5 1.1 5.1 3 1.6-1.9 3.1-3 5.1-3 3.5 0 5.7 3.6 4.4 6.8C19.5 16.4 12 21 12 21z"/></svg>{{ section.settings.benefit_photo | escape }}</li>
+        {%- endif -%}
+      </ul>
+
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'testimonial' and block.settings.quote != blank -%}
+          <figure class="mps__testimonial" {{ block.shopify_attributes }}>
+            {%- if block.settings.stars > 0 -%}<div class="mps__testimonial-stars" aria-label="{{ block.settings.stars }} out of 5 stars">{% for i in (1..block.settings.stars) %}★{% endfor %}</div>{%- endif -%}
+            <blockquote>{{ block.settings.quote | escape }}</blockquote>
+            <figcaption>
+              {%- if block.settings.image != blank -%}{{ block.settings.image | image_url: width: 96 | image_tag: width: 48, height: 48, loading: 'lazy', alt: '' }}{%- endif -%}
+              <span>{{ block.settings.author | escape }}{% if block.settings.verified %} · <em>Verified buyer</em>{% endif %}</span>
+            </figcaption>
+          </figure>
+        {%- endif -%}
+      {%- endfor -%}
+
+      {%- if product.description != blank -%}
+        <details class="mps__details"><summary>Product details</summary><div class="rte">{{ product.description }}</div></details>
+      {%- endif -%}
+    </div>
+  </div>
+
+  <div class="mps__sticky" data-sticky hidden>
+    <div class="mps__sticky-price"><s data-compare-price></s> <strong data-price></strong></div>
+    <button type="button" class="mps__btn mps__btn--primary" data-primary data-sticky-button><span data-primary-label>Upload your pet's photo</span></button>
+  </div>
+
+  <dialog class="mps__dialog" data-editor-dialog aria-labelledby="PetEditorTitle-{{ section.id }}">
+    <div class="mps__dialog-inner">
+      <header class="mps__dialog-head">
+        <h2 id="PetEditorTitle-{{ section.id }}">Full editor</h2>
+        <button type="button" class="mps__dialog-close" data-editor-done aria-label="Close editor">×</button>
+      </header>
+      <div class="mps__dialog-body">
+        <div class="mps__dialog-stage" data-editor-stage><canvas class="mps__canvas" data-editor-canvas tabindex="0" role="img" aria-label="Design editor. Drag to move, corners resize, round handle rotates. Arrow keys move the selected item."></canvas></div>
+        <div class="mps__dialog-tools">
+          <div class="mps__seg" role="radiogroup" aria-label="What to edit">
+            <button type="button" role="radio" aria-checked="true" data-target="pet">Pet</button>
+            <button type="button" role="radio" aria-checked="false" data-target="name">Name</button>
+          </div>
+          <div class="mps__adjust-grid">
+            <span class="mps__adjust-label">Move</span>
+            <div class="mps__pad">
+              <button type="button" data-nudge="up" aria-label="Move up">↑</button>
+              <button type="button" data-nudge="left" aria-label="Move left">←</button>
+              <button type="button" data-nudge="right" aria-label="Move right">→</button>
+              <button type="button" data-nudge="down" aria-label="Move down">↓</button>
+            </div>
+            <span class="mps__adjust-label">Size</span>
+            <div class="mps__row"><button type="button" data-nudge="smaller" aria-label="Smaller">−</button><button type="button" data-nudge="bigger" aria-label="Bigger">+</button></div>
+            <span class="mps__adjust-label">Rotate</span>
+            <div class="mps__row"><button type="button" data-nudge="ccw" aria-label="Rotate left">⟲</button><button type="button" data-nudge="cw" aria-label="Rotate right">⟳</button></div>
+          </div>
+
+          <h3 class="mps__label mps__label--small">Background <span class="mps__label-value" data-bg-name></span></h3>
+          <div class="mps__swatches mps__swatches--small" role="radiogroup" aria-label="Background" data-editor-swatches></div>
+
+          <h3 class="mps__label mps__label--small">Name</h3>
+          <input class="mps__input mps__input--small" type="text" maxlength="{{ section.settings.name_max }}" autocomplete="off" spellcheck="false" data-editor-name aria-label="Pet's name" placeholder="{{ section.settings.name_placeholder | escape }}">
+          <p class="mps__field-error" data-name-error hidden></p>
+          <div class="mps__field-row">
+            <label>Font
+              <select data-font>
+                <option value="fredoka">Rounded</option>
+                <option value="pacifico">Script</option>
+                <option value="montserrat">Bold</option>
+                <option value="playfair">Classic</option>
+              </select>
+            </label>
+            <label>Fill <input type="color" data-fill value="#ffffff"></label>
+            <label>Outline <input type="color" data-stroke value="#2a2230"></label>
+          </div>
+          <label class="mps__range">Name size <input type="range" min="0.05" max="0.26" step="0.005" data-name-size></label>
+          <div class="mps__dialog-actions">
+            <button type="button" class="mps__link" data-editor-revert>Undo changes</button>
+            <button type="button" class="mps__link" data-reset>Reset placement</button>
+            <button type="button" class="mps__btn mps__btn--primary" data-editor-done>Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="application/json" data-studio-config>
+    {
+      "productId": {{ product.id | json }},
+      "productHandle": {{ product.handle | json }},
+      "moneyFormat": {{ shop.money_format | json }},
+      "cartUrl": {{ routes.cart_url | json }},
+      "cartAddUrl": {{ routes.cart_add_url | append: '.js' | json }},
+      "cartJsUrl": {{ routes.cart_url | append: '.js' | json }},
+      "cartUpdateUrl": {{ routes.cart_update_url | append: '.js' | json }},
+      "currentVariantId": {{ current_variant.id | json }},
+      "variants": [{% for variant in product.variants %}{"id": {{ variant.id }}, "title": {{ variant.title | json }}, "options": {{ variant.options | json }}, "price": {{ variant.price }}, "compareAtPrice": {{ variant.compare_at_price | default: 0 }}, "available": {{ variant.available }}, "sku": {{ variant.sku | json }}}{% unless forloop.last %},{% endunless %}{% endfor %}],
+      "media": [{% assign first_media = true %}{% for media in product.media %}{% if media.media_type == 'image' %}{% unless first_media %},{% endunless %}{"src": {{ media | image_url: width: 1600 | json }}, "thumb": {{ media | image_url: width: 200 | json }}, "alt": {{ media.alt | default: product.title | json }}}{% assign first_media = false %}{% endif %}{% endfor %}],
+      "patterns": {{ section.settings.pattern_ids | json }},
+      "defaultBackground": {{ default_bg | json }},
+      "aiEndpoint": {{ section.settings.ai_endpoint | json }},
+      "approveEndpoint": {{ section.settings.approve_endpoint | json }},
+      "templateEndpoint": {{ section.settings.template_endpoint | json }},
+      "printDpi": {{ section.settings.print_dpi }},
+      "safeInset": {{ section.settings.safe_inset | divided_by: 100.0 }},
+      "generationLimit": {{ section.settings.generation_limit }},
+      "maxUploadMb": {{ section.settings.max_upload_mb }},
+      "minPhotoSide": {{ section.settings.min_photo_side }},
+      "redirectToCart": {{ section.settings.redirect_to_cart }},
+      "progressSeconds": {{ section.settings.progress_seconds | default: 0 }}
+    }
+  </script>
+</section>
+
+<script src="{{ 'pet-backgrounds.js' | asset_url }}" defer></script>
+<script src="{{ 'pet-studio.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Pet studio",
+  "tag": "div",
+  "class": "section-pet-studio",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "info": "Leave empty to use the product title (the part before the dash)." },
+    { "type": "text", "id": "subheading", "label": "Subheading", "default": "Upload a photo of your pet. We turn it into an illustrated portrait you can personalize and preview before you buy." },
+    { "type": "text", "id": "review_noun", "label": "Reviews label", "default": "reviews", "info": "Stars appear only when the product has real review data (reviews.rating and reviews.rating_count metafields, filled by a reviews app)." },
+    { "type": "header", "content": "Backgrounds" },
+    { "type": "text", "id": "pattern_ids", "label": "Built-in backgrounds (in order)", "default": "pink-hearts,rainbow-hearts,red-hearts,florals,tropical-leaves,clouds,christmas-trees,paw-prints,starry-night,sunset,ocean,lavender,mint,cream,blush,sky,sage,lilac,sunshine,navy,charcoal,white", "info": "Comma-separated ids. Image backgrounds added as blocks are shown after these." },
+    { "type": "text", "id": "default_background", "label": "Default background id", "info": "Empty: first background (Christmas products use christmas-trees, memorial products clouds). A ?bg=pink-hearts link always wins." },
+    { "type": "range", "id": "swatches_visible", "label": "Swatches before “See all”", "min": 5, "max": 30, "step": 1, "default": 11 },
+    { "type": "header", "content": "Pet name" },
+    { "type": "text", "id": "name_placeholder", "label": "Placeholder", "default": "e.g. Buddy" },
+    { "type": "range", "id": "name_max", "label": "Max characters", "min": 6, "max": 24, "step": 1, "default": 14 },
+    { "type": "header", "content": "Photo upload" },
+    { "type": "range", "id": "max_upload_mb", "label": "Max photo size (MB)", "min": 5, "max": 30, "step": 1, "default": 20 },
+    { "type": "range", "id": "min_photo_side", "label": "Min photo size (shortest side, px)", "min": 300, "max": 1200, "step": 50, "default": 500 },
+    { "type": "checkbox", "id": "email_capture", "label": "Ask for an email (optional field)", "default": false },
+    { "type": "text", "id": "email_label", "label": "Email label", "default": "Email (optional), so we can contact you about your design" },
+    { "type": "text", "id": "consent_label", "label": "Marketing consent label", "default": "Send me news and offers from MyPetMemo" },
+    { "type": "header", "content": "AI portrait service" },
+    { "type": "text", "id": "ai_endpoint", "label": "Portrait generation URL", "default": "https://mypetmemo-portrait.aitomasbuilder.workers.dev/generate" },
+    { "type": "range", "id": "generation_limit", "label": "Portraits per shopper per day", "min": 1, "max": 30, "step": 1, "default": 8, "info": "Counted in the shopper's browser. Re-using a photo never counts: its portrait is cached." },
+    { "type": "range", "id": "progress_seconds", "label": "Measured generation time (seconds)", "min": 0, "max": 180, "step": 5, "default": 0, "info": "0 shows no time estimate. Only set this after measuring real generation times." },
+    { "type": "header", "content": "Approval and print files" },
+    { "type": "text", "id": "approve_endpoint", "label": "Design approval URL", "default": "https://mypetmemo-shopify.vercel.app/api/designs" },
+    { "type": "text", "id": "template_endpoint", "label": "Printify print-area URL", "default": "https://mypetmemo-shopify.vercel.app/api/print-template" },
+    { "type": "range", "id": "print_dpi", "label": "Fallback print resolution (dpi)", "min": 100, "max": 300, "step": 10, "default": 150, "info": "Used only until the Printify print area has loaded." },
+    { "type": "range", "id": "safe_inset", "label": "Safe margin (% of width)", "min": 2, "max": 10, "step": 1, "default": 5 },
+    { "type": "checkbox", "id": "redirect_to_cart", "label": "Go to cart after adding", "default": true },
+    { "type": "header", "content": "Benefits panel" },
+    { "type": "text", "id": "shipping_text", "label": "Shipping line", "info": "Leave empty to hide. Only enter times your fulfillment really meets." },
+    { "type": "text", "id": "benefit_preview", "label": "Preview line", "default": "Preview before you buy" },
+    { "type": "text", "id": "benefit_photo", "label": "Photo line", "default": "Made from your actual pet photo" }
+  ],
+  "blocks": [
+    {
+      "type": "background",
+      "name": "Image background",
+      "settings": [
+        { "type": "text", "id": "name", "label": "Name", "default": "Background" },
+        { "type": "text", "id": "slug", "label": "Link id", "info": "Used in ?bg= links. Empty: made from the name." },
+        { "type": "image_picker", "id": "image", "label": "Pattern image", "info": "At least 3000 px wide for sharp blanket prints." },
+        { "type": "color", "id": "color", "label": "Main color", "default": "#f7f1e6" }
+      ]
+    },
+    {
+      "type": "testimonial",
+      "name": "Customer review",
+      "settings": [
+        { "type": "paragraph", "content": "Only add real reviews from real customers." },
+        { "type": "textarea", "id": "quote", "label": "Review" },
+        { "type": "text", "id": "author", "label": "Name" },
+        { "type": "range", "id": "stars", "label": "Stars", "min": 0, "max": 5, "step": 1, "default": 5 },
+        { "type": "checkbox", "id": "verified", "label": "Verified buyer", "default": false },
+        { "type": "image_picker", "id": "image", "label": "Photo" }
+      ]
+    },
+    { "type": "@app" }
+  ],
+  "presets": [{ "name": "Pet studio" }]
+}
+{% endschema %}

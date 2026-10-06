@@ -20,11 +20,12 @@ function client({ token = process.env.PRINTIFY_TOKEN, shopId = process.env.PRINT
     createDraftOrder: (order, items, config) => call('POST', `/shops/${shopId}/orders.json`, {
       external_id: String(order.id),
       label: `Shopify ${order.name}`,
+      // Ornament lines use the configured ornament blueprint; studio designs carry their own.
       line_items: items.map(i => ({
-        print_provider_id: config.printify.print_provider_id,
-        blueprint_id: config.printify.blueprint_id,
+        print_provider_id: i.print_provider_id || config.printify.print_provider_id,
+        blueprint_id: i.blueprint_id || config.printify.blueprint_id,
         variant_id: i.printify_variant_id,
-        print_areas: { [config.printify.print_position]: i.print_file_url },
+        print_areas: { [i.position || config.printify.print_position]: i.print_file_url },
         quantity: i.quantity
       })),
       shipping_method: 1,
