@@ -11,6 +11,8 @@
   const TAU = Math.PI * 2;
   const NAME_BASELINE = 0.35;          // baseline offset from the name centre, in font sizes
   const NAME_STROKE = 0.16;            // outline width, in font sizes
+  const CAPTION_LINE = 1.25;           // caption line spacing, in caption font sizes
+  const CAPTION_RATIO = 0.5;           // caption size relative to the name
   const MAX_SOURCE_EDGE = 1536;
   const GENERATION_TIMEOUT_MS = 180000;
   const PREVIEW_EXPORT = 1200;
@@ -483,7 +485,7 @@
       if (e.key === 'Tab') return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        const order = ['pet'].concat(s.state.name.text ? ['name'] : []);
+        const order = ['pet'].concat(s.hasLabel() ? ['name'] : []);
         s.select(order[(order.indexOf(s.state.selected) + 1) % order.length]);
         return;
       }
@@ -519,7 +521,8 @@
         sticky: q('[data-sticky]'), dialog: q('[data-editor-dialog]'), editorName: q('[data-editor-name]'),
         font: q('[data-font]'), fill: q('[data-fill]'), stroke: q('[data-stroke]'), nameSize: q('[data-name-size]'),
         gallery: q('[data-gallery]'), galleryMain: q('[data-gallery-main]'), galleryThumbs: q('[data-gallery-thumbs]'),
-        galleryToggle: q('[data-gallery-toggle]'), email: q('[data-email-input]'), consent: q('[data-marketing-consent]')
+        galleryToggle: q('[data-gallery-toggle]'), email: q('[data-email-input]'), consent: q('[data-marketing-consent]'),
+        extras: qa('[data-extra]'), suggestions: qa('[data-suggest]')
       };
       this.state = {
         phase: 'empty',            // empty | generating | ready | error
@@ -530,6 +533,7 @@
         bgImage: null,
         pet: { cx: 0.5, cy: 0.6, w: 0.86, rot: 0 },
         name: { text: '', cx: 0.5, cy: 0.12, size: 0.13, rot: 0, font: 'fredoka', fill: '#ffffff', stroke: '#2a2230' },
+        extra: { year: '', dates: '', message: '' },   // optional lines under the name (see captionLines)
         selected: null,
         adjustOpen: false,
         editorOpen: false,
@@ -586,6 +590,18 @@
         this.changed({ design: true });
       };
       el.nameInput.addEventListener('input', () => onName(el.nameInput));
+      const onExtra = (key, value) => {
+        const wasDefault = this.isDefaultLayout(), before = this.captionLines().length;
+        this.state.extra[key] = value.replace(/\s+/g, ' ').replace(/^\s+/, '');
+        if (wasDefault && before !== this.captionLines().length) this.placeDefault();
+        el.extras.forEach(i => { if (i.dataset.extra === key && i.value !== value) i.value = value; });
+        el.suggestions.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.suggest === this.state.extra.message)));
+        this.changed({ design: true });
+      };
+      el.extras.forEach(i => i.addEventListener('input', () => onExtra(i.dataset.extra, i.value)));
+      el.suggestions.forEach(b => b.addEventListener('click', () => {
+        onExtra('message', this.state.extra.message === b.dataset.suggest ? '' : b.dataset.suggest);
+      }));
       if (el.editorName) el.editorName.addEventListener('input', () => onName(el.editorName));
       el.adjustBtn.addEventListener('click', () => (this.state.adjustOpen ? this.closeAdjust() : this.openAdjust('pet')));
       this.root.querySelector('[data-adjust-save]').addEventListener('click', () => this.closeAdjust());
@@ -1072,6 +1088,16 @@
       const shape = this.shape();
       if (!shape) return null;
       const named = !!this.state.name.text;
+      if (this.captionLines().length) {
+        // Name plus a year, dates or message: a smaller pet and the text block a little higher.
+        const C = {
+          circle: { pet: 0.74, name: [0.71, 0.13] },
+          snowflake: { pet: 0.7, name: [0.66, 0.115] },
+          heart: { pet: 0.7, name: [0.57, 0.115] },
+          star: { pet: 0.64, name: [0.62, 0.09] }
+        };
+        return C[shape] || C.circle;
+      }
       const L = {
         circle: { pet: named ? 0.84 : 0.9, name: [0.8, 0.15] },
         snowflake: { pet: named ? 0.8 : 0.86, name: [0.72, 0.13] },
@@ -1097,6 +1123,36 @@
       const maxW = 1 - 2 * this.safe();
       return Math.min(n.size, maxW / Math.max(w, 0.01) * 0.98);
     }
+    /** Optional lines under the name, from the year / dates / message fields this product offers. */
+    captionLines() {
+      const e = this.state.extra, clean = t => String(t || '').replace(/\s+/g, ' ').trim();
+      if (this.config.extraFields === 'year') return [clean(e.year)].filter(Boolean);
+      if (this.config.extraFields === 'memorial') return [clean(e.dates), clean(e.message)].filter(Boolean);
+      return [];
+    }
+    /** The name or its caption lines exist (both are moved together as one "name" element). */
+    hasLabel() { return !!this.state.name.text || this.captionLines().length > 0; }
+    /** Caption placement in print fractions: centred under the name and rotated with it.
+     *  The backend draws exactly these numbers (backend/lib/render.js captionLayer). */
+    caption(p = this.printSize()) {
+      const lines = this.captionLines();
+      if (!lines.length) return null;
+      const n = this.state.name, W = p.width, H = p.height;
+      const ns = n.text ? this.nameSize() : 0;
+      const ctx = this.measureCtx;
+      ctx.font = this.font(100);
+      const widest = Math.max(...lines.map(l => ctx.measureText(l).width / 100), 0.01);
+      const maxW = (this.shape() ? 0.62 : 1 - 2 * this.safe());
+      const size = Math.min(n.text ? ns * CAPTION_RATIO : n.size * 0.6, (maxW / widest) * 0.98, 0.3);
+      const k = lines.length;
+      // distance (px) from the name centre to the caption block centre
+      const dy = n.text ? (0.62 * ns + 0.5 * size + ((k - 1) / 2) * CAPTION_LINE * size) * W : 0;
+      const a = n.rot * DEG;
+      return {
+        lines, size, rot: n.rot, font: n.font, fill: n.fill, stroke: n.stroke,
+        cx: n.cx + (-Math.sin(a) * dy) / W, cy: n.cy + (Math.cos(a) * dy) / H
+      };
+    }
     /** Object box in pixels inside a `box` drawn at x/y/w/h. */
     geometry(which, box) {
       const s = this.state;
@@ -1105,11 +1161,31 @@
         const w = s.pet.w * box.w, h = w * (s.artwork.height / s.artwork.width);
         return { x: box.x + s.pet.cx * box.w, y: box.y + s.pet.cy * box.h, w, h, rot: s.pet.rot };
       }
-      if (!s.name.text) return null;
+      if (!this.hasLabel()) return null;
+      // Box in the name's own (rotated) frame, origin at the name centre: name line plus caption lines.
+      let top = Infinity, bottom = -Infinity, half = 0;
       const size = this.nameSize() * box.w;
-      this.measureCtx.font = this.font(size);
-      const tw = this.measureCtx.measureText(s.name.text).width;
-      return { x: box.x + s.name.cx * box.w, y: box.y + s.name.cy * box.h, w: tw + size * 0.3, h: size * 1.2, rot: s.name.rot, size };
+      if (s.name.text) {
+        this.measureCtx.font = this.font(size);
+        half = (this.measureCtx.measureText(s.name.text).width + size * 0.3) / 2;
+        top = -size * 0.6; bottom = size * 0.6;
+      }
+      const c = this.caption({ width: box.w, height: box.h });
+      if (c) {
+        const cs = c.size * box.w, a = s.name.rot * DEG;
+        // caption centre relative to the name centre, back in the unrotated frame
+        const ox = (c.cx - s.name.cx) * box.w, oy = (c.cy - s.name.cy) * box.h;
+        const ly = ox * Math.sin(a) + oy * Math.cos(a);
+        this.measureCtx.font = this.font(cs);
+        c.lines.forEach(l => { half = Math.max(half, (this.measureCtx.measureText(l).width + cs * 0.3) / 2); });
+        const blockHalf = ((c.lines.length - 1) * CAPTION_LINE * cs) / 2 + cs * 0.6;
+        top = Math.min(top, ly - blockHalf); bottom = Math.max(bottom, ly + blockHalf);
+      }
+      const mid = (top + bottom) / 2, a = s.name.rot * DEG;
+      return {
+        x: box.x + s.name.cx * box.w - Math.sin(a) * mid, y: box.y + s.name.cy * box.h + Math.cos(a) * mid,
+        w: half * 2, h: bottom - top, rot: s.name.rot, size
+      };
     }
     halfExtents(which) {
       const p = this.printSize();
@@ -1131,8 +1207,12 @@
       }
       const name = this.state.name, n = this.halfExtents('name');
       if (n) {
-        name.cx = n.hx * 2 <= 1 - 2 * sx ? clamp(name.cx, sx + n.hx, 1 - sx - n.hx) : 0.5;
-        name.cy = n.hy * 2 <= 1 - 2 * sy ? clamp(name.cy, sy + n.hy, 1 - sy - n.hy) : 0.5;
+        // clamp the centre of the name + caption block, then move the name by the same amount
+        const g = this.geometry('name', { x: 0, y: 0, w: p.width, h: p.height });
+        const ox = g.x / p.width - name.cx, oy = g.y / p.height - name.cy;
+        const bx = name.cx + ox, by = name.cy + oy;
+        name.cx = (n.hx * 2 <= 1 - 2 * sx ? clamp(bx, sx + n.hx, 1 - sx - n.hx) : 0.5) - ox;
+        name.cy = (n.hy * 2 <= 1 - 2 * sy ? clamp(by, sy + n.hy, 1 - sy - n.hy) : 0.5) - oy;
       }
     }
     placePet() {
@@ -1147,7 +1227,7 @@
         s.pet = { cx: 0.5, cy: round4(1 - h / 2), w: round4(w), rot: 0 };
         return;
       }
-      const top = s.name.text ? 0.24 : 0.1;
+      const top = this.hasLabel() ? 0.24 : 0.1;
       const aspect = s.artwork.height / s.artwork.width;
       let w = ((1 - top) * p.height) / (p.width * aspect);
       w = Math.min(w, 0.88);
@@ -1158,6 +1238,10 @@
       const s = this.state;
       const L = this.layout();
       Object.assign(s.name, L ? { cx: 0.5, cy: L.name[0], size: L.name[1], rot: 0 } : { cx: 0.5, cy: 0.115, size: 0.13, rot: 0 });
+      if (L && this.captionLines().length) {
+        const p = this.printSize(), g = this.geometry('name', { x: 0, y: 0, w: p.width, h: p.height });
+        if (g) s.name.cy = round4(s.name.cy - (g.y / p.height - s.name.cy));
+      }
       this.placePet();
       this.clampAll();
       this.defaultLayout = s.artwork ? JSON.stringify([s.pet, s.name.cx, s.name.cy, s.name.size, s.name.rot]) : null;
@@ -1173,7 +1257,7 @@
     }
     nudge({ dx = 0, dy = 0, scale = 1, rot = 0 }) {
       const target = this.state.selected || 'pet';
-      if (target === 'name' && !this.state.name.text) return;
+      if (target === 'name' && !this.hasLabel()) return;
       const obj = this.state[target];
       obj.cx += dx; obj.cy += dy;
       if (scale !== 1) this.applyScale(target, { ...obj }, scale);
@@ -1181,11 +1265,11 @@
       this.changed({ placement: true, commit: true });
     }
     select(target) {
-      if (target === 'name' && !this.state.name.text) target = 'pet';
+      if (target === 'name' && !this.hasLabel()) target = 'pet';
       this.state.selected = target;
       this.root.querySelectorAll('[data-target]').forEach(b => {
         b.setAttribute('aria-checked', String(b.dataset.target === target));
-        if (b.dataset.target === 'name') b.disabled = !this.state.name.text;
+        if (b.dataset.target === 'name') b.disabled = !this.hasLabel();
       });
       this.renderAll();
     }
@@ -1234,6 +1318,26 @@
         ctx.strokeText(n.text, 0, NAME_BASELINE * size);
         ctx.fillStyle = n.fill;
         ctx.fillText(n.text, 0, NAME_BASELINE * size);
+        ctx.restore();
+      }
+      const c = this.caption();
+      if (c) {
+        const size = c.size * W, k = c.lines.length;
+        ctx.save();
+        ctx.translate(x + c.cx * W, y + c.cy * H);
+        ctx.rotate(c.rot * DEG);
+        ctx.font = this.font(size, c.font);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        ctx.lineWidth = NAME_STROKE * size;
+        ctx.strokeStyle = c.stroke;
+        ctx.fillStyle = c.fill;
+        c.lines.forEach((line, i) => {
+          const ly = (i - (k - 1) / 2) * CAPTION_LINE * size + NAME_BASELINE * size;
+          ctx.strokeText(line, 0, ly);
+          ctx.fillText(line, 0, ly);
+        });
         ctx.restore();
       }
       ctx.restore();
@@ -1301,7 +1405,7 @@
       if (design || commit || price) this.persistSoon();
     }
     validateName() {
-      const text = this.state.name.text;
+      const text = [this.state.name.text].concat(this.captionLines()).join(' ');
       let msg = '';
       if (text && /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(text)) msg = 'Emoji can’t be printed. Please use letters and numbers.';
       this.el.nameErrors.forEach(n => { n.textContent = msg; n.hidden = !msg; });
@@ -1386,8 +1490,8 @@
       if (s.photo && el.thumb.src !== s.photo.url) el.thumb.src = s.photo.url;
       el.editRow.hidden = !has;
       el.approveNote.hidden = !has || s.phase === 'generating';
-      this.root.querySelectorAll('[data-target="name"]').forEach(b => { b.disabled = !s.name.text; });
-      if (s.selected === 'name' && !s.name.text) s.selected = 'pet';
+      this.root.querySelectorAll('[data-target="name"]').forEach(b => { b.disabled = !this.hasLabel(); });
+      if (s.selected === 'name' && !this.hasLabel()) s.selected = 'pet';
     }
 
     /* ----- persistence (refresh recovery) ----- */
@@ -1398,7 +1502,7 @@
     persist() {
       const s = this.state;
       kv.set(`state:${this.config.productId}`, {
-        at: Date.now(), photoHash: s.photo && s.photo.hash, pet: s.pet, name: s.name, addedId: s.addedId,
+        at: Date.now(), photoHash: s.photo && s.photo.hash, pet: s.pet, name: s.name, extra: s.extra, addedId: s.addedId,
         background: { id: s.background.id, color: s.background.color, name: s.background.name },
         variantId: s.variant && s.variant.id
       });
@@ -1417,7 +1521,10 @@
         if (v) { this.selectedOptions = v.options.slice(); this.resolveVariant(-1, { silent: true }); }
       }
       Object.assign(this.state.name, saved.name || {});
+      Object.assign(this.state.extra, saved.extra || {});
       this.el.nameInput.value = this.state.name.text || '';
+      this.el.extras.forEach(i => { i.value = this.state.extra[i.dataset.extra] || ''; });
+      this.el.suggestions.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.suggest === this.state.extra.message)));
       const photo = await kv.get(`photo:${this.config.productId}`);
       const art = saved.photoHash ? await kv.get(`art:${saved.photoHash}`) : null;
       if (photo && photo.blob) {
@@ -1460,6 +1567,10 @@
           text: s.name.text.trim(), cx: round4(s.name.cx), cy: round4(s.name.cy), size: round4(this.nameSize()), rot: round4(s.name.rot),
           font: s.name.font, fill: s.name.fill, stroke: s.name.stroke
         } : null,
+        caption: (() => {
+          const c = this.caption(p);
+          return c ? { lines: c.lines, cx: round4(c.cx), cy: round4(c.cy), size: round4(c.size), rot: round4(c.rot), font: c.font, fill: c.fill, stroke: c.stroke } : undefined;
+        })(),
         artwork: { sha256: s.art.sha256, w: s.art.w, h: s.art.h }
       };
     }
@@ -1536,6 +1647,10 @@
         form.append('id', String(s.variant.id));
         form.append('quantity', '1');
         if (design.name) form.append('properties[Pet name]', design.name.text);
+        const extra = this.state.extra, clean = t => String(t || '').replace(/\s+/g, ' ').trim();
+        if (this.config.extraFields === 'year' && clean(extra.year)) form.append('properties[Year]', clean(extra.year));
+        if (this.config.extraFields === 'memorial' && clean(extra.dates)) form.append('properties[Dates]', clean(extra.dates));
+        if (this.config.extraFields === 'memorial' && clean(extra.message)) form.append('properties[Message]', clean(extra.message));
         form.append('properties[Background]', design.background.name);
         form.append('properties[Design ID]', approval.id);
         form.append('properties[Design preview]', preview, `${approval.id}-preview.jpg`);
@@ -1596,5 +1711,5 @@
   else init();
   document.addEventListener('shopify:section:load', e => init(e.target));
 
-  window.MyPetMemoStudio = { formatMoney, parseInches, removeFlatBackground, NAME_BASELINE, NAME_STROKE };
+  window.MyPetMemoStudio = { formatMoney, parseInches, removeFlatBackground, NAME_BASELINE, NAME_STROKE, CAPTION_LINE };
 })();

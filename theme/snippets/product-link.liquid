@@ -1,0 +1,22 @@
+{% doc %}
+  Returns the page a product family links to: its category page when one exists, else the product, else the catalog.
+  @param {string} kind - Product family
+{% enddoc %}
+{%- liquid
+  case kind
+    when 'ornament'
+      assign category = collections['pet-ornaments']
+      assign item = settings.ornament_product | default: all_products['custom-pet-christmas-ornament']
+    when 'portrait'
+      assign category = nil
+      assign item = settings.portrait_product | default: all_products['digital-pet-portrait']
+    else
+      assign category = collections['pet-blankets']
+      assign item = settings.blanket_product | default: all_products['custom-pet-portrait-blanket']
+  endcase
+  if category != blank and category.products_count > 0
+    echo category.url
+  else
+    echo item.url | default: routes.all_products_collection_url
+  endif
+-%}

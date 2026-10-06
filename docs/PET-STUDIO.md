@@ -49,6 +49,27 @@ The same section runs the ornament pages (`templates/product.pet-ornament.json`,
   `shapePath()` in pet-studio.js if a blank differs.
 * Single-value options such as "One Size" are hidden.
 
+Each ornament has its own template:
+
+* `product.pet-ornament-christmas.json`: festive backgrounds (Christmas trees, snowflakes, twinkle lights,
+  plaid, candy cane, winter snow, …) and an optional **year** line under the name.
+* `product.pet-ornament-memorial.json`: soft clouds and watercolor backgrounds, optional **dates** and an
+  optional **message** with suggestion chips ("Forever in my heart", …).
+
+The extra lines (section setting **Extra text under the name**: none / year / memorial) are drawn under the
+name in the same font, at half its size, and move with it. They travel in the signed design as `caption`
+(`lines`, position, size), are rendered into the print file by `backend/lib/render.js`, and show in the cart
+as Year / Dates / Message.
+
+## Category pages
+
+`/collections/pet-blankets` and `/collections/pet-ornaments` use `templates/collection.pet-category.json`
+(section `main-pet-category`): one card per product with its image, price ("from" when sizes differ), sizes or
+shapes with their prices, what the shopper personalizes, and a button to the product page. Unavailable
+products show "Coming soon". The homepage blanket and ornament cards, the hero buttons and other
+`product-link` uses open these pages (the Digital Pet Portrait card is unchanged). Collection sort order
+decides the card order.
+
 ## Theme files
 
 | File | Purpose |
@@ -58,7 +79,11 @@ The same section runs the ornament pages (`templates/product.pet-ornament.json`,
 | assets/pet-studio.js / .css | Studio logic and styles |
 | assets/pet-backgrounds.js | Built-in backgrounds (shared with the backend) |
 | templates/product.pet-blanket.json | Template used by the three blankets |
-| templates/product.pet-ornament.json | Template used by the two ornaments |
+| templates/product.pet-ornament.json | Generic ornament template |
+| templates/product.pet-ornament-christmas.json / -memorial.json | Christmas and memorial ornament pages |
+| sections/main-pet-category.liquid, templates/collection.pet-category.json | Blanket and ornament selection pages |
+| sections/featured-products.liquid, snippets/product-card.liquid, snippets/product-link.liquid | Homepage cards link to the category pages |
+| locales/en.default.json | Store text (homepage card titles) |
 | snippets/cart-properties.liquid | Shows the design preview in the cart |
 | sections/main-cart.liquid | Uses the design preview as the cart line image |
 | snippets/cart-addon.liquid | Add-ons no longer copy the design token (it belongs to the blanket's variant) |

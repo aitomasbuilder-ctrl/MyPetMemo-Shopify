@@ -1,0 +1,63 @@
+{% doc %}
+  Renders a Shopify product card or an unpriced editorial sample.
+  @param {product} [item] - Published product
+  @param {string} [kind] - MyPetMemo family
+  @param {boolean} [sample_images] - Use the approved illustrations
+  @param {collection} [category] - Category page the card opens; its lowest price is shown as "from"
+{% enddoc %}
+{% liquid
+  assign family = kind
+  if family == blank
+    capture family
+      render 'product-kind', item: item
+    endcapture
+    assign family = family | strip
+  endif
+  assign title = item.title
+  if category != blank or title == blank
+    assign title_key = 'catalog.' | append: family | append: '_title'
+    assign title = title_key | t
+  endif
+  assign link = item.url | default: routes.all_products_collection_url
+  assign price = item.price
+  assign price_varies = item.price_varies
+  assign available = item.available
+  if category != blank and category.products_count > 0
+    assign link = category.url
+    assign price = nil
+    assign available = false
+    for p in category.products
+      if p.available
+        assign available = true
+        if price == nil or p.price_min < price
+          assign price = p.price_min
+        endif
+      endif
+      if p.price_varies or p.price_min != category.products.first.price_min
+        assign price_varies = true
+      endif
+    endfor
+    if price == nil
+      assign price = category.products.first.price_min
+    endif
+  endif
+  assign description_key = 'catalog.' | append: family | append: '_short'
+  assign action_key = 'catalog.' | append: family | append: '_action'
+%}
+<article class="product-card">
+  <a class="product-image-link" href="{{ link }}">
+    {% if family != 'other' and sample_images != false %}
+      {% render 'pet-image', kind: family, tile: 0, alt: title %}
+    {% elsif item.featured_image %}
+      {{ item.featured_image | image_url: width: 900 | image_tag: loading: 'lazy', widths: '300,450,650,900', sizes: '(max-width: 700px) 90vw, 30vw', class: 'card-image' }}
+    {% else %}
+      {{ 'product-1' | placeholder_svg_tag: 'card-image placeholder' }}
+    {% endif %}
+    <span class="product-tag">{% if family == 'portrait' %}{{ 'catalog.digital_tag' | t }}{% else %}{{ 'catalog.personal_tag' | t }}{% endif %}</span>
+    <span class="round-link">{% render 'icon', name: 'arrow-up' %}</span>
+  </a>
+  <div class="product-card-heading"><h3><a href="{{ link }}">{{ title | escape }}</a></h3>{% if item != blank %}<span>{% if price_varies %}<small>{{ 'common.from' | t }} </small>{% endif %}{{ price | money }}</span>{% endif %}</div>
+  {% if family != 'other' %}<p>{{ description_key | t }}</p>{% endif %}
+  {% if item == blank or category != blank and available == false %}<p class="small">{{ 'catalog.coming_soon' | t }}</p>{% endif %}
+  <a class="text-link" href="{{ link }}">{% if family == 'other' %}{{ 'catalog.view' | t }}{% else %}{{ action_key | t }}{% endif %}{% render 'icon', name: 'arrow', size: 16 %}</a>
+</article>

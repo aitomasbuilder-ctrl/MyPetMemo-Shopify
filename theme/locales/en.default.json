@@ -1,0 +1,264 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin language editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "catalog": {
+    "digital_tag": "DIGITAL DOWNLOAD",
+    "personal_tag": "MAKE IT PERSONAL",
+    "coming_soon": "Coming soon",
+    "view": "View product",
+    "shop_all": "Shop all keepsakes",
+    "gifts": "Personalized gifts",
+    "eyebrow": "MADE FROM THE PETS YOU LOVE",
+    "blanket_title": "Custom Pet Portrait Blanket",
+    "ornament_title": "Pet Ornament",
+    "portrait_title": "Digital Pet Portrait",
+    "blanket_short": "A little closer. A little cozier.",
+    "ornament_short": "Personalized keepsakes for celebrations and memories.",
+    "portrait_short": "Your favorite face, wherever you go.",
+    "blanket_action": "Create my blanket",
+    "ornament_action": "Create my ornament",
+    "portrait_action": "Create my portrait",
+    "blanket_description": "Turn your favorite pet photo into a soft, personalized blanket. A familiar face, made for your favorite place.",
+    "ornament_description": "A familiar face for your favorite tradition. Turn your pet photo into a personalized ornament to hang year after year.",
+    "portrait_description": "A personalized, high-resolution pet portrait for your phone, your walls, and the next gift you have in mind."
+  },
+  "common": {
+    "from": "from",
+    "skip": "Skip to content",
+    "menu": "Open menu",
+    "mobile_navigation": "Mobile navigation",
+    "main_navigation": "Main navigation",
+    "search": "Search gifts",
+    "account": "My account",
+    "illustration": "ILLUSTRATIVE MOCKUP",
+    "mockups": "Product and lifestyle images are illustrative mockups.",
+    "home": "Home",
+    "pagination": "Pagination"
+  },
+  "cart": {
+    "title": "Your bag",
+    "view_photo": "View photo",
+    "keep_shopping": "Keep shopping",
+    "empty": "A little room for something personal.",
+    "empty_text": "Your bag is waiting for a favorite face.",
+    "quantity": "Quantity",
+    "remove": "Remove",
+    "update": "Update bag",
+    "note": "Order note (optional)",
+    "summary": "A keepsake in the making.",
+    "subtotal": "Subtotal",
+    "checkout_note": "Shipping, taxes, and discounts are confirmed at checkout.",
+    "checkout": "Checkout",
+    "personalization_note": "Please check names, options, and photo attachments before checking out.",
+    "extra": "A LITTLE MORE TO LOVE",
+    "add_extra": "Add matching keepsake",
+    "for_product": "Matches your {{ title }}. Copies the pet photos and personalization from this keepsake."
+  },
+  "nav": {
+    "best_sellers": "Best sellers",
+    "blankets": "Blankets",
+    "christmas": "Christmas gifts",
+    "portraits": "Pet portraits",
+    "how": "How it works"
+  },
+  "footer": {
+    "tagline": "Your pet. Your memory.",
+    "personal": "Made personal.",
+    "shop": "Shop",
+    "help": "Here to help",
+    "contact": "Contact us",
+    "faq": "FAQ",
+    "photo_guide": "Photo guide",
+    "world": "Our little world",
+    "story": "Our story"
+  },
+  "social": {
+    "instagram": "Instagram",
+    "tiktok": "TikTok",
+    "facebook": "Facebook"
+  },
+  "hero": {
+    "create": "Create my keepsake",
+    "christmas": "Shop Christmas gifts",
+    "trust_1": "Made from your photo",
+    "trust_2": "A gift like no other",
+    "trust_3": "Thoughtfully personal",
+    "image_alt": "Golden retriever beside a personalized Milo portrait blanket",
+    "note": "More than a photo.",
+    "note_bold": "A little piece of forever.",
+    "value_1": "Your pet, beautifully reimagined",
+    "value_2": "Personal details, endless meaning",
+    "value_3": "Made for the ones you love"
+  },
+  "transform": {
+    "eyebrow": "A PHOTO BECOMES A FEELING",
+    "text": "One photo is all it takes.",
+    "photo": "Your photo",
+    "portrait": "Your pet portrait",
+    "keepsake": "Your MyPetMemo",
+    "start": "Start with your photo",
+    "sample": "Illustrative design examples. Final artwork is prepared from your photo."
+  },
+  "how": {
+    "eyebrow": "YOUR PHOTO. OUR NEXT PROJECT.",
+    "start": "Start with a photo"
+  },
+  "styles": {
+    "eyebrow": "SAME PET. YOUR POINT OF VIEW.",
+    "intro": "Four portrait styles. One familiar face.",
+    "watercolor": "Watercolor",
+    "minimal": "Minimal",
+    "classic": "Classic",
+    "vintage": "Vintage",
+    "minimal_text": "Clean, simple, unmistakably them.",
+    "watercolor_text": "Soft brushstrokes. All their character.",
+    "classic_text": "Timeless detail. A familiar face.",
+    "vintage_text": "Warm tones with an old-soul feel."
+  },
+  "gifting": {
+    "eyebrow": "THE MOST PERSONAL PRESENT",
+    "alt": "Woman holding a personalized golden retriever blanket in a bright living room"
+  },
+  "why": {
+    "eyebrow": "NOT JUST ANOTHER PET GIFT"
+  },
+  "lifestyle": {
+    "eyebrow": "AT HOME, WITH LOVE",
+    "text": "On the couch. On the tree. Always close.",
+    "alt_0": "Golden retriever blanket on a modern sofa",
+    "alt_1": "Printed blanket texture close-up",
+    "alt_2": "French bulldog ornament on a Christmas tree",
+    "alt_3": "French bulldog beside a personalized ornament",
+    "alt_4": "Dachshund digital portrait on a phone",
+    "alt_5": "Golden retriever blanket gift box",
+    "alt_6": "Woman holding a pet blanket",
+    "alt_7": "Golden retriever portrait blanket"
+  },
+  "reviews": {
+    "eyebrow": "EVERY MEMORY STARTS SOMEWHERE"
+  },
+  "guarantee": {
+    "read": "Read our policy"
+  },
+  "photo": {
+    "eyebrow": "A GOOD PHOTO MAKES ALL THE DIFFERENCE",
+    "intro": "Choose a bright, clear photo with their face and ears in view. Eye level works best.",
+    "upload": "Upload your pet",
+    "good": "A great photo",
+    "good_1": "Natural light",
+    "good_2": "Sharp, full face",
+    "good_3": "Pet close to the camera",
+    "avoid": "Better to avoid",
+    "avoid_1": "Dark or blurry",
+    "avoid_2": "Face hidden or too far away",
+    "avoid_3": "Heavy filters or screenshots"
+  },
+  "faq": {
+    "eyebrow": "A FEW THINGS YOU MIGHT BE WONDERING",
+    "need_help": "Still need a hand?",
+    "contact": "Get in touch"
+  },
+  "newsletter": {
+    "eyebrow": "THERE’S ROOM FOR YOU & YOUR PET",
+    "email": "Your email address",
+    "consent": "By subscribing, you agree to receive MyPetMemo emails.",
+    "privacy": "Privacy policy",
+    "success": "You’re on the list. Welcome to the MyPetMemo family."
+  },
+  "product": {
+    "layout": "YOUR PHOTO LAYOUT",
+    "favorite_face": "Your favorite face",
+    "preview_note": "Photo placement guide. Final artwork is prepared separately.",
+    "from_photo": "MADE FROM YOUR PHOTO",
+    "show_layout": "Show your photo layout",
+    "sample_note": "Product images are illustrative mockups.",
+    "one_of_kind": "They’re already one of a kind.",
+    "keepsake_too": "Their keepsake should be, too.",
+    "eyebrow": "YOUR PET. BEAUTIFULLY PERSONAL.",
+    "digital": "Digital download",
+    "digital_notice": "Digital file only. No frame or physical product is included.",
+    "options": "Choose your option",
+    "sold_out": "Sold out",
+    "upload": "Upload your pet photo",
+    "photo_tips": "Photo tips",
+    "file_error": "Choose a JPG, PNG, or WebP photo up to 10 MB.",
+    "choose_photo": "Choose a photo of your pet",
+    "tap_upload": "Tap to upload a clear photo",
+    "file_hint": "JPG, PNG, or WebP · Up to 10 MB each",
+    "more_photos": "Add more photos (optional)",
+    "more_hint": "Use a group photo or up to three separate photos. Choose the matching number of pets in your product option, if offered.",
+    "photo_two": "Pet photo 2",
+    "photo_three": "Pet photo 3",
+    "style": "Choose your portrait style",
+    "make_personal": "Make it personal",
+    "pet_name": "Pet name(s), optional",
+    "name_hint": "Their name, just as you’d like it printed",
+    "background": "Background",
+    "year": "Year, optional",
+    "notes": "Anything we should know? (optional)",
+    "add": "Add to bag",
+    "tax_included": "Taxes included.",
+    "tax_checkout": "Taxes calculated at checkout.",
+    "shipping_checkout": "Shipping calculated at checkout.",
+    "shipping_policy": "Shipping policy",
+    "details": "Product details",
+    "care_returns": "Our care promise",
+    "returns_text": "For damaged or incorrect items, contact us with your order number and photos.",
+    "view_photo": "View product photo {{ number }}"
+  },
+  "collection": {
+    "sort": "Sort by",
+    "apply": "Apply",
+    "empty": "Our keepsake collection is coming soon. Please check back.",
+    "heading": "Keepsakes for every kind of love."
+  },
+  "search": {
+    "eyebrow": "SOMETHING PERSONAL AWAITS",
+    "heading": "Find their perfect keepsake.",
+    "placeholder": "Try blanket, ornament, or portrait",
+    "button": "Search",
+    "empty": "No gifts found. Try “blanket” or “portrait”.",
+    "results": "{{ count }} results for “{{ terms }}”"
+  },
+  "contact": {
+    "eyebrow": "WE’RE HERE TO HELP",
+    "intro": "A question about your keepsake? Send us a note. If you’ve already ordered, include your order number.",
+    "success": "Thanks for your message. We’ll be in touch.",
+    "name": "Your name",
+    "email": "Your email",
+    "order": "Order number (optional)",
+    "message": "Your message",
+    "send": "Send message"
+  },
+  "not_found": {
+    "heading": "This one wandered off.",
+    "text": "Let’s find you something worth keeping.",
+    "button": "Back to MyPetMemo"
+  },
+  "blog": {
+    "read": "Read the story"
+  },
+  "password": {
+    "eyebrow": "SOMETHING PERSONAL IS ON ITS WAY",
+    "enter": "Enter using password",
+    "password": "Store password",
+    "button": "Enter store"
+  },
+  "backgrounds": {
+    "classic_christmas": "Classic Christmas",
+    "snow": "Snow",
+    "minimal": "Minimal",
+    "red": "Red",
+    "green": "Green"
+  },
+  "date_formats": {
+    "date": "%B %d, %Y"
+  }
+}

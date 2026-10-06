@@ -4,6 +4,8 @@
 //   pet:  width = pet.w * W, height from the artwork's aspect, centred on (cx*W, cy*H), rotated pet.rot degrees
 //   name: font size = name.size * W, centred on cx*W, alphabetic baseline at cy*H + 0.35 * font size,
 //         outline width 0.16 * font size drawn under the fill
+//   caption (optional lines under the name): same rules per line, line i centred at
+//         cy*H + (i - (n-1)/2) * 1.25 * font size, all lines rotated caption.rot around (cx*W, cy*H)
 const crypto = require('node:crypto');
 const sharp = require('sharp');
 const backgrounds = require('../shared/pet-backgrounds');
@@ -11,6 +13,7 @@ const { textPath } = require('./text-path');
 
 const NAME_BASELINE = 0.35;
 const NAME_STROKE = 0.16;
+const CAPTION_LINE = 1.25;
 
 sharp.cache(false);
 
@@ -44,17 +47,29 @@ async function petLayer(design, artwork, W, H) {
   return { input, left: x0, top: y0 };
 }
 
+/** Outlined text: each line is { text, y } (y = line centre in pixels) around a rotation centre cx/cy. */
+function textLayer(t, lines, W, H) {
+  const size = t.size * W;
+  const cx = t.cx * W, cy = t.cy * H;
+  const d = lines.map(l => textPath(l.text, t.font, size, cx, l.y + NAME_BASELINE * size).d).join('');
+  const rot = t.rot ? ` transform="rotate(${t.rot} ${cx} ${cy})"` : '';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><g${rot}>` +
+    `<path d="${esc(d)}" fill="none" stroke="${t.stroke}" stroke-width="${(NAME_STROKE * size).toFixed(2)}" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `<path d="${esc(d)}" fill="${t.fill}"/></g></svg>`;
+  return { input: Buffer.from(svg), left: 0, top: 0 };
+}
+
 function nameLayer(design, W, H) {
   const n = design.name;
   if (!n) return null;
-  const size = n.size * W;
-  const cx = n.cx * W, cy = n.cy * H;
-  const { d } = textPath(n.text, n.font, size, cx, cy + NAME_BASELINE * size);
-  const rot = n.rot ? ` transform="rotate(${n.rot} ${cx} ${cy})"` : '';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><g${rot}>` +
-    `<path d="${esc(d)}" fill="none" stroke="${n.stroke}" stroke-width="${(NAME_STROKE * size).toFixed(2)}" stroke-linejoin="round" stroke-linecap="round"/>` +
-    `<path d="${esc(d)}" fill="${n.fill}"/></g></svg>`;
-  return { input: Buffer.from(svg), left: 0, top: 0 };
+  return textLayer(n, [{ text: n.text, y: n.cy * H }], W, H);
+}
+
+function captionLayer(design, W, H) {
+  const c = design.caption;
+  if (!c || !c.lines || !c.lines.length) return null;
+  const size = c.size * W, k = c.lines.length;
+  return textLayer(c, c.lines.map((text, i) => ({ text, y: c.cy * H + (i - (k - 1) / 2) * CAPTION_LINE * size })), W, H);
 }
 
 /**
@@ -70,6 +85,8 @@ async function renderDesign({ design, artwork, backgroundImage, width, height, f
   if (pet) layers.push(pet);
   const name = nameLayer(design, W, H);
   if (name) layers.push(name);
+  const caption = captionLayer(design, W, H);
+  if (caption) layers.push(caption);
   let out = sharp(base, { limitInputPixels: false }).composite(layers).withMetadata({ density: dpi });
   out = format === 'png' ? out.png({ compressionLevel: 6 }) : out.flatten({ background: '#ffffff' }).jpeg({ quality: 92, chromaSubsampling: '4:4:4', mozjpeg: false });
   const buffer = await out.toBuffer();
@@ -78,4 +95,4 @@ async function renderDesign({ design, artwork, backgroundImage, width, height, f
   return { buffer, width: W, height: H, format, sha256: sha256(buffer) };
 }
 
-module.exports = { renderDesign, sha256, NAME_BASELINE, NAME_STROKE };
+module.exports = { renderDesign, sha256, NAME_BASELINE, NAME_STROKE, CAPTION_LINE };
