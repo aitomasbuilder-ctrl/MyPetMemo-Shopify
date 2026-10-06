@@ -1,0 +1,12 @@
+{% doc %}
+  Offers a real Shopify add-on product and carries over the source personalization.
+  @param {line_item} item - Source keepsake
+  @param {product} [addon] - Add-on product selected by the merchant
+  @param {string} addon_kind - Add-on family
+  @param {string} slot - Unique add-on form slot
+  Approved-design references (_design, Design ID) stay on the source line: they are tied to its variant.
+{% enddoc %}
+{% if addon != blank and addon.available %}
+  {% assign form_id = 'Addon-' | append: item.key | append: '-' | append: slot %}
+  <div class="cart-addon"><div>{% render 'pet-image', kind: addon_kind, tile: 0, alt: addon.title %}</div><div><p class="eyebrow">{{ 'cart.extra' | t }}</p><h3>{{ addon.title | escape }}</h3><p>{{ 'cart.for_product' | t: title: item.product.title }}</p>{% form 'product', addon, id: form_id %}<input type="hidden" name="quantity" value="1">{% for property in item.properties %}{% if property.last != blank and property.first != '_MyPetMemo family' and property.first != '_design' and property.first != '_design_unsigned' and property.first != 'Design ID' %}<input type="hidden" name="properties[{{ property.first | escape }}]" value="{{ property.last | escape }}">{% endif %}{% endfor %}<input type="hidden" name="properties[_MyPetMemo family]" value="{{ addon_kind }}"><input type="hidden" name="properties[_MyPetMemo add-on]" value="true"><input type="hidden" name="properties[Matching keepsake]" value="{{ item.product.title | escape }} — {{ item.variant.title | escape }}"><label class="sr-only" for="Variant-{{ form_id }}">{{ 'product.options' | t }}</label><select class="text-input" name="id" id="Variant-{{ form_id }}">{% for variant in addon.variants %}{% if variant.available %}<option value="{{ variant.id }}">{% unless addon.has_only_default_variant %}{{ variant.title | escape }} — {% endunless %}{{ variant.price | money | strip_html }}</option>{% endif %}{% endfor %}</select><button class="button outline" type="submit">{{ 'cart.add_extra' | t }}{% render 'icon', name: 'arrow', size: 17 %}</button>{% endform %}</div></div>
+{% endif %}

@@ -1,0 +1,5 @@
+{% doc %}
+  Renders customer-visible order personalization.
+  @param {line_item} item - Cart line
+{% enddoc %}
+<dl class="line-properties">{% for property in item.properties %}{% assign first_character = property.first | slice: 0 %}{% if property.last != blank and first_character != '_' %}<div><dt>{{ property.first | escape }}:</dt><dd>{% if property.last contains '/uploads/' %}{% if property.first == 'Design preview' %}<a href="{{ property.last | escape }}" target="_blank" rel="noopener"><img src="{{ property.last | escape }}" alt="{{ 'cart.view_photo' | t | escape }}" width="96" height="115" loading="lazy" style="display:block;width:96px;height:auto;border-radius:8px;margin-top:4px"></a>{% else %}<a href="{{ property.last | escape }}" target="_blank" rel="noopener">{{ 'cart.view_photo' | t }}</a>{% endif %}{% else %}{{ property.last | escape }}{% endif %}</dd></div>{% endif %}{% endfor %}</dl>

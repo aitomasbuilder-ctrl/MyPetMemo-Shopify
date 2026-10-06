@@ -47,10 +47,11 @@ test('shopify store: hold is applied to OPEN fulfillment orders only', async () 
   const fetchImpl = async (url, opts) => {
     const { query, variables } = JSON.parse(opts.body);
     if (query.includes('OrderState')) return { ok: true, json: async () => ({ data: { order: { metafield: null, fulfillmentOrders: { nodes: [{ id: 'fo1', status: 'OPEN' }, { id: 'fo2', status: 'CLOSED' }] } } } }) };
+    if (query.includes('tagsAdd')) { holds.push(`tag:${variables.tags}`); return { ok: true, json: async () => ({ data: { tagsAdd: { userErrors: [] } } }) }; }
     holds.push(variables.id); return { ok: true, json: async () => ({ data: { fulfillmentOrderHold: { userErrors: [] } } }) };
   };
   await shopifyStore({ shop: 'x', token: 't', fetchImpl }).applyHold('5', 'why');
-  assert.deepEqual(holds, ['fo1']);
+  assert.deepEqual(holds, ['tag:personalization-hold', 'fo1']);
 });
 
 const { tokenProvider } = require('../lib/shopify-auth');

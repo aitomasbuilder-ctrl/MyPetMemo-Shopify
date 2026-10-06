@@ -1,0 +1,65 @@
+{%- comment -%} Three-step explainer shown under the pet studio. {%- endcomment -%}
+<section class="mps-steps" aria-labelledby="StepsTitle-{{ section.id }}">
+  <div class="mps-steps__inner">
+    <h2 class="mps-steps__title" id="StepsTitle-{{ section.id }}">{{ section.settings.heading | escape }}</h2>
+    {%- if section.settings.subheading != blank -%}<p class="mps-steps__sub">{{ section.settings.subheading | escape }}</p>{%- endif -%}
+    <ol class="mps-steps__list">
+      {%- for block in section.blocks -%}
+        <li class="mps-steps__item" {{ block.shopify_attributes }}>
+          <div class="mps-steps__media{% if block.settings.image == blank %} mps-steps__media--num{% endif %}">
+            {%- if block.settings.image != blank -%}
+              {{ block.settings.image | image_url: width: 720 | image_tag: loading: 'lazy', alt: block.settings.title, sizes: '(min-width: 900px) 30vw, 90vw' }}
+            {%- else -%}
+              <span class="mps-steps__num" aria-hidden="true">{{ forloop.index }}</span>
+            {%- endif -%}
+          </div>
+          <h3>{{ block.settings.title | escape }}</h3>
+          {%- if block.settings.text != blank -%}<p>{{ block.settings.text | escape }}</p>{%- endif -%}
+        </li>
+      {%- endfor -%}
+    </ol>
+  </div>
+</section>
+{% style %}
+  .mps-steps { background: #fff; color: #1b2a4e; font-family: Montserrat, "Helvetica Neue", Arial, sans-serif; padding: 48px 16px 64px; border-top: 1px solid #eceff4; }
+  .mps-steps__inner { max-width: 1180px; margin: 0 auto; text-align: center; }
+  .mps-steps__title { margin: 0 0 10px; font-size: clamp(24px, 3vw, 36px); font-weight: 800; text-transform: uppercase; letter-spacing: .02em; }
+  .mps-steps__sub { margin: 0 auto 28px; max-width: 640px; font-size: 17px; color: #59627a; }
+  .mps-steps__list { list-style: none; margin: 28px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+  .mps-steps__media { aspect-ratio: 4 / 3; border-radius: 16px; overflow: hidden; background: #fdf6e7; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+  .mps-steps__media--num { aspect-ratio: auto; background: none; }
+  .mps-steps__media img { width: 100%; height: 100%; object-fit: cover; }
+  .mps-steps__num { width: 72px; height: 72px; border-radius: 50%; background: #1b2a4e; color: #fff; font-size: 32px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .mps-steps__item h3 { margin: 0 0 6px; font-size: 20px; font-weight: 800; }
+  .mps-steps__item p { margin: 0; font-size: 16px; line-height: 1.5; color: #3b4560; }
+  @media (max-width: 899px) { .mps-steps__list { grid-template-columns: 1fr; } }
+{% endstyle %}
+{% schema %}
+{
+  "name": "Pet studio steps",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "From photo to sherpa blanket" },
+    { "type": "text", "id": "subheading", "label": "Subheading", "default": "You see exactly what we print before you order." }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Step",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "text", "id": "title", "label": "Title", "default": "Step" },
+        { "type": "textarea", "id": "text", "label": "Text" }
+      ]
+    }
+  ],
+  "max_blocks": 4,
+  "presets": [{
+    "name": "Pet studio steps",
+    "blocks": [
+      { "type": "step", "settings": { "title": "Upload your pet photo", "text": "Choose a clear photo of one pet with its face visible." } },
+      { "type": "step", "settings": { "title": "Generate and personalize the artwork", "text": "We turn the photo into an illustrated portrait. Pick a background, add a name and adjust the layout." } },
+      { "type": "step", "settings": { "title": "Approve your preview and order", "text": "Check the preview, choose a size and add it to your cart. We print the design you approved." } }
+    ]
+  }]
+}
+{% endschema %}
