@@ -1,5 +1,5 @@
 {%- comment -%}
-  MyPetMemo pet studio (personalized blankets).
+  MyPetMemo pet studio (personalized blankets and ornaments).
   Live preview on the left, product information and personalization on the right.
   Prices, sizes, availability, media and ratings all come from Shopify. Backgrounds are the
   built-in patterns in pet-backgrounds.js plus any image backgrounds added as blocks.
@@ -27,7 +27,7 @@
     <div class="mps__stage-col">
       <div class="mps__stage" data-stage data-dropzone>
         <canvas class="mps__canvas" data-canvas tabindex="0" role="img"
-          aria-label="Blanket preview. Use Adjust to move, resize or rotate your pet and the name."></canvas>
+          aria-label="{% if section.settings.family == 'ornament' %}Ornament{% else %}Blanket{% endif %} preview. Use Adjust to move, resize or rotate your pet and the name."></canvas>
 
         <div class="mps__gallery" data-gallery hidden>
           <div class="mps__gallery-main" data-gallery-main></div>
@@ -156,7 +156,7 @@
 
       {%- unless product.has_only_default_variant -%}
         {%- for option in product.options_with_values -%}
-          <div class="mps__group">
+          <div class="mps__group"{% if option.values.size < 2 %} hidden{% endif %}>
             <div class="mps__label-row"><h2 class="mps__label">{{ option.name | escape }}</h2>{%- if forloop.first -%}<span class="mps__label-price" data-price-inline></span>{%- endif -%}</div>
             <div class="mps__options" role="radiogroup" aria-label="{{ option.name | escape }}" data-option-group="{{ option.position }}">
               {%- for value in option.values -%}
@@ -281,6 +281,8 @@
     {
       "productId": {{ product.id | json }},
       "productHandle": {{ product.handle | json }},
+      "family": {{ section.settings.family | json }},
+      "fallbackPrint": {% assign fb = section.settings.fallback_print_size | downcase | split: 'x' %}{% if fb.size == 2 %}{"width": {{ fb[0] | strip | plus: 0 }}, "height": {{ fb[1] | strip | plus: 0 }}}{% else %}null{% endif %},
       "moneyFormat": {{ shop.money_format | json }},
       "cartUrl": {{ routes.cart_url | json }},
       "cartAddUrl": {{ routes.cart_add_url | append: '.js' | json }},
@@ -314,6 +316,7 @@
   "tag": "div",
   "class": "section-pet-studio",
   "settings": [
+    { "type": "select", "id": "family", "label": "Product type", "default": "blanket", "options": [{ "value": "blanket", "label": "Blanket" }, { "value": "ornament", "label": "Ornament (shape from the variant)" }] },
     { "type": "text", "id": "heading", "label": "Heading", "info": "Leave empty to use the product title (the part before the dash)." },
     { "type": "text", "id": "subheading", "label": "Subheading", "default": "Upload a photo of your pet. We turn it into an illustrated portrait you can personalize and preview before you buy." },
     { "type": "text", "id": "review_noun", "label": "Reviews label", "default": "reviews", "info": "Stars appear only when the product has real review data (reviews.rating and reviews.rating_count metafields, filled by a reviews app)." },
@@ -338,6 +341,7 @@
     { "type": "text", "id": "approve_endpoint", "label": "Design approval URL", "default": "https://mypetmemo-shopify.vercel.app/api/designs" },
     { "type": "text", "id": "template_endpoint", "label": "Printify print-area URL", "default": "https://mypetmemo-shopify.vercel.app/api/print-template" },
     { "type": "range", "id": "print_dpi", "label": "Fallback print resolution (dpi)", "min": 100, "max": 300, "step": 10, "default": 150, "info": "Used only until the Printify print area has loaded." },
+    { "type": "text", "id": "fallback_print_size", "label": "Fallback print size (px)", "info": "For products without inch sizes in the variant, e.g. 1200x1200 for ornaments. Used only until the Printify print area has loaded." },
     { "type": "range", "id": "safe_inset", "label": "Safe margin (% of width)", "min": 2, "max": 10, "step": 1, "default": 5 },
     { "type": "checkbox", "id": "redirect_to_cart", "label": "Go to cart after adding", "default": true },
     { "type": "header", "content": "Benefits panel" },

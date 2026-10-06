@@ -142,6 +142,29 @@ test('order: two designs in one order become two Printify lines with their own p
   assert.equal(rec.lines['1'].size, '500x600'); assert.equal(rec.lines['1'].artwork_check, 'sha256');
 });
 
+test('ornament: family and shape are part of the design; blankets stay unchanged', async () => {
+  const art = await artworkPng();
+  const blanket = design.normalise(input(art), { hosts });
+  assert.equal(blanket.family, 'blanket'); assert.equal('shape' in blanket, false);
+  const heart = design.normalise(input(art, { family: 'ornament', shape: 'heart', print: { w: 1200, h: 1200 } }), { hosts });
+  assert.equal(heart.family, 'ornament'); assert.equal(heart.shape, 'heart');
+  assert.equal(design.normalise(input(art, { family: 'ornament', shape: 'blob' }), { hosts }).shape, 'circle');
+  const star = design.normalise(input(art, { family: 'ornament', shape: 'star', print: { w: 1200, h: 1200 } }), { hosts });
+  assert.notEqual(design.designId(heart), design.designId(star), 'another shape is another design');
+});
+
+test('order: an ornament design renders at the Printify print area and becomes a draft line', async () => {
+  const a = await signedLine(5, { family: 'ornament', shape: 'star', print: { w: 1200, h: 1200 }, pet: { cx: 0.5, cy: 0.43, w: 0.5, rot: 0 }, name: { text: 'Bo', cx: 0.5, cy: 0.69, size: 0.1, font: 'fredoka', fill: '#ffffff', stroke: '#2a2230' } });
+  const order = { id: 91, name: '#1091', financial_status: 'paid', line_items: [a.line] };
+  const { prepare, stored } = deps({ 'https://cdn.shopify.com/s/files/1/uploads/5.png': a.art });
+  const store = mkStore(), printify = mkPrintify();
+  const r = await processPaidOrder(order, { store, printify, prepare, gateOptions });
+  assert.equal(r.action, 'draft_created');
+  assert.equal(printify.calls[0].length, 1);
+  assert.equal(stored.length, 1);
+  assert.equal(store.m.get('91').lines['5'].design_id, a.id);
+});
+
 test('order: duplicate and concurrent webhooks create one Printify order', async () => {
   const a = await signedLine(1);
   const order = { id: 78, financial_status: 'paid', line_items: [a.line] };
