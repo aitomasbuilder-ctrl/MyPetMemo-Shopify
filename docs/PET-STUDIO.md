@@ -1,4 +1,4 @@
-# Pet studio: personalized blanket page
+# Pet studio: personalized blanket and ornament pages
 
 The blanket product page lets a customer upload a pet photo, get an illustrated portrait, choose a
 background, add a name, adjust the layout, pick a size, approve the preview and add it to the cart.
@@ -35,6 +35,20 @@ orders/paid webhook ────────────────────
 * Teeinblue is not used on this page: its widget cannot produce this layout, and the earlier AI test with it
   failed. It stays installed for any products that still use it.
 
+## Ornaments
+
+The same section runs the ornament pages (`templates/product.pet-ornament.json`, section setting
+**Product type = Ornament**). The variant's shape option (Star, Circle, Heart, Snowflake) picks the outline:
+
+* The preview, the cart preview image and the safe line are clipped to that outline. While adjusting, the
+  part of the design outside the ornament stays faintly visible.
+* The default layout puts the pet on the bottom edge (the outline hides where the portrait ends) with the
+  name across its chest. Switching shape re-flows the layout until the shopper moves something.
+* The print file is the full rectangular print area from Printify; the ceramic blank is pre-shaped.
+* The outlines are drawn approximations of the blanks. Compare them with Printify's mockups and adjust
+  `shapePath()` in pet-studio.js if a blank differs.
+* Single-value options such as "One Size" are hidden.
+
 ## Theme files
 
 | File | Purpose |
@@ -44,6 +58,7 @@ orders/paid webhook ────────────────────
 | assets/pet-studio.js / .css | Studio logic and styles |
 | assets/pet-backgrounds.js | Built-in backgrounds (shared with the backend) |
 | templates/product.pet-blanket.json | Template used by the three blankets |
+| templates/product.pet-ornament.json | Template used by the two ornaments |
 | snippets/cart-properties.liquid | Shows the design preview in the cart |
 | sections/main-cart.liquid | Uses the design preview as the cart line image |
 | snippets/cart-addon.liquid | Add-ons no longer copy the design token (it belongs to the blanket's variant) |

@@ -1,4 +1,4 @@
-/* MyPetMemo pet studio (personalized blankets)
+/* MyPetMemo pet studio (personalized blankets and ornaments)
  * Upload → AI portrait (transparent) → background, name, placement → approve & add to cart.
  * The approved design is signed by the MyPetMemo backend and travels with the cart line; the print
  * file is rendered server side after payment from the same design data (see backend/lib/render.js).
@@ -26,6 +26,52 @@
   const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
   /* ---------- helpers ---------- */
+  /** Ornament outline from a variant option such as "Heart / One Size". Blankets have none. */
+  function shapeFromOptions(options) {
+    for (const o of options || []) {
+      const v = String(o).toLowerCase();
+      if (/snow/.test(v)) return 'snowflake';
+      if (/star/.test(v)) return 'star';
+      if (/heart/.test(v)) return 'heart';
+      if (/circle|round/.test(v)) return 'circle';
+    }
+    return null;
+  }
+  /** Traces an ornament outline inside the box x/y/w/h (scaled by k around its centre). */
+  function shapePath(ctx, shape, x, y, w, h, k = 1) {
+    const cx = x + w / 2, cy = y + h / 2, rx = (w / 2) * k, ry = (h / 2) * k;
+    ctx.beginPath();
+    if (shape === 'circle') { ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU); return; }
+    if (shape === 'heart') {
+      const X = u => cx + u * rx, Y = v => cy + v * ry;
+      ctx.moveTo(X(0), Y(-0.55));
+      ctx.bezierCurveTo(X(0.12), Y(-1.02), X(1.02), Y(-1.02), X(1), Y(-0.4));
+      ctx.bezierCurveTo(X(0.98), Y(0.12), X(0.45), Y(0.55), X(0), Y(1));
+      ctx.bezierCurveTo(X(-0.45), Y(0.55), X(-0.98), Y(0.12), X(-1), Y(-0.4));
+      ctx.bezierCurveTo(X(-1.02), Y(-1.02), X(-0.12), Y(-1.02), X(0), Y(-0.55));
+      ctx.closePath();
+      return;
+    }
+    if (shape === 'snowflake') {
+      // Solid six-pointed snowflake blank: short pointed tips with a notch between each pair.
+      for (let i = 0; i < 18; i++) {
+        const a = -Math.PI / 2 + (i * Math.PI) / 9, r = [1, 0.8, 0.8][i % 3];
+        const k2 = i % 3 === 0 ? 0 : (i % 3 === 1 ? 1 : -1) * 0.12;
+        const px = cx + Math.cos(a + k2) * r * rx, py = cy + Math.sin(a + k2) * r * ry;
+        if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+      }
+      ctx.closePath();
+      return;
+    }
+    // star: five points filling the box from top to bottom.
+    const top = -Math.PI / 2;
+    for (let i = 0; i < 10; i++) {
+      const a = top + (i * Math.PI) / 5, r = i % 2 ? 0.52 : 1;
+      const px = cx + Math.cos(a) * r * rx, py = cy + (Math.sin(a) * r + 0.095) * ry * 1.05;
+      if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+    }
+    ctx.closePath();
+  }
   const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
   const dist = (ax, ay, bx, by) => Math.hypot(bx - ax, by - ay);
   const round4 = n => Math.round(n * 10000) / 10000;
@@ -250,15 +296,29 @@
       ctx.clearRect(0, 0, this.w, this.h);
       const box = this.box();
       const s = this.studio;
-      // blanket on the stage
+      const shape = s.shape();
+      // blanket or ornament on the stage
       ctx.save();
       ctx.shadowColor = 'rgba(27, 42, 78, 0.22)';
       ctx.shadowBlur = this.w * 0.03;
       ctx.shadowOffsetY = this.w * 0.01;
       ctx.fillStyle = s.state.background.color || '#fff';
-      ctx.fillRect(box.x, box.y, box.w, box.h);
+      if (shape) { shapePath(ctx, shape, box.x, box.y, box.w, box.h); ctx.fill(); } else ctx.fillRect(box.x, box.y, box.w, box.h);
       ctx.restore();
-      s.drawDesign(ctx, box.x, box.y, box.w, box.h, { dpr: this.dpr, placeholder: !s.state.artwork });
+      if (shape) {
+        // While editing, the part of the design outside the ornament stays faintly visible.
+        if (this.isEditing()) { ctx.save(); ctx.globalAlpha = 0.22; s.drawDesign(ctx, box.x, box.y, box.w, box.h, { dpr: this.dpr }); ctx.restore(); }
+        ctx.save();
+        shapePath(ctx, shape, box.x, box.y, box.w, box.h); ctx.clip();
+        s.drawDesign(ctx, box.x, box.y, box.w, box.h, { dpr: this.dpr, placeholder: !s.state.artwork });
+        ctx.restore();
+        ctx.save();
+        shapePath(ctx, shape, box.x, box.y, box.w, box.h);
+        ctx.lineWidth = Math.max(1.5, box.w * 0.006); ctx.strokeStyle = 'rgba(27, 42, 78, 0.18)'; ctx.stroke();
+        ctx.restore();
+      } else {
+        s.drawDesign(ctx, box.x, box.y, box.w, box.h, { dpr: this.dpr, placeholder: !s.state.artwork });
+      }
       if (this.isEditing()) {
         s.drawSafeArea(ctx, box);
         for (const which of ['pet', 'name']) {
@@ -518,7 +578,10 @@
       el.retry.addEventListener('click', () => this.retry());
       this.root.querySelectorAll('[data-new-photo], [data-error-new-photo], [data-replace]').forEach(b => b.addEventListener('click', () => el.fileInput.click()));
       const onName = input => {
+        const wasDefault = this.isDefaultLayout(), hadName = !!this.state.name.text;
         this.state.name.text = input.value.replace(/\s+/g, ' ').replace(/^\s+/, '');
+        // Adding or removing the name re-flows a layout the shopper has not moved yet.
+        if (wasDefault && hadName !== !!this.state.name.text) this.placeDefault();
         [el.nameInput, el.editorName].forEach(i => { if (i && i !== input) i.value = input.value; });
         this.changed({ design: true });
       };
@@ -692,6 +755,7 @@
         variant = candidates[0] || variant || config.variants[0];
       }
       const before = this.state.variant ? this.printSize() : null;
+      const shapeBefore = this.shape();
       this.state.variant = variant;
       this.selectedOptions = variant.options.slice();
       this.el.optionGroups.forEach(group => {
@@ -710,7 +774,8 @@
         url.searchParams.set('variant', variant.id);
         window.history.replaceState(window.history.state, '', url);
       }
-      if (before) this.keepPetAnchored(before);
+      if (before && shapeBefore !== this.shape() && this.isDefaultLayout()) { this.placeDefault(); }
+      else if (before) this.keepPetAnchored(before);
       this.fetchTemplate(variant);
       this.changed({ design: !opts.silent, price: true });
     }
@@ -719,7 +784,9 @@
       if (fromPrintify) return fromPrintify;
       const inches = variant && parseInches(variant.options[0] || variant.title);
       const dpi = this.config.printDpi || 150;
-      return inches ? { width: Math.round(inches.w * dpi), height: Math.round(inches.h * dpi), source: 'size' } : { width: 5000, height: 6000, source: 'default' };
+      if (inches) return { width: Math.round(inches.w * dpi), height: Math.round(inches.h * dpi), source: 'size' };
+      const f = this.config.fallbackPrint;
+      return f && f.width > 0 && f.height > 0 ? { width: f.width, height: f.height, source: 'default' } : { width: 5000, height: 6000, source: 'default' };
     }
     async fetchTemplate(variant) {
       const endpoint = this.config.templateEndpoint;
@@ -734,7 +801,10 @@
         if (json.width > 0 && json.height > 0) {
           const before = this.printSize(variant);
           this.templates.set(variant.id, { width: Math.round(json.width), height: Math.round(json.height), source: 'printify' });
-          if (variant === this.state.variant) { this.keepPetAnchored(before); this.changed({ price: true }); }
+          if (variant === this.state.variant) {
+            if (this.isDefaultLayout()) this.placeDefault(); else this.keepPetAnchored(before);
+            this.changed({ price: true });
+          }
         }
       } catch (e) { this.templates.delete(variant.id); }
     }
@@ -757,8 +827,8 @@
       this.root.querySelectorAll('[data-compare-price]').forEach(n => { n.textContent = v.compareAtPrice > v.price ? money(v.compareAtPrice) : ''; });
       if (this.el.priceInline) this.el.priceInline.textContent = money(v.price);
       if (this.el.printInfo) {
-        const p = this.printSize(), inches = parseInches(v.options[0] || v.title);
-        this.el.printInfo.textContent = `Print file ${p.width} × ${p.height} px` + (inches ? ` for ${inches.w} × ${inches.h} in (${Math.round(inches.w * 2.54)} × ${Math.round(inches.h * 2.54)} cm)` : '') + (v.available ? '' : ' · Sold out');
+        this.el.printInfo.textContent = v.available ? '' : 'Sold out';
+        this.el.printInfo.hidden = v.available;
       }
     }
 
@@ -995,6 +1065,24 @@
       return (w * size.width * (a.height / a.width)) / size.height;
     }
     safe() { return clamp(this.config.safeInset || 0.05, 0, 0.2); }
+    shape() { return this.config.family === 'ornament' ? shapeFromOptions(this.state.variant && this.state.variant.options) || 'circle' : null; }
+    /** Default placement. Blankets: name on top, pet on the bottom edge. Ornaments: pet on the bottom edge
+     *  (the outline hides where the portrait ends) with the name across its chest, inside the shape. */
+    layout() {
+      const shape = this.shape();
+      if (!shape) return null;
+      const named = !!this.state.name.text;
+      const L = {
+        circle: { pet: named ? 0.84 : 0.9, name: [0.8, 0.15] },
+        snowflake: { pet: named ? 0.8 : 0.86, name: [0.72, 0.13] },
+        heart: { pet: named ? 0.8 : 0.86, name: [0.66, 0.13] },
+        star: { pet: named ? 0.72 : 0.8, name: [0.7, 0.1] }
+      };
+      return L[shape] || L.circle;
+    }
+    isDefaultLayout() {
+      return !!this.defaultLayout && this.defaultLayout === JSON.stringify([this.state.pet, this.state.name.cx, this.state.name.cy, this.state.name.size, this.state.name.rot]);
+    }
     font(px, key = this.state.name.font) {
       const f = FONTS[key] || FONTS.fredoka;
       return `${f.weight} ${px}px "${f.family}", "Arial Rounded MT Bold", Arial, sans-serif`;
@@ -1051,6 +1139,14 @@
       const s = this.state;
       if (!s.artwork) return;
       const p = this.printSize();
+      const L = this.layout();
+      if (L) {
+        let w = (L.pet * p.height) / (p.width * (s.artwork.height / s.artwork.width));
+        w = Math.min(w, 0.86);
+        const h = this.petHeightFrac(w);
+        s.pet = { cx: 0.5, cy: round4(1 - h / 2), w: round4(w), rot: 0 };
+        return;
+      }
       const top = s.name.text ? 0.24 : 0.1;
       const aspect = s.artwork.height / s.artwork.width;
       let w = ((1 - top) * p.height) / (p.width * aspect);
@@ -1060,9 +1156,11 @@
     }
     placeDefault() {
       const s = this.state;
-      Object.assign(s.name, { cx: 0.5, cy: 0.115, size: 0.13, rot: 0 });
+      const L = this.layout();
+      Object.assign(s.name, L ? { cx: 0.5, cy: L.name[0], size: L.name[1], rot: 0 } : { cx: 0.5, cy: 0.115, size: 0.13, rot: 0 });
       this.placePet();
       this.clampAll();
+      this.defaultLayout = s.artwork ? JSON.stringify([s.pet, s.name.cx, s.name.cy, s.name.size, s.name.rot]) : null;
     }
     applyScale(target, start, scale) {
       if (target === 'pet') this.state.pet.w = clamp(start.w * scale, 0.15, 1.6);
@@ -1166,6 +1264,14 @@
       ctx.restore();
     }
     drawSafeArea(ctx, box) {
+      const shape = this.shape();
+      if (shape) {
+        ctx.save();
+        shapePath(ctx, shape, box.x, box.y, box.w, box.h, 1 - 2 * this.safe());
+        ctx.setLineDash([8, 6]); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(214, 69, 69, 0.6)'; ctx.stroke();
+        ctx.restore();
+        return;
+      }
       const p = this.printSize();
       const ix = this.safe() * box.w, iy = this.safe() * p.width / p.height * box.h;
       ctx.save();
@@ -1340,6 +1446,8 @@
       const s = this.state, p = this.printSize();
       const bg = s.background;
       return {
+        family: this.config.family === 'ornament' ? 'ornament' : 'blanket',
+        shape: this.shape() || undefined,
         product_id: String(this.config.productId),
         variant_id: String(s.variant.id),
         sku: s.variant.sku || '',
@@ -1384,7 +1492,15 @@
           tryDraw(0);
         });
       }
-      this.drawDesign(ctx, 0, 0, W, H, { dpr: 1 });
+      const shape = this.shape();
+      if (shape) {
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+        ctx.save(); shapePath(ctx, shape, 0, 0, W, H); ctx.clip();
+        this.drawDesign(ctx, 0, 0, W, H, { dpr: 1 });
+        ctx.restore();
+      } else {
+        this.drawDesign(ctx, 0, 0, W, H, { dpr: 1 });
+      }
       return canvasToBlob(canvas, 'image/jpeg', 0.88);
     }
     async inCart(id) {
@@ -1398,7 +1514,7 @@
       const s = this.state;
       if (this.adding) return;
       if (!s.artwork || !s.art) { this.el.fileInput.click(); return; }
-      if (!s.variant || !s.variant.available) { this.el.cartStatus.textContent = 'This size is sold out. Please choose another size.'; return; }
+      if (!s.variant || !s.variant.available) { this.el.cartStatus.textContent = 'This option is sold out. Please choose another one.'; return; }
       if (!this.validateName()) { this.el.nameInput.focus(); return; }
       this.adding = true;
       this.updateUI();
@@ -1427,7 +1543,7 @@
         else form.append('properties[_design_unsigned]', approval.unsigned);
         form.append('properties[_artwork]', s.art.blob, `${approval.id}-artwork.png`);
         form.append('properties[_Original photo]', s.photo.blob, `${approval.id}-original.jpg`);
-        form.append('properties[_MyPetMemo family]', 'blanket');
+        form.append('properties[_MyPetMemo family]', this.config.family === 'ornament' ? 'ornament' : 'blanket');
         const res = await fetch(this.config.cartAddUrl, { method: 'POST', body: form, headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new StudioError('cart', json.description || json.message || 'We couldn’t add this to your cart. Please try again.');
