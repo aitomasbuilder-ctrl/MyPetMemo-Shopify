@@ -502,6 +502,87 @@
   }
 
   /* ---------- studio ---------- */
+  /* One review at a time under the generation countdown. Fixed height (all slides share one grid
+   * cell), gentle fade, dots and previous/next buttons. Auto-rotation pauses while the shopper
+   * hovers, focuses or has used the controls, and is off for reduced motion. */
+  class ReviewCarousel {
+    constructor(root, reviews) {
+      this.root = root;
+      this.reviews = reviews;
+      this.index = 0;
+      this.timer = null;
+      this.paused = false;
+      this.reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      this.slides = root.querySelector('[data-carousel-slides]');
+      this.dots = root.querySelector('[data-carousel-dots]');
+      const prev = root.querySelector('[data-carousel-prev]'), next = root.querySelector('[data-carousel-next]');
+      reviews.forEach((r, i) => {
+        this.slides.appendChild(this.card(r, i));
+        const d = document.createElement('button');
+        d.type = 'button';
+        d.className = 'mps__gen-dot';
+        d.setAttribute('aria-label', `Show review ${i + 1} of ${reviews.length}`);
+        d.addEventListener('click', () => { this.hold(); this.show(i); });
+        this.dots.appendChild(d);
+      });
+      const single = reviews.length < 2;
+      prev.hidden = next.hidden = this.dots.hidden = single;
+      prev.addEventListener('click', () => { this.hold(); this.show(this.index - 1); });
+      next.addEventListener('click', () => { this.hold(); this.show(this.index + 1); });
+      root.addEventListener('pointerenter', () => { this.paused = true; });
+      root.addEventListener('pointerleave', () => { if (!this.held) this.paused = false; });
+      root.addEventListener('focusin', () => { this.paused = true; });
+      root.addEventListener('focusout', e => { if (!root.contains(e.relatedTarget) && !this.held) this.paused = false; });
+      this.show(0);
+    }
+    card(r, i) {
+      const fig = document.createElement('figure');
+      fig.className = 'mps__gen-card' + (r.sample ? ' is-sample' : '');
+      fig.setAttribute('role', 'group');
+      fig.setAttribute('aria-roledescription', 'slide');
+      fig.setAttribute('aria-label', `${i + 1} of ${this.reviews.length}`);
+      const media = document.createElement('div');
+      media.className = 'mps__gen-card-media';
+      if (r.image) { const img = document.createElement('img'); img.src = r.image; img.alt = ''; img.loading = 'lazy'; media.appendChild(img); }
+      else { const sp = document.createElement('span'); sp.textContent = r.name.trim().charAt(0).toUpperCase(); sp.setAttribute('aria-hidden', 'true'); media.appendChild(sp); }
+      const body = document.createElement('figcaption');
+      const head = document.createElement('p');
+      head.className = 'mps__gen-card-name';
+      head.textContent = r.name;
+      if (r.verified) { const v = document.createElement('span'); v.className = 'mps-review__verified'; v.textContent = 'Verified purchase'; head.appendChild(v); }
+      if (r.sample) { const v = document.createElement('span'); v.className = 'mps-review__sample'; v.textContent = 'Sample · preview only'; head.appendChild(v); }
+      const stars = document.createElement('div');
+      stars.className = 'mps-stars mps-stars--small';
+      const rating = Math.max(1, Math.min(5, Number(r.rating) || 5));
+      stars.style.setProperty('--rating', `${rating * 20}%`);
+      stars.setAttribute('role', 'img');
+      stars.setAttribute('aria-label', `${rating} out of 5 stars`);
+      const text = document.createElement('blockquote');
+      text.className = 'mps__gen-card-text';
+      const t = String(r.text);
+      text.textContent = t.length > 170 ? `${t.slice(0, 167).replace(/\s+\S*$/, '')}…` : t;
+      body.append(head, stars, text);
+      if (r.about) { const a = document.createElement('p'); a.className = 'mps-review__about'; a.textContent = `Review of ${r.about}`; body.appendChild(a); }
+      fig.append(media, body);
+      return fig;
+    }
+    show(i) {
+      const n = this.reviews.length;
+      this.index = (i + n) % n;
+      Array.from(this.slides.children).forEach((c, j) => { const on = j === this.index; c.classList.toggle('is-active', on); c.setAttribute('aria-hidden', String(!on)); });
+      Array.from(this.dots.children).forEach((d, j) => d.setAttribute('aria-current', String(j === this.index)));
+    }
+    hold() { this.held = true; this.paused = true; }
+    start() {
+      this.stop();
+      this.held = false; this.paused = false;
+      this.show(0);
+      if (this.reduce || this.reviews.length < 2) return;
+      this.timer = setInterval(() => { if (!this.paused && !document.hidden) this.show(this.index + 1); }, 7000);
+    }
+    stop() { clearInterval(this.timer); this.timer = null; }
+  }
+
   class PetStudio {
     constructor(root) {
       this.root = root;
@@ -512,7 +593,8 @@
         stage: q('[data-stage]'), fileInput: q('[data-file-input]'), uploadPanel: q('[data-upload-panel]'),
         photoRow: q('[data-photo-row]'), thumb: q('[data-thumb]'), photoStatus: q('[data-photo-status]'),
         error: q('[data-error]'), errorText: q('[data-error-text]'), retry: q('[data-retry]'),
-        progress: q('[data-progress]'), progressTitle: q('[data-progress-title]'), progressStep: q('[data-progress-step]'), progressBar: q('[data-progress-bar]'),
+        gen: q('[data-gen]'), genTitle: q('[data-gen-title]'), genStatus: q('[data-gen-status]'), genBar: q('[data-gen-bar]'), genFill: q('[data-gen-fill]'),
+        genTime: q('[data-gen-time]'), genCancel: q('[data-gen-cancel]'), uploadNote: q('[data-upload-note]'),
         dropHint: q('[data-drop-hint]'), swatches: q('[data-swatches]'), editorSwatches: q('[data-editor-swatches]'), seeAll: q('[data-see-all]'),
         bgNames: qa('[data-bg-name]'), nameInput: q('[data-name-input]'), nameErrors: qa('[data-name-error]'),
         editRow: q('[data-edit-row]'), adjustBtn: q('[data-adjust]'), adjustPanel: q('[data-adjust-panel]'),
@@ -521,7 +603,7 @@
         sticky: q('[data-sticky]'), dialog: q('[data-editor-dialog]'), editorName: q('[data-editor-name]'),
         font: q('[data-font]'), fill: q('[data-fill]'), stroke: q('[data-stroke]'), nameSize: q('[data-name-size]'),
         gallery: q('[data-gallery]'), galleryMain: q('[data-gallery-main]'), galleryThumbs: q('[data-gallery-thumbs]'),
-        galleryToggle: q('[data-gallery-toggle]'), email: q('[data-email-input]'), consent: q('[data-marketing-consent]'),
+        thumbs: q('[data-thumbs]'), thumbDesign: q('[data-thumb-design]'), email: q('[data-email-input]'), consent: q('[data-marketing-consent]'),
         extras: qa('[data-extra]'), suggestions: qa('[data-suggest]')
       };
       this.state = {
@@ -551,6 +633,7 @@
       this.initVariants();
       this.bindUI();
       this.initGallery();
+      this.initReviews();
       this.initSticky();
       this.views = [new View(this, root.querySelector('[data-canvas]'), { interactive: () => this.state.adjustOpen })];
       if (this.el.dialog) this.editorView = new View(this, root.querySelector('[data-editor-canvas]'), { interactive: () => this.state.editorOpen });
@@ -848,21 +931,23 @@
       }
     }
 
-    /* ----- gallery ----- */
+    /* ----- gallery: "Your design" plus product photos as thumbnails under the preview ----- */
     initGallery() {
       const { el, config } = this;
-      if (!el.galleryToggle || !config.media.length) return;
+      if (!el.thumbs || !config.media.length) return;
       config.media.forEach((m, i) => {
         const b = document.createElement('button');
         b.type = 'button';
-        b.setAttribute('aria-label', `Show photo ${i + 1}`);
+        b.className = 'mps__thumb-btn';
+        b.setAttribute('aria-label', `Product photo ${i + 1}`);
+        b.setAttribute('aria-current', 'false');
         const img = document.createElement('img');
-        img.src = m.thumb; img.alt = ''; img.loading = 'lazy';
+        img.src = m.thumb; img.alt = ''; img.loading = 'lazy'; img.width = 64; img.height = 64;
         b.appendChild(img);
-        b.addEventListener('click', () => this.showGalleryImage(i));
-        el.galleryThumbs.appendChild(b);
+        b.addEventListener('click', () => { this.toggleGallery(true); this.showGalleryImage(i); });
+        el.thumbs.appendChild(b);
       });
-      el.galleryToggle.addEventListener('click', () => this.toggleGallery());
+      el.thumbDesign.addEventListener('click', () => this.toggleGallery(false));
       this.root.querySelector('[data-gallery-prev]').addEventListener('click', () => this.showGalleryImage(this.state.galleryIndex - 1));
       this.root.querySelector('[data-gallery-next]').addEventListener('click', () => this.showGalleryImage(this.state.galleryIndex + 1));
       el.gallery.addEventListener('keydown', e => {
@@ -875,9 +960,12 @@
       const open = typeof force === 'boolean' ? force : !this.state.galleryOpen;
       this.state.galleryOpen = open;
       this.el.gallery.hidden = !open;
-      const t = this.el.galleryToggle;
-      if (t) { t.textContent = open ? t.dataset.labelDesign : t.dataset.labelPhotos; t.setAttribute('aria-pressed', String(open)); }
       if (open) this.showGalleryImage(this.state.galleryIndex);
+      else this.markThumb(-1);
+    }
+    markThumb(i) {
+      if (!this.el.thumbs) return;
+      Array.from(this.el.thumbs.children).forEach((b, j) => b.setAttribute('aria-current', String(j === i + 1)));
     }
     showGalleryImage(index) {
       const media = this.config.media;
@@ -887,7 +975,7 @@
       const img = document.createElement('img');
       img.src = media[i].src; img.alt = media[i].alt || '';
       this.el.galleryMain.replaceChildren(img);
-      Array.from(this.el.galleryThumbs.children).forEach((b, j) => b.setAttribute('aria-current', String(i === j)));
+      this.markThumb(i);
     }
 
     /* ----- upload & generation ----- */
@@ -988,10 +1076,14 @@
         if (id !== this.generationId) return;
         this.stopProgress();
         let error = err;
-        if (err && err.name === 'AbortError') {
-          error = controller.signal.reason === 'timeout' ? new StudioError('timeout', 'This is taking longer than usual. Please try again.') : null;
+        // fetch rejects with the abort reason itself ('timeout' / 'cancel') in current browsers, so check the signal.
+        if (controller.signal.aborted || (err && err.name === 'AbortError')) {
+          const reason = controller.signal.reason;
+          if (reason === 'timeout') error = new StudioError('timeout', 'This is taking longer than usual. Please try again. Your photo and choices are saved.');
+          else if (reason === 'cancel') error = new StudioError('cancelled', 'Stopped. Your photo and choices are saved. Try again whenever you’re ready.');
+          else error = null;
         } else if (!(err instanceof StudioError)) {
-          error = new StudioError('network', 'We couldn’t reach our portrait service. Check your connection and try again.');
+          error = new StudioError('network', 'We couldn’t reach our portrait service. Check your connection and try again. Your photo and choices are saved.');
         }
         this.setPhase(this.state.artwork ? 'ready' : 'error');
         if (error) this.showError(error);
@@ -1038,31 +1130,76 @@
       if (removedRatio > 0.97 || removedRatio === 0) throw new StudioError('no_subject', 'We couldn’t separate your pet from the background. Please try again or use a different photo.');
       return canvas;
     }
+    /* ----- generation progress (inline in the personalization column) -----
+     * Real stages come from requestPortrait(); between them the bar creeps towards 92% on an
+     * estimated curve and is labelled as an estimate. It only completes when the artwork is ready. */
     startProgress() {
+      const { el } = this;
       const start = performance.now();
-      const expected = this.config.progressSeconds || 45;
-      const steps = [[0, 'Uploading your photo…'], [0.08, 'Illustrating your pet…'], [0.45, 'Keeping every marking and color…'], [0.72, 'Almost there…']];
-      this.el.progress.hidden = false;
-      this.el.progressTitle.textContent = this.config.progressSeconds ? `Creating your design… usually about ${this.config.progressSeconds} seconds` : 'Creating your design…';
+      const expected = this.config.progressSeconds || 60;
+      const steps = [[0, 'Uploading your photo…'], [0.1, 'Illustrating your pet…'], [0.45, 'Keeping every marking and color…'], [0.72, 'Adding the finishing touches…']];
       this.progressFloor = 0;
       this.progressLocked = false;
+      el.gen.hidden = false;
+      el.genFill.style.width = '0%';
+      el.genStatus.textContent = steps[0][1];
+      el.genTime.textContent = '';
+      cancelAnimationFrame(this.progressTimer);
+      clearInterval(this.progressClock);
       const tick = () => {
         const t = (performance.now() - start) / 1000;
-        const value = Math.max(this.progressFloor, 0.92 * (1 - Math.exp(-t / (expected / 2.5))));
-        this.el.progressBar.style.width = `${Math.round(value * 100)}%`;
-        if (!this.progressLocked) this.el.progressStep.textContent = steps.filter(s => value >= s[0]).pop()[1];
+        const value = Math.min(0.92, Math.max(this.progressFloor, 0.92 * (1 - Math.exp(-t / (expected / 2.2)))));
+        el.genFill.style.width = `${(value * 100).toFixed(1)}%`;
+        el.genBar.setAttribute('aria-valuenow', String(Math.round(value * 100)));
+        if (!this.progressLocked) {
+          const label = steps.filter(x => value >= x[0]).pop()[1];
+          if (el.genStatus.textContent !== label) el.genStatus.textContent = label;
+        }
         this.progressTimer = requestAnimationFrame(tick);
       };
-      cancelAnimationFrame(this.progressTimer);
-      tick();
+      const clock = () => {
+        const left = Math.ceil(expected - (performance.now() - start) / 1000);
+        el.genTime.textContent = left > 0
+          ? `About ${left} second${left === 1 ? '' : 's'} left (estimated)`
+          : 'Your portrait is taking a little longer. We’re still working on it.';
+        el.genTime.classList.toggle('is-late', left <= 0);
+      };
+      tick(); clock();
+      this.progressClock = setInterval(clock, 1000);
+      this.carousel && this.carousel.start();
+      if (window.matchMedia('(max-width: 899px)').matches) requestAnimationFrame(() => el.gen.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
     }
     setProgress(value, label) {
       this.progressFloor = Math.max(this.progressFloor || 0, value);
-      if (label) { this.el.progressStep.textContent = label; this.progressLocked = value > 0.5; }
+      if (label) { this.el.genStatus.textContent = label; this.progressLocked = value > 0.5; }
     }
     stopProgress() {
       cancelAnimationFrame(this.progressTimer);
-      this.el.progress.hidden = true;
+      clearInterval(this.progressClock);
+      this.carousel && this.carousel.stop();
+      this.el.gen.hidden = true;
+    }
+    cancelGeneration() {
+      if (this.state.phase !== 'generating' || !this.abortController) return;
+      this.abortController.abort('cancel');
+    }
+    initReviews() {
+      const { el } = this;
+      const link = this.root.querySelector('[data-reviews-link]');
+      if (link) link.addEventListener('click', e => {
+        const target = document.getElementById(link.getAttribute('href').slice(1));
+        if (!target) return;
+        e.preventDefault();
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+        target.focus({ preventScroll: true });
+      });
+      if (el.genCancel) el.genCancel.addEventListener('click', () => this.cancelGeneration());
+      const box = this.root.querySelector('[data-carousel]');
+      const json = this.root.querySelector('[data-gen-reviews-json]');
+      let reviews = [];
+      try { reviews = JSON.parse(json ? json.textContent : '[]').filter(r => r && r.name && r.text); } catch (e) { reviews = []; }
+      if (box && reviews.length) this.carousel = new ReviewCarousel(box, reviews);
     }
     showError(err) {
       this.el.errorText.textContent = err.message;
@@ -1486,6 +1623,7 @@
         b.classList.toggle('is-busy', !!this.adding);
       });
       el.uploadPanel.hidden = has || s.phase === 'generating';
+      if (el.uploadNote) el.uploadNote.hidden = has || s.phase === 'generating';
       el.photoRow.hidden = !s.photo;
       if (s.photo && el.thumb.src !== s.photo.url) el.thumb.src = s.photo.url;
       el.editRow.hidden = !has;

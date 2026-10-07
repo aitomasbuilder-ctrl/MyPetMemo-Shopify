@@ -166,7 +166,7 @@
         "consent_label": "Send me news and offers from MyPetMemo",
         "ai_endpoint": "https://mypetmemo-portrait.aitomasbuilder.workers.dev/generate",
         "generation_limit": 8,
-        "progress_seconds": 0,
+        "progress_seconds": 60,
         "approve_endpoint": "https://mypetmemo-shopify.vercel.app/api/designs",
         "template_endpoint": "https://mypetmemo-shopify.vercel.app/api/print-template",
         "print_dpi": 150,
