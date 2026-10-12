@@ -8,6 +8,143 @@
 {%- assign rating = product.metafields.reviews.rating.value -%}
 {%- assign rating_count = product.metafields.reviews.rating_count.value -%}
 {%- assign short_title = product.title | split: ' – ' | first | split: ' - ' | first -%}
+
+{%- comment -%}
+  Reviews. Genuine reviews come from the "MyPetMemo review" metaobjects (Content → Metaobjects) and from
+  "Customer review" blocks. Reviews for this product come first; reviews of other MyPetMemo products fill
+  in only when there are fewer than three. The verified badge needs an order number on the review.
+  Sample reviews appear only in the theme editor (request.design_mode), never on the live store.
+{%- endcomment -%}
+{%- liquid
+  assign rv_cards = ''
+  assign rv_json = ''
+  assign rv_shown = 0
+  assign rv_product_count = 0
+  assign rv_product_sum = 0
+  assign rv_all_count = 0
+  assign rv_all_sum = 0
+  assign rv_entries = shop.metaobjects.mypetmemo_review.values
+  for r in rv_entries
+    assign r_rating = r.rating.value | plus: 0
+    if r_rating < 1 or r_rating > 5 or r.body.value == blank or r.name.value == blank
+      continue
+    endif
+    assign rv_all_count = rv_all_count | plus: 1
+    assign rv_all_sum = rv_all_sum | plus: r_rating
+    if r.product.value.id == product.id
+      assign rv_product_count = rv_product_count | plus: 1
+      assign rv_product_sum = rv_product_sum | plus: r_rating
+    endif
+  endfor
+  for block in section.blocks
+    if block.type == 'testimonial' and block.settings.quote != blank and block.settings.author != blank and block.settings.stars > 0
+      assign rv_all_count = rv_all_count | plus: 1
+      assign rv_all_sum = rv_all_sum | plus: block.settings.stars
+      assign rv_product_count = rv_product_count | plus: 1
+      assign rv_product_sum = rv_product_sum | plus: block.settings.stars
+    endif
+  endfor
+
+  for pass in (1..2)
+    for r in rv_entries
+      if rv_shown >= 8
+        break
+      endif
+      assign r_rating = r.rating.value | plus: 0
+      if r_rating < 1 or r_rating > 5 or r.body.value == blank or r.name.value == blank
+        continue
+      endif
+      assign r_mine = false
+      if r.product.value.id == product.id
+        assign r_mine = true
+      endif
+      if pass == 1 and r_mine == false
+        continue
+      endif
+      if pass == 2
+        if r_mine or rv_shown >= 3
+          continue
+        endif
+      endif
+      assign r_image = r.photo.value.preview_image | default: r.product.value.featured_image
+      assign r_about = ''
+      if r_mine == false
+        assign r_about = r.product.value.title | split: ' – ' | first | split: ' - ' | first
+      endif
+      assign r_verified = false
+      if r.order_number.value != blank
+        assign r_verified = true
+      endif
+      assign r_text = r.body.value | strip_newlines | strip
+      capture card
+        render 'pet-review-card', name: r.name.value, rating: r_rating, text: r_text, image: r_image, verified: r_verified, about: r_about
+      endcapture
+      assign rv_cards = rv_cards | append: card
+      assign r_img_url = ''
+      if r_image != blank
+        assign r_img_url = r_image | image_url: width: 240
+      endif
+      assign j_name = r.name.value | json
+      assign j_text = r_text | json
+      assign j_image = r_img_url | json
+      assign j_about = r_about | json
+      assign item = '{"name":' | append: j_name | append: ',"rating":' | append: r_rating | append: ',"text":' | append: j_text | append: ',"image":' | append: j_image | append: ',"verified":' | append: r_verified | append: ',"about":' | append: j_about | append: '}'
+      if rv_json != ''
+        assign rv_json = rv_json | append: ','
+      endif
+      assign rv_json = rv_json | append: item
+      assign rv_shown = rv_shown | plus: 1
+    endfor
+    if pass == 1
+      for block in section.blocks
+        if block.type == 'testimonial' and block.settings.quote != blank and block.settings.author != blank and block.settings.stars > 0 and rv_shown < 8
+          assign r_image = block.settings.image | default: product.featured_image
+          capture card
+            render 'pet-review-card', name: block.settings.author, rating: block.settings.stars, text: block.settings.quote, image: r_image, verified: block.settings.verified
+          endcapture
+          assign rv_cards = rv_cards | append: card
+          assign r_img_url = r_image | image_url: width: 240
+          assign j_name = block.settings.author | json
+          assign j_text = block.settings.quote | json
+          assign j_image = r_img_url | json
+          assign item = '{"name":' | append: j_name | append: ',"rating":' | append: block.settings.stars | append: ',"text":' | append: j_text | append: ',"image":' | append: j_image | append: ',"verified":' | append: block.settings.verified | append: ',"about":""}'
+          if rv_json != ''
+            assign rv_json = rv_json | append: ','
+          endif
+          assign rv_json = rv_json | append: item
+          assign rv_shown = rv_shown | plus: 1
+        endif
+      endfor
+    endif
+  endfor
+
+  assign rv_sample = false
+  if rv_shown == 0 and request.design_mode
+    assign rv_sample = true
+  endif
+
+  assign rv_avg = nil
+  assign rv_label = ''
+  if rating != blank and rating_count != blank and rating_count > 0
+    assign rv_avg = rating.rating | times: 5.0 | divided_by: rating.scale_max | round: 1
+    assign rv_label = rating_count | append: ' ' | append: section.settings.review_noun | default: 'reviews'
+  elsif rv_product_count > 0
+    assign rv_avg = rv_product_sum | times: 1.0 | divided_by: rv_product_count | round: 1
+    assign rv_label = rv_product_count | append: ' review'
+    if rv_product_count > 1
+      assign rv_label = rv_label | append: 's'
+    endif
+  elsif rv_all_count > 0
+    assign rv_avg = rv_all_sum | times: 1.0 | divided_by: rv_all_count | round: 1
+    assign rv_label = rv_all_count | append: ' MyPetMemo review'
+    if rv_all_count > 1
+      assign rv_label = rv_label | append: 's'
+    endif
+  elsif rv_sample
+    assign rv_avg = 4.9
+    assign rv_label = 'Sample rating · theme editor only'
+  endif
+-%}
 {%- assign default_bg = section.settings.default_background -%}
 {%- if product.metafields.mypetmemo.default_background != blank -%}
   {%- assign default_bg = product.metafields.mypetmemo.default_background.value -%}
@@ -33,20 +170,17 @@
           <div class="mps__gallery-main" data-gallery-main></div>
           <button type="button" class="mps__gallery-nav mps__gallery-nav--prev" data-gallery-prev aria-label="Previous photo">&#8249;</button>
           <button type="button" class="mps__gallery-nav mps__gallery-nav--next" data-gallery-next aria-label="Next photo">&#8250;</button>
-          <div class="mps__gallery-thumbs" data-gallery-thumbs></div>
         </div>
 
-        <div class="mps__progress" data-progress hidden aria-live="polite">
-          <div class="mps__spinner" aria-hidden="true"></div>
-          <p class="mps__progress-title" data-progress-title>Creating your design…</p>
-          <p class="mps__progress-step" data-progress-step></p>
-          <div class="mps__bar"><span data-progress-bar></span></div>
-        </div>
         <div class="mps__drop-hint" data-drop-hint hidden><span>Drop your photo here</span></div>
       </div>
       {%- if product.media.size > 0 -%}
-        <button type="button" class="mps__photos-toggle" data-gallery-toggle
-          data-label-photos="View product photos" data-label-design="Back to your design">View product photos</button>
+        <div class="mps__thumbs" role="group" aria-label="Your design and product photos" data-thumbs>
+          <button type="button" class="mps__thumb-btn mps__thumb-btn--design" data-thumb-design aria-current="true" aria-label="Your design">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.4 5 6.9 5c2 0 3.5 1.1 5.1 3 1.6-1.9 3.1-3 5.1-3 3.5 0 5.7 3.6 4.4 6.8C19.5 16.4 12 21 12 21z"/></svg>
+            <span>Your design</span>
+          </button>
+        </div>
       {%- endif -%}
     </div>
 
@@ -54,17 +188,20 @@
       <h1 class="mps__title">{{ section.settings.heading | default: short_title | escape }}</h1>
       {%- if section.settings.subheading != blank -%}<p class="mps__subtitle">{{ section.settings.subheading | escape }}</p>{%- endif -%}
 
-      {%- if rating != blank and rating_count != blank and rating_count > 0 -%}
-        <p class="mps__rating">
-          <span class="mps__stars" style="--rating: {{ rating.rating | divided_by: rating.scale_max | times: 100 }}%" aria-hidden="true">★★★★★</span>
-          <strong>{{ rating.rating | round: 2 }}/{{ rating.scale_max | round }}</strong>
-          <span>from {{ rating_count }} {{ section.settings.review_noun | default: 'reviews' | escape }}</span>
-        </p>
+      {%- if rv_avg != nil -%}
+        <a class="mps__rating{% if rv_sample %} is-sample{% endif %}" href="#Reviews-{{ section.id }}" data-reviews-link>
+          <span class="mps-stars" style="--rating: {{ rv_avg | times: 20 }}%" aria-hidden="true"></span>
+          <strong>{{ rv_avg }}</strong><span class="mps__rating-max">/5</span>
+          <span class="mps__rating-count">({{ rv_label | escape }})</span>
+          <span class="mps__visually-hidden">Rated {{ rv_avg }} out of 5. See reviews.</span>
+        </a>
       {%- endif -%}
 
       <button type="button" class="mps__btn mps__btn--primary mps__btn--block" data-primary>
         <span data-primary-label>Upload your pet's photo</span><span class="mps__btn-price" data-primary-price hidden> — <s data-compare-price></s> <span data-price></span></span>
       </button>
+
+      {%- if section.settings.upload_note != blank -%}<p class="mps__upload-note" data-upload-note>{{ section.settings.upload_note | escape }}</p>{%- endif -%}
 
       <div class="mps__upload" data-upload-panel>
         <input class="mps__file" type="file" id="PetPhoto-{{ section.id }}" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" data-file-input>
@@ -87,6 +224,40 @@
           <p data-photo-status>Your photo</p>
           <button type="button" class="mps__link" data-replace>Replace photo</button>
         </div>
+      </div>
+
+      <div class="mps__gen" data-gen hidden>
+        <div class="mps__gen-head">
+          <span class="mps__gen-spinner" aria-hidden="true"></span>
+          <div>
+            <h2 class="mps__gen-title" data-gen-title tabindex="-1">Creating your pet’s portrait</h2>
+            <p class="mps__gen-status" data-gen-status aria-live="polite">Uploading your photo…</p>
+          </div>
+        </div>
+        <div class="mps__gen-bar" role="progressbar" aria-label="Estimated progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-gen-bar><span data-gen-fill></span></div>
+        <p class="mps__gen-time" data-gen-time></p>
+
+        <div class="mps__gen-reviews" data-gen-reviews{% if rv_json == '' and rv_sample == false %} hidden{% endif %}>
+          <p class="mps__gen-kicker">Reviews from MyPetMemo customers</p>
+          <div class="mps__gen-carousel" role="region" aria-roledescription="carousel" aria-label="Customer reviews" data-carousel>
+            <div class="mps__gen-slides" data-carousel-slides aria-live="off"></div>
+            <div class="mps__gen-controls">
+              <button type="button" class="mps__gen-arrow" data-carousel-prev aria-label="Previous review">&#8249;</button>
+              <div class="mps__gen-dots" data-carousel-dots></div>
+              <button type="button" class="mps__gen-arrow" data-carousel-next aria-label="Next review">&#8250;</button>
+            </div>
+          </div>
+        </div>
+        <div class="mps__gen-info" data-gen-info{% if rv_json != '' or rv_sample %} hidden{% endif %}>
+          <p class="mps__gen-kicker">How your photo becomes a portrait</p>
+          <ol>
+            <li>We find your pet in the photo and remove the background.</li>
+            <li>The artwork keeps their markings, colors and expression.</li>
+            <li>You choose the background and name, then preview before you buy.</li>
+          </ol>
+        </div>
+        <p class="mps__gen-foot">Your preview will appear here when it’s ready. <button type="button" class="mps__link mps__link--small" data-gen-cancel>Cancel</button></p>
+        <script type="application/json" data-gen-reviews-json>[{{ rv_json }}{% if rv_sample %}{"name":"Sample customer","rating":5,"text":"Sample review text. Real reviews from your MyPetMemo review entries will appear here.","image":"","verified":false,"about":"","sample":true},{"name":"Another sample","rating":5,"text":"Sample text to preview the layout. This card is shown only in the theme editor.","image":"","verified":false,"about":"","sample":true}{% endif %}]</script>
       </div>
 
       <div class="mps__error" data-error hidden role="alert">
@@ -222,24 +393,32 @@
         {%- endif -%}
       </ul>
 
-      {%- for block in section.blocks -%}
-        {%- if block.type == 'testimonial' and block.settings.quote != blank -%}
-          <figure class="mps__testimonial" {{ block.shopify_attributes }}>
-            {%- if block.settings.stars > 0 -%}<div class="mps__testimonial-stars" aria-label="{{ block.settings.stars }} out of 5 stars">{% for i in (1..block.settings.stars) %}★{% endfor %}</div>{%- endif -%}
-            <blockquote>{{ block.settings.quote | escape }}</blockquote>
-            <figcaption>
-              {%- if block.settings.image != blank -%}{{ block.settings.image | image_url: width: 96 | image_tag: width: 48, height: 48, loading: 'lazy', alt: '' }}{%- endif -%}
-              <span>{{ block.settings.author | escape }}{% if block.settings.verified %} · <em>Verified buyer</em>{% endif %}</span>
-            </figcaption>
-          </figure>
-        {%- endif -%}
-      {%- endfor -%}
 
       {%- if product.description != blank -%}
         <details class="mps__details"><summary>Product details</summary><div class="rte">{{ product.description }}</div></details>
       {%- endif -%}
     </div>
   </div>
+
+  {%- if rv_shown > 0 or rv_sample -%}
+    <section class="mps-reviews" id="Reviews-{{ section.id }}" aria-labelledby="ReviewsTitle-{{ section.id }}" tabindex="-1">
+      <div class="mps-reviews__head">
+        <h2 id="ReviewsTitle-{{ section.id }}">{{ section.settings.reviews_heading | default: 'Customer reviews' | escape }}</h2>
+        {%- if rv_avg != nil -%}
+          <p class="mps-reviews__summary"><span class="mps-stars" style="--rating: {{ rv_avg | times: 20 }}%" aria-hidden="true"></span> <strong>{{ rv_avg }}/5</strong> <span>({{ rv_label | escape }})</span></p>
+        {%- endif -%}
+      </div>
+      <div class="mps-reviews__grid">
+        {%- if rv_sample -%}
+          {%- render 'pet-review-card', name: 'Sample customer', rating: 5, text: 'Sample review text. Add real reviews in Content → Metaobjects → MyPetMemo review and they replace these cards.', sample: true -%}
+          {%- render 'pet-review-card', name: 'Another sample', rating: 5, text: 'This sample card is shown only in the theme editor, never on your live store.', sample: true -%}
+          {%- render 'pet-review-card', name: 'Third sample', rating: 4, text: 'Cards show the name, stars, a short review, a photo when there is one, and a verified badge only for reviews matched to an order.', sample: true -%}
+        {%- else -%}
+          {{ rv_cards }}
+        {%- endif -%}
+      </div>
+    </section>
+  {%- endif -%}
 
   <div class="mps__sticky" data-sticky hidden>
     <div class="mps__sticky-price"><s data-compare-price></s> <strong data-price></strong></div>
@@ -328,7 +507,7 @@
       "maxUploadMb": {{ section.settings.max_upload_mb }},
       "minPhotoSide": {{ section.settings.min_photo_side }},
       "redirectToCart": {{ section.settings.redirect_to_cart }},
-      "progressSeconds": {{ section.settings.progress_seconds | default: 0 }}
+      "progressSeconds": {{ section.settings.progress_seconds | default: 60 }}
     }
   </script>
 </section>
@@ -345,7 +524,9 @@
     { "type": "select", "id": "family", "label": "Product type", "default": "blanket", "options": [{ "value": "blanket", "label": "Blanket" }, { "value": "ornament", "label": "Ornament (shape from the variant)" }] },
     { "type": "text", "id": "heading", "label": "Heading", "info": "Leave empty to use the product title (the part before the dash)." },
     { "type": "text", "id": "subheading", "label": "Subheading", "default": "Upload a photo of your pet. We turn it into an illustrated portrait you can personalize and preview before you buy." },
-    { "type": "text", "id": "review_noun", "label": "Reviews label", "default": "reviews", "info": "Stars appear only when the product has real review data (reviews.rating and reviews.rating_count metafields, filled by a reviews app)." },
+    { "type": "text", "id": "review_noun", "label": "Reviews label", "default": "reviews", "info": "Used with ratings from a reviews app (reviews.rating metafields)." },
+    { "type": "text", "id": "reviews_heading", "label": "Reviews heading", "default": "Customer reviews", "info": "Reviews come from Content → Metaobjects → MyPetMemo review (and Customer review blocks). Nothing shows on the live store until real reviews exist; the theme editor shows labeled samples." },
+    { "type": "text", "id": "upload_note", "label": "Note under the upload button", "default": "No payment needed. See your design before you buy." },
     { "type": "header", "content": "Backgrounds" },
     { "type": "text", "id": "pattern_ids", "label": "Built-in backgrounds (in order)", "default": "pink-hearts,rainbow-hearts,red-hearts,florals,tropical-leaves,clouds,christmas-trees,paw-prints,starry-night,sunset,ocean,lavender,mint,cream,blush,sky,sage,lilac,sunshine,navy,charcoal,white", "info": "Comma-separated ids. Image backgrounds added as blocks are shown after these." },
     { "type": "text", "id": "default_background", "label": "Default background id", "info": "Empty: first background (Christmas products use christmas-trees, memorial products clouds). A ?bg=pink-hearts link always wins." },
@@ -371,7 +552,7 @@
     { "type": "header", "content": "AI portrait service" },
     { "type": "text", "id": "ai_endpoint", "label": "Portrait generation URL", "default": "https://mypetmemo-portrait.aitomasbuilder.workers.dev/generate" },
     { "type": "range", "id": "generation_limit", "label": "Portraits per shopper per day", "min": 1, "max": 30, "step": 1, "default": 8, "info": "Counted in the shopper's browser. Re-using a photo never counts: its portrait is cached." },
-    { "type": "range", "id": "progress_seconds", "label": "Measured generation time (seconds)", "min": 0, "max": 180, "step": 5, "default": 0, "info": "0 shows no time estimate. Only set this after measuring real generation times." },
+    { "type": "range", "id": "progress_seconds", "label": "Estimated generation time (seconds)", "min": 15, "max": 180, "step": 5, "default": 60, "info": "Shown as an estimate. The preview appears as soon as it is ready; longer waits show a “taking a little longer” message." },
     { "type": "header", "content": "Approval and print files" },
     { "type": "text", "id": "approve_endpoint", "label": "Design approval URL", "default": "https://mypetmemo-shopify.vercel.app/api/designs" },
     { "type": "text", "id": "template_endpoint", "label": "Printify print-area URL", "default": "https://mypetmemo-shopify.vercel.app/api/print-template" },
@@ -403,7 +584,7 @@
         { "type": "textarea", "id": "quote", "label": "Review" },
         { "type": "text", "id": "author", "label": "Name" },
         { "type": "range", "id": "stars", "label": "Stars", "min": 0, "max": 5, "step": 1, "default": 5 },
-        { "type": "checkbox", "id": "verified", "label": "Verified buyer", "default": false },
+        { "type": "checkbox", "id": "verified", "label": "Verified purchase", "default": false, "info": "Tick only when you matched this review to a paid order." },
         { "type": "image_picker", "id": "image", "label": "Photo" }
       ]
     },

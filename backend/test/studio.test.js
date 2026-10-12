@@ -263,7 +263,8 @@ test('caption: optional year or dates and message lines are validated and drawn 
   assert.deepEqual(d.caption.lines, ['2012 – 2026', 'Forever in my heart']);
   assert.equal(d.caption.fill, '#ffffff');
   assert.notEqual(design.designId(d), design.designId(design.normalise({ ...base, caption: { ...cap, lines: ['2026'] } }, { hosts })));
-  assert.throws(() => design.normalise({ ...base, caption: { ...cap, lines: ['a', 'b', 'c'] } }, { hosts }), e => e.code === 'caption_lines');
+  assert.equal(design.normalise({ ...base, caption: { ...cap, lines: ['Jan 2012 –', 'Mar 2026', 'Forever in', 'my heart'] } }, { hosts }).caption.lines.length, 4, 'wrapped dates and message (star and heart)');
+  assert.throws(() => design.normalise({ ...base, caption: { ...cap, lines: ['a', 'b', 'c', 'd', 'e'] } }, { hosts }), e => e.code === 'caption_lines');
   assert.throws(() => design.normalise({ ...base, caption: { ...cap, lines: ['x'.repeat(33)] } }, { hosts }), e => e.code === 'caption_too_long');
   const r = await renderDesign({ design: d, artwork: art, width: 600, height: 600 });
   const { data, info } = await sharp(r.buffer).raw().toBuffer({ resolveWithObject: true });

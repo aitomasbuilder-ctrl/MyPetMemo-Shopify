@@ -1,0 +1,25 @@
+{%- comment -%}
+  One customer review card (pet studio product pages).
+  name, rating (1-5), text, image (image object or empty), verified (true only when the review was
+  matched to a real order), about (product title when the review is for another product),
+  sample (theme-editor preview content, never shown on the live store).
+{%- endcomment -%}
+<figure class="mps-review{% if sample %} is-sample{% endif %}">
+  <div class="mps-review__media">
+    {%- if image != blank -%}
+      {{ image | image_url: width: 360 | image_tag: loading: 'lazy', widths: '180,360', sizes: '90px', alt: '' }}
+    {%- else -%}
+      <span class="mps-review__initial" aria-hidden="true">{{ name | slice: 0 | upcase }}</span>
+    {%- endif -%}
+  </div>
+  <div class="mps-review__body">
+    <div class="mps-review__head">
+      <strong class="mps-review__name">{{ name | escape }}</strong>
+      {%- if verified -%}<span class="mps-review__verified">Verified purchase</span>{%- endif -%}
+      {%- if sample -%}<span class="mps-review__sample">Sample · preview only</span>{%- endif -%}
+    </div>
+    <div class="mps-stars mps-stars--small" style="--rating: {{ rating | times: 20 }}%" role="img" aria-label="{{ rating }} out of 5 stars"></div>
+    <blockquote class="mps-review__text">{{ text | escape }}</blockquote>
+    {%- if about != blank -%}<p class="mps-review__about">Review of {{ about | escape }}</p>{%- endif -%}
+  </div>
+</figure>

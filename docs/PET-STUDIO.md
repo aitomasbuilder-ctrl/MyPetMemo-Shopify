@@ -61,6 +61,30 @@ name in the same font, at half its size, and move with it. They travel in the si
 (`lines`, position, size), are rendered into the print file by `backend/lib/render.js`, and show in the cart
 as Year / Dates / Message.
 
+## Reviews
+
+Reviews come from the **MyPetMemo review** metaobjects (Shopify admin → Content → Metaobjects): name, rating
+(1–5), review text, optional photo, optional product and optional order number. Only *Active* entries show.
+The **Verified purchase** badge appears only when the order number is filled in. "Customer review" blocks on
+the section are still supported. Product pages show:
+
+* a star summary under the title (this product's reviews; if it has none, all MyPetMemo reviews, labelled as
+  such; a reviews app's `reviews.rating` metafields win when present) that scrolls to the review cards;
+* review cards below the product information (this product first; other products fill in when there are
+  fewer than three, labelled "Review of …");
+* the same reviews, one at a time, under the generation countdown.
+
+With no reviews, nothing review-related shows on the live store. The theme editor shows clearly labelled
+sample cards so the layout can be previewed.
+
+## Generation progress
+
+The loading section sits in the personalization column: spinner, "Creating your pet's portrait", the current
+stage, a progress bar and an estimated countdown (section setting, default 60 s), then the review carousel
+(or photo tips when there are no reviews). The bar never completes before the artwork arrives. Past the
+estimate it says the portrait is taking a little longer. Cancel and failures keep the photo, name,
+background and options, with Try again. Generation still times out after 180 s.
+
 ## Category pages
 
 `/collections/pet-blankets` and `/collections/pet-ornaments` use `templates/collection.pet-category.json`
