@@ -39,6 +39,23 @@
     }
     return null;
   }
+  // Heart outline as cubic segments in a unit frame centred on 0 (x and y from -1 to 1), starting at the top dip.
+  const HEART_START = [0, -0.55];
+  const HEART_SEGS = [
+    [[0.12, -1.02], [1.02, -1.02], [1, -0.4]],
+    [[0.98, 0.12], [0.45, 0.55], [0, 1]],
+    [[-0.45, 0.55], [-0.98, 0.12], [-1, -0.4]],
+    [[-1.02, -1.02], [-0.12, -1.02], [0, -0.55]]
+  ];
+  /** Five-pointed star corners in the same unit frame (shared by the outline and the layout maths). */
+  function starPoints() {
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5, r = i % 2 ? 0.52 : 1;
+      pts.push([Math.cos(a) * r, (Math.sin(a) * r + 0.095) * 1.05]);
+    }
+    return pts;
+  }
   /** Traces an ornament outline inside the box x/y/w/h (scaled by k around its centre). */
   function shapePath(ctx, shape, x, y, w, h, k = 1) {
     const cx = x + w / 2, cy = y + h / 2, rx = (w / 2) * k, ry = (h / 2) * k;
@@ -46,11 +63,8 @@
     if (shape === 'circle') { ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU); return; }
     if (shape === 'heart') {
       const X = u => cx + u * rx, Y = v => cy + v * ry;
-      ctx.moveTo(X(0), Y(-0.55));
-      ctx.bezierCurveTo(X(0.12), Y(-1.02), X(1.02), Y(-1.02), X(1), Y(-0.4));
-      ctx.bezierCurveTo(X(0.98), Y(0.12), X(0.45), Y(0.55), X(0), Y(1));
-      ctx.bezierCurveTo(X(-0.45), Y(0.55), X(-0.98), Y(0.12), X(-1), Y(-0.4));
-      ctx.bezierCurveTo(X(-1.02), Y(-1.02), X(-0.12), Y(-1.02), X(0), Y(-0.55));
+      ctx.moveTo(X(HEART_START[0]), Y(HEART_START[1]));
+      HEART_SEGS.forEach(([a, b, c]) => ctx.bezierCurveTo(X(a[0]), Y(a[1]), X(b[0]), Y(b[1]), X(c[0]), Y(c[1])));
       ctx.closePath();
       return;
     }
@@ -66,13 +80,99 @@
       return;
     }
     // star: five points filling the box from top to bottom.
-    const top = -Math.PI / 2;
-    for (let i = 0; i < 10; i++) {
-      const a = top + (i * Math.PI) / 5, r = i % 2 ? 0.52 : 1;
-      const px = cx + Math.cos(a) * r * rx, py = cy + (Math.sin(a) * r + 0.095) * ry * 1.05;
-      if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
-    }
+    starPoints().forEach(([u, v], i) => { if (i) ctx.lineTo(cx + u * rx, cy + v * ry); else ctx.moveTo(cx + u * rx, cy + v * ry); });
     ctx.closePath();
+  }
+
+  /* ---------- shape-aware ornament layouts (star and heart) ----------
+   * Each shape has its own arrangement instead of a rectangular design cropped by the outline:
+   *   star:  name, dates and message across the wide middle (the arms), the portrait in the centre below them
+   *   heart: the portrait under the top dip (and the hanging hole), the text above the narrow bottom point
+   * Positions are print fractions (x of the width, y of the height). Distances to the outline are in
+   * print-width units so the safe margin is the same on every side. */
+  const SHAPE_FIT = {
+    star: { textFirst: true, hole: [0.5, 0.13, 0.032], text: [0.3, 0.7], petEnd: 0.9, headMin: 0.3, headMax: 0.46, nameMax: 0.13 },
+    heart: { textFirst: false, hole: [0.5, 0.255, 0.03], text: [0.42, 0.92], petEnd: 0.9, headMin: 0.34, headMax: 0.54, nameMax: 0.14 }
+  };
+  const FIT_MARGIN = 0.045;     // smallest distance from any text or the pet's head to the outline
+  const FIT_GAP = 0.022;        // space between the text block and the head
+  const HOLE_CLEAR = 0.035;     // space between the hanging hole and the top of the head
+  const NAME_MIN = 0.062, CAPTION_MIN = 0.04;
+  const GRID = 160;
+  const gridCache = new Map();
+  /** Outline as a polygon in print fractions. */
+  function shapePolygon(shape) {
+    const map = ([u, v]) => [0.5 + u / 2, 0.5 + v / 2];
+    if (shape === 'star') return starPoints().map(map);
+    if (shape === 'heart') {
+      const pts = [];
+      let s = HEART_START;
+      HEART_SEGS.forEach(([a, b, c]) => {
+        for (let i = 1; i <= 48; i++) {
+          const t = i / 48, u = 1 - t;
+          pts.push(map([u * u * u * s[0] + 3 * u * u * t * a[0] + 3 * u * t * t * b[0] + t * t * t * c[0],
+            u * u * u * s[1] + 3 * u * u * t * a[1] + 3 * u * t * t * b[1] + t * t * t * c[1]]));
+        }
+        s = c;
+      });
+      return pts;
+    }
+    return null;
+  }
+  /** Distance to the outline (print-width units, negative outside) on a grid, for print area proportions `aspect` (h / w). */
+  function depthGrid(shape, aspect) {
+    const key = shape + ':' + aspect.toFixed(3);
+    if (gridCache.has(key)) return gridCache.get(key);
+    const poly = shapePolygon(shape).map(([x, y]) => [x, y * aspect]);
+    const data = new Float32Array((GRID + 1) * (GRID + 1));
+    for (let j = 0; j <= GRID; j++) {
+      for (let i = 0; i <= GRID; i++) {
+        const px = i / GRID, py = (j / GRID) * aspect;
+        let inside = false, d = Infinity;
+        for (let k = 0, l = poly.length - 1; k < poly.length; l = k++) {
+          const a = poly[k], b = poly[l];
+          if ((a[1] > py) !== (b[1] > py) && px < ((b[0] - a[0]) * (py - a[1])) / (b[1] - a[1]) + a[0]) inside = !inside;
+          const dx = b[0] - a[0], dy = b[1] - a[1];
+          const t = clamp(((px - a[0]) * dx + (py - a[1]) * dy) / (dx * dx + dy * dy || 1), 0, 1);
+          d = Math.min(d, Math.hypot(px - a[0] - t * dx, py - a[1] - t * dy));
+        }
+        data[j * (GRID + 1) + i] = inside ? d : -d;
+      }
+    }
+    const grid = {
+      depth(x, y) {
+        if (!(x >= 0 && x <= 1 && y >= 0 && y <= 1)) return -1;
+        const fx = x * GRID, fy = y * GRID, i = Math.min(GRID - 1, Math.floor(fx)), j = Math.min(GRID - 1, Math.floor(fy));
+        const tx = fx - i, ty = fy - j, at = (a, b) => data[b * (GRID + 1) + a];
+        return (at(i, j) * (1 - tx) + at(i + 1, j) * tx) * (1 - ty) + (at(i, j + 1) * (1 - tx) + at(i + 1, j + 1) * tx) * ty;
+      },
+      /** Smallest depth over a rectangle's outline and centre line (x0..x1, y0..y1). */
+      rect(x0, y0, x1, y1) {
+        let m = Infinity;
+        for (let k = 0; k <= 8; k++) {
+          const x = x0 + ((x1 - x0) * k) / 8;
+          m = Math.min(m, this.depth(x, y0), this.depth(x, y1), this.depth(x, (y0 + y1) / 2));
+        }
+        for (let k = 1; k < 4; k++) { const y = y0 + ((y1 - y0) * k) / 4; m = Math.min(m, this.depth(x0, y), this.depth(x1, y)); }
+        return m;
+      }
+    };
+    gridCache.set(key, grid);
+    return grid;
+  }
+  /** Splits a line at the space that gives the most even halves (prefers breaking after a dash or comma). */
+  function splitLine(text, measure) {
+    const words = text.split(' ');
+    if (words.length < 2) return [text];
+    let best = null;
+    for (let i = 1; i < words.length; i++) {
+      const a = words.slice(0, i).join(' '), b = words.slice(i).join(' ');
+      let score = Math.max(measure(a), measure(b));
+      if (/[–—,-]$/.test(a)) score *= 0.85;
+      if (/^[–—-]/.test(b)) score *= 1.3;
+      if (!best || score < best.score) best = { score, lines: [a, b] };
+    }
+    return best.lines;
   }
   const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
   const dist = (ax, ay, bx, by) => Math.hypot(bx - ax, by - ay);
@@ -318,6 +418,7 @@
         shapePath(ctx, shape, box.x, box.y, box.w, box.h);
         ctx.lineWidth = Math.max(1.5, box.w * 0.006); ctx.strokeStyle = 'rgba(27, 42, 78, 0.18)'; ctx.stroke();
         ctx.restore();
+        s.drawHole(ctx, box.x, box.y, box.w, box.h);
       } else {
         s.drawDesign(ctx, box.x, box.y, box.w, box.h, { dpr: this.dpr, placeholder: !s.state.artwork });
       }
@@ -668,7 +769,7 @@
         const wasDefault = this.isDefaultLayout(), hadName = !!this.state.name.text;
         this.state.name.text = input.value.replace(/\s+/g, ' ').replace(/^\s+/, '');
         // Adding or removing the name re-flows a layout the shopper has not moved yet.
-        if (wasDefault && hadName !== !!this.state.name.text) this.placeDefault();
+        if (this.reflow(wasDefault, hadName !== !!this.state.name.text)) this.placeDefault();
         [el.nameInput, el.editorName].forEach(i => { if (i && i !== input) i.value = input.value; });
         this.changed({ design: true });
       };
@@ -676,7 +777,7 @@
       const onExtra = (key, value) => {
         const wasDefault = this.isDefaultLayout(), before = this.captionLines().length;
         this.state.extra[key] = value.replace(/\s+/g, ' ').replace(/^\s+/, '');
-        if (wasDefault && before !== this.captionLines().length) this.placeDefault();
+        if (this.reflow(wasDefault, before !== this.captionLines().length)) this.placeDefault();
         el.extras.forEach(i => { if (i.dataset.extra === key && i.value !== value) i.value = value; });
         el.suggestions.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.suggest === this.state.extra.message)));
         this.changed({ design: true });
@@ -700,7 +801,7 @@
         this.root.querySelectorAll('[data-editor-done]').forEach(b => b.addEventListener('click', () => this.closeEditor()));
         el.dialog.addEventListener('close', () => this.closeEditor());
         this.root.querySelector('[data-editor-revert]').addEventListener('click', () => this.revertEditor());
-        el.font.addEventListener('change', () => { this.state.name.font = el.font.value; this.fontsReady().then(() => this.changed({ design: true })); });
+        el.font.addEventListener('change', () => { const wasDefault = this.isDefaultLayout(); this.state.name.font = el.font.value; this.fontsReady().then(() => { if (this.reflow(wasDefault, false)) this.placeDefault(); this.changed({ design: true }); }); });
         el.fill.addEventListener('input', () => { this.state.name.fill = el.fill.value; this.changed({ design: true }); });
         el.stroke.addEventListener('input', () => { this.state.name.stroke = el.stroke.value; this.changed({ design: true }); });
         el.nameSize.addEventListener('input', () => { this.state.name.size = Number(el.nameSize.value); this.changed({ design: true }); });
@@ -1065,7 +1166,7 @@
         const hadArtwork = !!this.state.artwork;
         this.state.artwork = img;
         this.state.art = { blob: art.blob, sha256: art.sha256, w: art.w, h: art.h };
-        if (!hadArtwork) this.placeDefault(); else { this.placePet(); this.clampAll(); }
+        if (!hadArtwork || SHAPE_FIT[this.shape()]) this.placeDefault(); else { this.placePet(); this.clampAll(); }
         this.stopProgress();
         this.setPhase('ready');
         this.setPhotoStatus(fromCache ? 'Portrait ready (saved from before)' : 'Portrait ready');
@@ -1244,7 +1345,16 @@
       return L[shape] || L.circle;
     }
     isDefaultLayout() {
-      return !!this.defaultLayout && this.defaultLayout === JSON.stringify([this.state.pet, this.state.name.cx, this.state.name.cy, this.state.name.size, this.state.name.rot]);
+      return !!this.defaultLayout && this.defaultLayout === this.layoutKey();
+    }
+    /** Whether a text edit re-flows the layout: star and heart layouts re-fit on every edit until the shopper moves something. */
+    reflow(wasDefault, linesChanged) {
+      if (SHAPE_FIT[this.shape()]) return wasDefault || !this.state.artwork;
+      return wasDefault && linesChanged;
+    }
+    layoutKey() {
+      const n = this.state.name;
+      return JSON.stringify([this.state.pet, n.cx, n.cy, n.size, n.rot, n.cap || 0, n.breaks || []]);
     }
     font(px, key = this.state.name.font) {
       const f = FONTS[key] || FONTS.fredoka;
@@ -1272,15 +1382,21 @@
     /** Caption placement in print fractions: centred under the name and rotated with it.
      *  The backend draws exactly these numbers (backend/lib/render.js captionLayer). */
     caption(p = this.printSize()) {
-      const lines = this.captionLines();
-      if (!lines.length) return null;
       const n = this.state.name, W = p.width, H = p.height;
-      const ns = n.text ? this.nameSize() : 0;
       const ctx = this.measureCtx;
       ctx.font = this.font(100);
+      let lines = this.captionLines();
+      if (!lines.length) return null;
+      // Star and heart layouts may wrap a line (n.breaks) and set their own caption size (n.cap, relative to the name).
+      if (n.breaks && n.breaks.length) {
+        const measure = t => ctx.measureText(t).width;
+        lines = lines.flatMap((l, i) => (n.breaks.includes(i) ? splitLine(l, measure) : [l]));
+      }
+      const ns = n.text ? this.nameSize() : 0;
       const widest = Math.max(...lines.map(l => ctx.measureText(l).width / 100), 0.01);
-      const maxW = (this.shape() ? 0.62 : 1 - 2 * this.safe());
-      const size = Math.min(n.text ? ns * CAPTION_RATIO : n.size * 0.6, (maxW / widest) * 0.98, 0.3);
+      const maxW = n.cap ? 0.9 : (this.shape() ? 0.62 : 1 - 2 * this.safe());
+      const base = n.text ? ns * (n.cap || CAPTION_RATIO) : n.size * (n.cap || 0.6);
+      const size = Math.min(base, (maxW / widest) * 0.98, 0.3);
       const k = lines.length;
       // distance (px) from the name centre to the caption block centre
       const dy = n.text ? (0.62 * ns + 0.5 * size + ((k - 1) / 2) * CAPTION_LINE * size) * W : 0;
@@ -1340,7 +1456,8 @@
       if (e) {
         // A pet wider than the safe area may shift a little but never far off centre.
         pet.cx = e.hx * 2 <= 1 - 2 * sx ? clamp(pet.cx, sx + e.hx, 1 - sx - e.hx) : clamp(pet.cx, 0.4, 0.6);
-        pet.cy = clamp(pet.cy, sy + e.hy, Math.max(sy + e.hy, 0.6 + e.hy));
+        const low = SHAPE_FIT[this.shape()] ? 0.95 : 0.6;
+        pet.cy = clamp(pet.cy, sy + e.hy, Math.max(sy + e.hy, low + e.hy));
       }
       const name = this.state.name, n = this.halfExtents('name');
       if (n) {
@@ -1373,6 +1490,13 @@
     }
     placeDefault() {
       const s = this.state;
+      if (SHAPE_FIT[this.shape()]) {
+        this.solveShapeLayout();
+        this.clampAll();
+        this.defaultLayout = s.artwork ? this.layoutKey() : null;
+        return;
+      }
+      delete s.name.cap; delete s.name.breaks;
       const L = this.layout();
       Object.assign(s.name, L ? { cx: 0.5, cy: L.name[0], size: L.name[1], rot: 0 } : { cx: 0.5, cy: 0.115, size: 0.13, rot: 0 });
       if (L && this.captionLines().length) {
@@ -1381,7 +1505,212 @@
       }
       this.placePet();
       this.clampAll();
-      this.defaultLayout = s.artwork ? JSON.stringify([s.pet, s.name.cx, s.name.cy, s.name.size, s.name.rot]) : null;
+      this.defaultLayout = s.artwork ? this.layoutKey() : null;
+    }
+    /** Head outline of the portrait (cached per artwork): rows from the top of the ears down to the chin, each with
+     *  the left and right edge of the opaque pixels, as fractions of the artwork width and height. */
+    headProfile() {
+      const art = this.state.artwork;
+      if (!art) return null;
+      if (this.headCache && this.headCache.art === art) return this.headCache.profile;
+      const SW = 160, SH = Math.max(1, Math.round((SW * art.height) / art.width));
+      const c = createCanvas(SW, SH), cx = c.getContext('2d');
+      cx.drawImage(art, 0, 0, SW, SH);
+      const data = cx.getImageData(0, 0, SW, SH).data;
+      const rows = [];
+      let top = -1, bottom = -1, minX = SW, maxX = -1;
+      for (let y = 0; y < SH; y++) {
+        let l = -1, r = -1;
+        for (let x = 0; x < SW; x++) if (data[(y * SW + x) * 4 + 3] > 32) { if (l < 0) l = x; r = x; }
+        rows.push(l < 0 ? null : [l, r]);
+        if (l >= 0) { if (top < 0) top = y; bottom = y; minX = Math.min(minX, l); maxX = Math.max(maxX, r); }
+      }
+      let profile = null;
+      if (top >= 0) {
+        const opaqueW = maxX - minX + 1, opaqueH = bottom - top + 1;
+        const headH = Math.max(4, Math.round(Math.min(0.6 * opaqueH, 0.95 * opaqueW)));
+        const pts = [];
+        let l0 = SW, r0 = -1;
+        for (let y = top; y < Math.min(SH, top + headH); y++) {
+          const row = rows[y];
+          if (!row) continue;
+          pts.push([(y + 0.5) / SH, row[0] / SW, (row[1] + 1) / SW]);
+          l0 = Math.min(l0, row[0]); r0 = Math.max(r0, row[1] + 1);
+        }
+        profile = { top: top / SH, height: headH / SH, left: l0 / SW, right: r0 / SW, pts };
+      }
+      this.headCache = { art, profile };
+      return profile;
+    }
+    /** Text rows of the name + caption block for a layout candidate, relative to the name centre (print-width units). */
+    labelRows(nameText, s, c, lines) {
+      const ctx = this.measureCtx, rows = [];
+      ctx.font = this.font(100);
+      const box = (text, size, base) => ({
+        w: (ctx.measureText(text).width / 100) * size + NAME_STROKE * size,
+        top: base - 0.78 * size - (NAME_STROKE / 2) * size, bottom: base + 0.25 * size + (NAME_STROKE / 2) * size
+      });
+      if (nameText) rows.push(box(nameText, s, NAME_BASELINE * s));
+      const k = lines.length;
+      const dy = nameText ? 0.62 * s + 0.5 * c + ((k - 1) / 2) * CAPTION_LINE * c : 0;
+      lines.forEach((l, i) => rows.push(box(l, c, dy + (i - (k - 1) / 2) * CAPTION_LINE * c + NAME_BASELINE * c)));
+      return rows;
+    }
+    /** Separate star and heart layouts: sizes and places the name, dates, message and the portrait so the whole head
+     *  and all text stay inside the ornament with a safe margin (see SHAPE_FIT). */
+    solveShapeLayout() {
+      const s = this.state, shape = this.shape(), F = SHAPE_FIT[shape];
+      const p = this.printSize(), aspect = p.height / p.width;
+      const grid = depthGrid(shape, aspect);
+      const name = s.name.text.trim(), raw = this.captionLines();
+      const ctx = this.measureCtx;
+      ctx.font = this.font(100);
+      const measure = t => ctx.measureText(t).width;
+      // Line-break options: none first, then each splittable line, then all of them.
+      const splittable = raw.map((l, i) => (l.includes(' ') ? i : -1)).filter(i => i >= 0);
+      const options = [[]];
+      splittable.forEach(i => options.push([i]));
+      if (splittable.length > 1) options.push(splittable.slice());
+      const head = this.headProfile(), art = s.artwork;
+      const holeBottom = F.hole[1] + F.hole[2] / aspect + HOLE_CLEAR / aspect;
+      const capRatio = name ? CAPTION_RATIO : 0.6;
+      const minS = name ? NAME_MIN : CAPTION_MIN / capRatio;
+      let best = null;
+      for (let size = F.nameMax; size >= minS - 1e-9; size -= 0.004) {
+        const c = Math.max(size * capRatio, CAPTION_MIN);
+        for (const breaks of raw.length ? options : [[]]) {
+          const lines = raw.flatMap((l, i) => (breaks.includes(i) ? splitLine(l, measure) : [l]));
+          const rows = this.labelRows(name, size, c, lines);
+          const text = rows.length ? this.fitText(grid, F, rows, aspect) : { cy: F.textFirst ? F.text[0] : F.text[1], top: F.text[1], bottom: F.text[0] };
+          if (!text) continue;
+          // Room left for the head: below the text on the star, between the hanging hole and the text on the heart.
+          const zone = F.textFirst ? [Math.max(text.bottom + FIT_GAP / aspect, holeBottom), F.petEnd] : [holeBottom, rows.length ? text.top - FIT_GAP / aspect : F.petEnd];
+          const pet = head ? this.fitHead(grid, F, head, art, zone, aspect) : null;
+          const headW = pet ? pet.headW : 0;
+          const score = Math.min(headW, F.headMin) * 4 + size + (head ? 0 : 1) - breaks.length * 0.004;
+          const cand = { size, cap: c / size, breaks, cy: text.cy, pet, score };
+          if (!best || score > best.score + 1e-9) best = cand;
+          if (!head || headW >= F.headMin - 1e-6) { best = cand; break; }
+        }
+        if (best && (!head || (best.pet && best.pet.headW >= F.headMin - 1e-6))) break;
+      }
+      Object.assign(s.name, { cx: 0.5, rot: 0 });
+      if (best) {
+        s.name.size = round4(best.size);
+        s.name.cap = round4(best.cap);
+        s.name.breaks = best.breaks;
+        s.name.cy = round4(best.cy);
+        if (best.pet) s.pet = best.pet.pet;
+      } else {
+        Object.assign(s.name, { cy: 0.5, size: F.nameMax, cap: capRatio, breaks: [] });
+      }
+      if (art && !(best && best.pet)) {
+        // No room was found (very long text): smallest readable portrait in the middle of its zone.
+        const w = 0.3 / Math.max(0.1, (head ? head.right - head.left : 0.6));
+        s.pet = { cx: 0.5, cy: round4(0.62 + this.petHeightFrac(w) / 2 - 0.1), w: round4(w), rot: 0 };
+      }
+      if (art && head) {
+        // Where the portrait's bottom edge lands inside the ornament, fade the chest out instead of a hard cut.
+        const ph = this.petHeightFrac(s.pet.w), bottom = s.pet.cy + ph / 2;
+        let inside = false;
+        for (let k = 0; k <= 10; k++) if (grid.depth(s.pet.cx - s.pet.w * 0.4 + (s.pet.w * 0.8 * k) / 10, bottom - 0.01) > 0) inside = true;
+        if (inside) s.pet.fade = round4(clamp(1 - head.top - head.height, 0.12, 0.4));
+      }
+    }
+    /** Highest (star) or lowest (heart) name position where every text row keeps the safe margin. */
+    fitText(grid, F, rows, aspect) {
+      const top = Math.min(...rows.map(r => r.top)), bottom = Math.max(...rows.map(r => r.bottom));
+      const lo = F.text[0] - top / aspect, hi = F.text[1] - bottom / aspect;
+      if (hi < lo) return null;
+      const steps = Math.max(1, Math.ceil((hi - lo) / 0.004));
+      for (let k = 0; k <= steps; k++) {
+        const cy = F.textFirst ? lo + ((hi - lo) * k) / steps : hi - ((hi - lo) * k) / steps;
+        if (rows.every(r => grid.rect(0.5 - r.w / 2, cy + r.top / aspect, 0.5 + r.w / 2, cy + r.bottom / aspect) >= FIT_MARGIN)) {
+          return { cy, top: cy + top / aspect, bottom: cy + bottom / aspect };
+        }
+      }
+      return null;
+    }
+    /** Largest portrait whose whole head (ears to chin) fits inside the zone with the safe margin. */
+    fitHead(grid, F, head, art, zone, aspect) {
+      const ratio = art.height / art.width;
+      const headCx = (head.left + head.right) / 2;
+      const place = w => {
+        const hTop = head.top * w * ratio / aspect, hH = head.height * w * ratio / aspect;
+        if (zone[0] + hH > zone[1]) return null;
+        const cx = 0.5 + (0.5 - headCx) * w;
+        for (let y0 = zone[0]; y0 + hH <= zone[1] + 1e-9; y0 += 0.004) {
+          const ok = head.pts.every(([py, l, r]) => {
+            const y = y0 + (py - head.top) * w * ratio / aspect;
+            return grid.depth(cx - w / 2 + l * w, y) >= FIT_MARGIN && grid.depth(cx - w / 2 + r * w, y) >= FIT_MARGIN;
+          }) && grid.depth(cx - w / 2 + headCx * w, y0) >= FIT_MARGIN;
+          if (ok) return { pet: { cx: round4(cx), cy: round4(y0 - hTop + (w * ratio) / aspect / 2), w: round4(w), rot: 0 }, headW: (head.right - head.left) * w, top: y0, bottom: y0 + hH };
+        }
+        return null;
+      };
+      const hw = head.right - head.left;
+      let lo = 0.05 / hw, hi = F.headMax / hw, found = place(lo);
+      if (!found) return null;
+      for (let i = 0; i < 14; i++) {
+        const mid = (lo + hi) / 2, r = place(mid);
+        if (r) { lo = mid; found = r; } else hi = mid;
+      }
+      return found;
+    }
+    /** Checks a star or heart layout (used by the tests): all text and the whole head inside the safe margin. */
+    fitAudit() {
+      const s = this.state, shape = this.shape(), F = SHAPE_FIT[shape];
+      if (!F) return null;
+      const p = this.printSize(), aspect = p.height / p.width, grid = depthGrid(shape, aspect);
+      const c = this.caption(p), name = s.name.text.trim();
+      const ns = name ? this.nameSize() : 0;
+      const rows = this.labelRows(name, ns, c ? c.size : 0, c ? c.lines : []);
+      const textDepth = Math.min(...rows.map(r => grid.rect(s.name.cx - r.w / 2, s.name.cy + r.top / aspect, s.name.cx + r.w / 2, s.name.cy + r.bottom / aspect)));
+      const head = this.headProfile();
+      let headDepth = Infinity, headTop = null, headW = 0;
+      if (head && s.artwork) {
+        const w = s.pet.w, ratio = s.artwork.height / s.artwork.width, x0 = s.pet.cx - w / 2, y0 = s.pet.cy - (w * ratio) / aspect / 2;
+        head.pts.forEach(([py, l, r]) => {
+          const y = y0 + py * w * ratio / aspect;
+          headDepth = Math.min(headDepth, grid.depth(x0 + l * w, y), grid.depth(x0 + r * w, y));
+        });
+        headTop = y0 + head.top * w * ratio / aspect;
+        headW = (head.right - head.left) * w;
+      }
+      // Point sizes on a 3 inch wide ornament (cap height is about 0.7 of the font size).
+      const pt = f => f * 3 * 72;
+      const sizes = [name ? ns : null, c ? c.size : null].filter(Boolean);
+      const holeBottom = F.hole[1] + F.hole[2] / aspect;
+      return {
+        shape, lines: c ? c.lines : [], nameSize: ns, captionSize: c ? c.size : 0, headW: round4(headW),
+        textDepth: round4(textDepth), headDepth: round4(headDepth), headTop: headTop == null ? null : round4(headTop),
+        textOk: textDepth >= FIT_MARGIN - 0.004, headOk: !s.artwork || (headDepth >= FIT_MARGIN - 0.004 && headTop >= holeBottom + HOLE_CLEAR / aspect - 0.004),
+        minPt: Math.min(...sizes.map(pt)), minAllowedPt: 8
+      };
+    }
+    /** The portrait with its bottom `fade` (fraction of the height) fading out, so a chest that ends inside the
+     *  ornament has no hard edge (backend/lib/render.js petLayer applies the same gradient). */
+    fadedArtwork(fade) {
+      const art = this.state.artwork;
+      if (this.fadeCache && this.fadeCache.art === art && this.fadeCache.fade === fade) return this.fadeCache.canvas;
+      const c = createCanvas(art.width, art.height), cx = c.getContext('2d');
+      cx.drawImage(art, 0, 0);
+      const g = cx.createLinearGradient(0, 0, 0, art.height);
+      g.addColorStop(1 - fade, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      cx.globalCompositeOperation = 'destination-in';
+      cx.fillStyle = g; cx.fillRect(0, 0, art.width, art.height);
+      this.fadeCache = { art, fade, canvas: c };
+      return c;
+    }
+    /** Hanging hole of a star or heart ornament (shown on the stage and the cart preview, never printed). */
+    drawHole(ctx, x, y, W, H) {
+      const F = SHAPE_FIT[this.shape()];
+      if (!F) return;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(x + F.hole[0] * W, y + F.hole[1] * H, F.hole[2] * W, 0, TAU);
+      ctx.fillStyle = '#ffffff'; ctx.fill();
+      ctx.lineWidth = Math.max(1, W * 0.006); ctx.strokeStyle = 'rgba(27, 42, 78, 0.35)'; ctx.stroke();
+      ctx.restore();
     }
     applyScale(target, start, scale) {
       if (target === 'pet') this.state.pet.w = clamp(start.w * scale, 0.15, 1.6);
@@ -1435,7 +1764,7 @@
         ctx.translate(x + s.pet.cx * W, y + s.pet.cy * H);
         ctx.rotate(s.pet.rot * DEG);
         ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(s.artwork, -pw / 2, -ph / 2, pw, ph);
+        ctx.drawImage(s.pet.fade ? this.fadedArtwork(s.pet.fade) : s.artwork, -pw / 2, -ph / 2, pw, ph);
         ctx.restore();
       } else if (placeholder) {
         this.drawPlaceholder(ctx, x, y, W, H);
@@ -1640,7 +1969,7 @@
     persist() {
       const s = this.state;
       kv.set(`state:${this.config.productId}`, {
-        at: Date.now(), photoHash: s.photo && s.photo.hash, pet: s.pet, name: s.name, extra: s.extra, addedId: s.addedId,
+        at: Date.now(), photoHash: s.photo && s.photo.hash, pet: s.pet, name: s.name, extra: s.extra, addedId: s.addedId, isDefault: this.isDefaultLayout(),
         background: { id: s.background.id, color: s.background.color, name: s.background.name },
         variantId: s.variant && s.variant.id
       });
@@ -1674,6 +2003,7 @@
           this.state.artwork = await loadImage(URL.createObjectURL(art.blob));
           this.state.art = { blob: art.blob, sha256: art.sha256, w: art.w, h: art.h };
           this.state.pet = saved.pet || this.state.pet;
+          if (saved.isDefault) this.defaultLayout = this.layoutKey();
           this.state.addedId = saved.addedId || null;
           this.state.phase = 'ready';
           this.setPhotoStatus('Your design was restored');
@@ -1700,7 +2030,7 @@
         background: bg.kind === 'image'
           ? { id: bg.id, kind: 'image', name: bg.name, color: bg.color, image_url: bg.image }
           : { id: bg.id, kind: bg.kind, name: bg.name, color: bg.color },
-        pet: { cx: round4(s.pet.cx), cy: round4(s.pet.cy), w: round4(s.pet.w), rot: round4(s.pet.rot) },
+        pet: { cx: round4(s.pet.cx), cy: round4(s.pet.cy), w: round4(s.pet.w), rot: round4(s.pet.rot), ...(s.pet.fade ? { fade: round4(s.pet.fade) } : {}) },
         name: s.name.text.trim() ? {
           text: s.name.text.trim(), cx: round4(s.name.cx), cy: round4(s.name.cy), size: round4(this.nameSize()), rot: round4(s.name.rot),
           font: s.name.font, fill: s.name.fill, stroke: s.name.stroke
@@ -1747,6 +2077,7 @@
         ctx.save(); shapePath(ctx, shape, 0, 0, W, H); ctx.clip();
         this.drawDesign(ctx, 0, 0, W, H, { dpr: 1 });
         ctx.restore();
+        this.drawHole(ctx, 0, 0, W, H);
       } else {
         this.drawDesign(ctx, 0, 0, W, H, { dpr: 1 });
       }

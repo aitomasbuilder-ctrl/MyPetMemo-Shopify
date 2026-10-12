@@ -1,7 +1,8 @@
 'use strict';
 // Production renderer: draws an approved design at the exact Printify print-area size.
 // Geometry mirrors the storefront preview (theme/assets/pet-studio.js, drawDesign):
-//   pet:  width = pet.w * W, height from the artwork's aspect, centred on (cx*W, cy*H), rotated pet.rot degrees
+//   pet:  width = pet.w * W, height from the artwork's aspect, centred on (cx*W, cy*H), rotated pet.rot degrees;
+//         with pet.fade the alpha falls linearly to 0 over the bottom pet.fade of the artwork height (before rotation)
 //   name: font size = name.size * W, centred on cx*W, alphabetic baseline at cy*H + 0.35 * font size,
 //         outline width 0.16 * font size drawn under the fill
 //   caption (optional lines under the name): same rules per line, line i centred at
@@ -34,6 +35,12 @@ async function petLayer(design, artwork, W, H) {
   const pw = Math.max(1, Math.round(design.pet.w * W));
   const ph = Math.max(1, Math.round(pw * meta.height / meta.width));
   let img = sharp(artwork).ensureAlpha().resize(pw, ph, { fit: 'fill', kernel: 'lanczos3' });
+  if (design.pet.fade) {
+    const mask = `<svg xmlns="http://www.w3.org/2000/svg" width="${pw}" height="${ph}"><defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="${ph}" gradientUnits="userSpaceOnUse">` +
+      `<stop offset="${(1 - design.pet.fade).toFixed(4)}" stop-color="#fff" stop-opacity="1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>` +
+      `<rect width="${pw}" height="${ph}" fill="url(#f)"/></svg>`;
+    img = sharp(await img.png().toBuffer()).composite([{ input: Buffer.from(mask), blend: 'dest-in' }]);
+  }
   if (design.pet.rot) img = sharp(await img.png().toBuffer()).rotate(design.pet.rot, { background: { r: 0, g: 0, b: 0, alpha: 0 } });
   const { data, info } = await img.png().toBuffer({ resolveWithObject: true });
   const left = Math.round(design.pet.cx * W - info.width / 2);

@@ -14,7 +14,7 @@ const SHA = /^[0-9a-f]{64}$/;
 const ID = /^\d{1,20}$/;
 const NAME_MAX = 24;
 const CAPTION_MAX = 32;   // per line (year, dates or a short message under the name)
-const CAPTION_LINES = 2;
+const CAPTION_LINES = 4;   // dates and message, each may wrap once on star and heart ornaments
 const SHAPES = new Set(['circle', 'heart', 'star', 'snowflake']); // ornament outlines (preview only; Printify cuts the blank)
 
 class DesignError extends Error {
@@ -119,7 +119,9 @@ function normalise(input, { hosts = defaultHosts() } = {}) {
     background: normaliseBackground(input.background, hosts),
     pet: {
       cx: num(input.pet && input.pet.cx, -0.5, 1.5, 'pet.cx'), cy: num(input.pet && input.pet.cy, -0.5, 1.5, 'pet.cy'),
-      w: num(input.pet && input.pet.w, 0.05, 3, 'pet.w'), rot: num((input.pet && input.pet.rot) || 0, -180, 180, 'pet.rot')
+      w: num(input.pet && input.pet.w, 0.05, 3, 'pet.w'), rot: num((input.pet && input.pet.rot) || 0, -180, 180, 'pet.rot'),
+      // star and heart ornaments: the bottom part of the portrait (this fraction of its height) fades out
+      ...(input.pet && input.pet.fade ? { fade: num(input.pet.fade, 0, 0.6, 'pet.fade') } : {})
     },
     name: normaliseName(input.name),
     ...(caption ? { caption } : {}),
