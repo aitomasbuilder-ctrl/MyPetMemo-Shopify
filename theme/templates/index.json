@@ -1,0 +1,295 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero",
+      "settings": {}
+    },
+    "transform": {
+      "type": "transformation",
+      "settings": {}
+    },
+    "featured": {
+      "type": "featured-products",
+      "settings": {}
+    },
+    "gift_set": {
+      "type": "matching-gift-set",
+      "blocks": {
+        "0": {
+          "type": "set",
+          "settings": {
+            "main": "blanket",
+            "title": "The Cozy Set",
+            "button": "Start with the blanket"
+          }
+        },
+        "1": {
+          "type": "set",
+          "settings": {
+            "main": "portrait",
+            "title": "The Keepsake Set",
+            "button": "Start with the portrait"
+          }
+        }
+      },
+      "block_order": [
+        "0",
+        "1"
+      ],
+      "settings": {}
+    },
+    "how": {
+      "type": "how-it-works",
+      "blocks": {
+        "0": {
+          "type": "step",
+          "settings": {
+            "heading": "Upload your pet",
+            "text": "A clear photo from your phone is all you need.",
+            "icon": "upload"
+          }
+        },
+        "1": {
+          "type": "step",
+          "settings": {
+            "heading": "Choose your style",
+            "text": "Choose a portrait style and add the personal details.",
+            "icon": "sparkles"
+          }
+        },
+        "2": {
+          "type": "step",
+          "settings": {
+            "heading": "We create your design",
+            "text": "Your favorite face becomes personalized artwork.",
+            "icon": "heart"
+          }
+        },
+        "3": {
+          "type": "step",
+          "settings": {
+            "heading": "Made for you",
+            "text": "Your physical keepsake is shipped; digital portraits arrive by email.",
+            "icon": "gift"
+          }
+        }
+      },
+      "block_order": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "settings": {}
+    },
+    "styles": {
+      "type": "portrait-styles",
+      "settings": {}
+    },
+    "gifting": {
+      "type": "gifting",
+      "blocks": {
+        "0": {
+          "type": "occasion",
+          "settings": {
+            "title": "Dog moms"
+          }
+        },
+        "1": {
+          "type": "occasion",
+          "settings": {
+            "title": "Dog dads"
+          }
+        },
+        "2": {
+          "type": "occasion",
+          "settings": {
+            "title": "Christmas"
+          }
+        },
+        "3": {
+          "type": "occasion",
+          "settings": {
+            "title": "Birthdays"
+          }
+        },
+        "4": {
+          "type": "occasion",
+          "settings": {
+            "title": "New pet parents"
+          }
+        },
+        "5": {
+          "type": "occasion",
+          "settings": {
+            "title": "Pet memorials"
+          }
+        }
+      },
+      "block_order": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "settings": {}
+    },
+    "why": {
+      "type": "why-mypetmemo",
+      "blocks": {
+        "0": {
+          "type": "benefit",
+          "settings": {
+            "heading": "Made from your photo",
+            "text": "Their markings. Their expression. Their little personality.",
+            "icon": "heart"
+          }
+        },
+        "1": {
+          "type": "benefit",
+          "settings": {
+            "heading": "A style that feels like you",
+            "text": "Four portrait styles, from beautifully simple to softly painted.",
+            "icon": "sparkles"
+          }
+        },
+        "2": {
+          "type": "benefit",
+          "settings": {
+            "heading": "Meaning in every detail",
+            "text": "A name, a memory, a face that makes an ordinary day better.",
+            "icon": "gift"
+          }
+        },
+        "3": {
+          "type": "benefit",
+          "settings": {
+            "heading": "Here to help",
+            "text": "A real person to contact when you need a hand with your keepsake.",
+            "icon": "shield"
+          }
+        }
+      },
+      "block_order": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "settings": {}
+    },
+    "lifestyle": {
+      "type": "lifestyle",
+      "settings": {}
+    },
+    "reviews": {
+      "type": "reviews-intro",
+      "settings": {}
+    },
+    "guarantee": {
+      "type": "guarantee",
+      "settings": {}
+    },
+    "photos": {
+      "type": "photo-guide",
+      "settings": {}
+    },
+    "faq": {
+      "type": "faq",
+      "blocks": {
+        "0": {
+          "type": "question",
+          "settings": {
+            "question": "Which pets are welcome?",
+            "answer": "<p>Dogs, cats, and the other animals you call family. Start with a clear photo showing your pet’s full face.</p>"
+          }
+        },
+        "1": {
+          "type": "question",
+          "settings": {
+            "question": "How does personalization work?",
+            "answer": "<p>Choose your product and options, upload a pet photo, select a portrait style, and add a name. Your artwork is prepared separately before your personalized item is produced.</p>"
+          }
+        },
+        "2": {
+          "type": "question",
+          "settings": {
+            "question": "What makes a great pet photo?",
+            "answer": "<p>Bright natural light and a sharp image work best. Keep the camera at your pet’s eye level, with the full face and ears visible. Avoid screenshots, heavy filters, and blurry photos.</p>"
+          }
+        },
+        "3": {
+          "type": "question",
+          "settings": {
+            "question": "What if I have more than one pet?",
+            "answer": "<p>Choose a multi-pet option when one is offered on the product page. For a blanket, you can attach a group photo or up to three individual photos. The selected product option determines the price.</p>"
+          }
+        },
+        "4": {
+          "type": "question",
+          "settings": {
+            "question": "Will I see the finished artwork immediately?",
+            "answer": "<p>The on-page photo layout is a placement guide, not the final portrait. The four style examples illustrate the artwork direction. Your finished artwork is prepared separately.</p>"
+          }
+        },
+        "5": {
+          "type": "question",
+          "settings": {
+            "question": "How long does delivery take?",
+            "answer": "<p>Please check the product description and shipping policy for the current production and delivery estimates. Contact us before ordering if you need a gift by a particular date.</p>"
+          }
+        },
+        "6": {
+          "type": "question",
+          "settings": {
+            "question": "Can I add my pet’s name?",
+            "answer": "<p>Yes. Add a name in the personalization form, or leave the field empty for a portrait without a name.</p>"
+          }
+        },
+        "7": {
+          "type": "question",
+          "settings": {
+            "question": "What if I need to change an order?",
+            "answer": "<p>Contact us as soon as you notice a mistake and include your order number. Changes depend on whether production has already started.</p>"
+          }
+        },
+        "8": {
+          "type": "question",
+          "settings": {
+            "question": "What if an item arrives damaged or incorrect?",
+            "answer": "<p>Contact us with your order number and clear photos. We review production defects, printing issues, and incorrect items under the store’s refund and replacement policy.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "settings": {}
+    }
+  },
+  "order": [
+    "hero",
+    "transform",
+    "featured",
+    "gift_set",
+    "how",
+    "styles",
+    "gifting",
+    "why",
+    "lifestyle",
+    "reviews",
+    "guarantee",
+    "photos",
+    "faq"
+  ]
+}

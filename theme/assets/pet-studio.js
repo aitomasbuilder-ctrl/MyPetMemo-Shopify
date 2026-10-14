@@ -2723,35 +2723,13 @@
           return;
         }
         const preview = await this.exportPreview();
-        const form = new FormData();
-        form.append('id', String(s.variant.id));
-        form.append('quantity', '1');
-        if (design.name) form.append('properties[Pet name]', design.name.text);
-        const extra = this.state.extra, clean = t => String(t || '').replace(/\s+/g, ' ').trim();
-        if (this.config.extraFields === 'year' && clean(extra.year)) form.append('properties[Year]', clean(extra.year));
-        if (this.config.extraFields === 'memorial' && clean(extra.dates)) form.append('properties[Dates]', clean(extra.dates));
-        if (this.config.extraFields === 'memorial' && clean(extra.message)) form.append('properties[Message]', clean(extra.message));
-        if (this.config.extraFields === 'line' && clean(extra.message)) form.append('properties[Text]', clean(extra.message));
-        if (this.isMug()) form.append('properties[Printed on]', 'Both sides');
-        if (this.isPortrait()) {
-          form.append('properties[Style]', this.P.STYLES[s.artStyle].label);
-          if (clean(extra.message)) form.append('properties[Custom text]', clean(extra.message));
-          if (s.artStyle === 'memorial' && clean(extra.dates)) form.append('properties[Dates]', clean(extra.dates));
-          if (this.isDigital()) form.append('properties[Delivery]', 'Digital download, emailed after payment');
-        }
-        form.append('properties[Background]', design.background.name);
-        form.append('properties[Design ID]', approval.id);
-        form.append('properties[Design preview]', preview, `${approval.id}-preview.jpg`);
-        if (approval.token) form.append('properties[_design]', approval.token);
-        else form.append('properties[_design_unsigned]', approval.unsigned);
-        form.append('properties[_artwork]', s.art.blob, `${approval.id}-artwork.png`);
-        form.append('properties[_Original photo]', s.photo.blob, `${approval.id}-original.jpg`);
-        form.append('properties[_MyPetMemo family]', this.familyKey());
+        const form = this.cartForm(design, approval, preview);
         const res = await fetch(this.config.cartAddUrl, { method: 'POST', body: form, headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new StudioError('cart', json.description || json.message || 'We couldn’t add this to your cart. Please try again.');
         s.addedId = approval.id;
         this.persist();
+        this.saveHandoff(design, approval.id);
         await this.captureEmail();
         this.el.cartStatus.textContent = `Added to your cart (design ${approval.id}).`;
         this.root.dispatchEvent(new CustomEvent('pet-studio:added', { bubbles: true, detail: { item: json, design, id: approval.id, signed: !!approval.token } }));
@@ -2762,6 +2740,49 @@
         this.adding = false;
         this.updateUI();
       }
+    }
+    /** Cart line for an approved design: what the shopper sees (name, text, background, preview) and what the
+     *  backend needs (signed design, artwork, original photo). Product page and matching add-ons use the same. */
+    cartForm(design, approval, preview, more = {}) {
+      const s = this.state;
+      const form = new FormData();
+      form.append('id', String(s.variant.id));
+      form.append('quantity', '1');
+      if (design.name) form.append('properties[Pet name]', design.name.text);
+      const extra = this.state.extra, clean = t => String(t || '').replace(/\s+/g, ' ').trim();
+      if (this.config.extraFields === 'year' && clean(extra.year)) form.append('properties[Year]', clean(extra.year));
+      if (this.config.extraFields === 'memorial' && clean(extra.dates)) form.append('properties[Dates]', clean(extra.dates));
+      if (this.config.extraFields === 'memorial' && clean(extra.message)) form.append('properties[Message]', clean(extra.message));
+      if (this.config.extraFields === 'line' && clean(extra.message)) form.append('properties[Text]', clean(extra.message));
+      if (this.isMug()) form.append('properties[Printed on]', 'Both sides');
+      if (this.isPortrait()) {
+        form.append('properties[Style]', this.P.STYLES[s.artStyle].label);
+        if (clean(extra.message)) form.append('properties[Custom text]', clean(extra.message));
+        if (s.artStyle === 'memorial' && clean(extra.dates)) form.append('properties[Dates]', clean(extra.dates));
+        if (this.isDigital()) form.append('properties[Delivery]', 'Digital download, emailed after payment');
+      }
+      form.append('properties[Background]', design.background.name);
+      form.append('properties[Design ID]', approval.id);
+      form.append('properties[Design preview]', preview, `${approval.id}-preview.jpg`);
+      if (approval.token) form.append('properties[_design]', approval.token);
+      else form.append('properties[_design_unsigned]', approval.unsigned);
+      form.append('properties[_artwork]', s.art.blob, `${approval.id}-artwork.png`);
+      form.append('properties[_Original photo]', s.photo.blob, `${approval.id}-original.jpg`);
+      form.append('properties[_MyPetMemo family]', this.familyKey());
+      Object.entries(more).forEach(([k, v]) => { if (v) form.append(`properties[${k}]`, v); });
+      return form;
+    }
+    /** Keeps the approved pet (artwork, photo, name and lettering, background, style) in this browser so the cart
+     *  can offer a matching ornament or mug made from it without a second upload (assets/pet-upsell.js). */
+    saveHandoff(design, id) {
+      const s = this.state, bg = s.background;
+      kv.set(`handoff:${id}`, {
+        at: Date.now(), id, family: this.familyKey(), productId: this.config.productId,
+        art: s.art, photo: s.photo && s.photo.blob,
+        name: { text: s.name.text, font: s.name.font, fill: s.name.fill, stroke: s.name.stroke },
+        background: { id: bg.id, kind: bg.kind, name: bg.name, color: bg.color, image: bg.image, preview: bg.preview },
+        artStyle: this.isPortrait() ? s.artStyle : null, extra: { ...s.extra }
+      });
     }
     async captureEmail() {
       const email = this.el.email && this.el.email.value.trim();
@@ -2788,6 +2809,64 @@
     }
   }
 
+  /* ---------- matching add-ons (cart upsell) ----------
+   * Builds an ornament or mug from a design the shopper already approved: the same artwork, background, name and
+   * lettering, placed by that product's own default layout, signed by the backend and added to the cart with the
+   * same properties as the product page. No second upload and no second AI request. */
+  const quiet = new Proxy(function () {}, {
+    get: (t, k) => (k === Symbol.iterator ? [][Symbol.iterator].bind([]) : k === 'length' ? 0 : quiet),
+    set: () => true,
+    apply: () => quiet
+  });
+  async function makeAddon(config, source) {
+    const d = Object.create(PetStudio.prototype);
+    Object.assign(d, {
+      headless: true, root: document.createElement('div'), config, el: quiet,
+      B: window.MyPetMemoBackgrounds, P: window.MyPetMemoPortrait || null,
+      templates: new Map(), svgCache: new Map(), styleCache: new Map(), decorCache: new Map(),
+      generationId: 0, measureCtx: createCanvas(4, 4).getContext('2d')
+    });
+    ['changed', 'renderAll', 'updateUI', 'persistSoon', 'persist'].forEach(m => { d[m] = () => {}; });
+    const variant = config.variants.find(v => v.id === config.variantId && v.available) || config.variants.find(v => v.available) || config.variants[0];
+    const n = source.name || {};
+    d.state = {
+      phase: 'ready', photo: { blob: source.photo, hash: '' }, artwork: await loadImage(URL.createObjectURL(source.art.blob)),
+      art: { blob: source.art.blob, sha256: source.art.sha256, w: source.art.w, h: source.art.h },
+      background: { ...source.background }, bgImage: null,
+      pet: { cx: 0.5, cy: 0.6, w: 0.86, rot: 0 },
+      name: { text: Array.from(String(n.text || '').trim()).slice(0, config.nameMax || 24).join(''), cx: 0.5, cy: 0.12, size: 0.13, rot: 0, font: n.font || 'fredoka', fill: n.fill || '#ffffff', stroke: n.stroke || '#2a2230' },
+      extra: { year: '', dates: '', message: '', ...(config.extra || {}) },
+      style: config.style || 'below', artStyle: 'modern', variant, selected: null, adjustOpen: false, editorOpen: false, addedId: null
+    };
+    d.selectedOptions = variant.options.slice();
+    if (d.state.background.kind === 'image') {
+      d.state.bgImage = await loadImage(d.state.background.preview || d.state.background.image).catch(() => null);
+    }
+    await d.fetchTemplate(variant);
+    await d.fontsReady();
+    d.placeDefault();
+    return d;
+  }
+  Object.assign(PetStudio.prototype, {
+    /** Add-ons: the cart image of this product with the shopper's pet. */
+    async addonPreview() {
+      const blob = await this.exportPreview();
+      this.previewBlob = blob;
+      return blob;
+    },
+    /** Add-ons: sign the design and add it to the cart. `more` adds visible or hidden line properties. */
+    async addonAdd(more = {}) {
+      this.clampAll();
+      const design = this.designData();
+      const approval = await this.approve(design);
+      const preview = this.previewBlob || await this.exportPreview();
+      const res = await fetch(this.config.cartAddUrl, { method: 'POST', body: this.cartForm(design, approval, preview, more), headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new StudioError('cart', json.description || json.message || 'We couldn’t add this to your cart.');
+      return { id: approval.id, item: json, signed: !!approval.token };
+    }
+  });
+
   const init = (scope = document) => {
     scope.querySelectorAll('[data-pet-studio]').forEach(root => {
       if (root.__petStudio) return;
@@ -2799,5 +2878,8 @@
   else init();
   document.addEventListener('shopify:section:load', e => init(e.target));
 
-  window.MyPetMemoStudio = { formatMoney, parseInches, removeFlatBackground, NAME_BASELINE, NAME_STROKE, CAPTION_LINE };
+  window.MyPetMemoStudio = {
+    formatMoney, parseInches, removeFlatBackground, NAME_BASELINE, NAME_STROKE, CAPTION_LINE,
+    makeAddon, handoff: id => kv.get(`handoff:${id}`), loadImage, sha256Hex
+  };
 })();

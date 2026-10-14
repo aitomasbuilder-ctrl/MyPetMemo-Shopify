@@ -1,0 +1,226 @@
+{%- comment -%}
+  "Make It a Matching Gift Set": a blanket or portrait shown with the ornament and mug made from the same pet.
+  The bundle price itself comes from the Shopify automatic discounts "Matching add-on 15% off" and
+  "Matching set 20% off both add-ons"; the percentages here only label it and must match them.
+{%- endcomment -%}
+{%- liquid
+  assign ornament = section.settings.ornament_product | default: all_products['custom-pet-christmas-ornament']
+  assign mug = section.settings.mug_product | default: all_products['personalized-pet-coffee-mug']
+  assign has_ornament = false
+  if ornament != blank and ornament.available
+    assign has_ornament = true
+  endif
+  assign has_mug = false
+  if mug != blank and mug.available
+    assign has_mug = true
+  endif
+-%}
+<section class="section wrap gift-set" id="matching-gift-set">
+  <div class="section-heading"><div><p class="eyebrow">{{ section.settings.eyebrow | escape }}</p><h2>{{ section.settings.heading | escape }}</h2></div><p>{{ section.settings.text | escape }}</p></div>
+  <div class="gift-set-grid">
+    {%- for block in section.blocks -%}
+      {%- liquid
+        if block.settings.main == 'portrait'
+          assign main = block.settings.product | default: settings.portrait_product | default: all_products['personalized-pet-portrait']
+          assign link = main.url
+        else
+          assign main = block.settings.product | default: settings.blanket_product | default: all_products['custom-pet-portrait-blanket']
+          capture link
+            render 'product-link', kind: 'blanket'
+          endcapture
+        endif
+        if main == blank or main.available == false
+          continue
+        endif
+        assign main_img = 'gift-set-' | append: block.settings.main | append: '-main.webp'
+        assign orn_img = 'gift-set-' | append: block.settings.main | append: '-ornament.webp'
+        assign mug_img = 'gift-set-' | append: block.settings.main | append: '-mug.webp'
+        assign addons = 0
+        assign addon_count = 0
+        if has_ornament
+          assign addons = addons | plus: ornament.price
+          assign addon_count = addon_count | plus: 1
+        endif
+        if has_mug
+          assign addons = addons | plus: mug.price
+          assign addon_count = addon_count | plus: 1
+        endif
+        if addon_count > 1
+          assign pct = section.settings.percent_both
+        else
+          assign pct = section.settings.percent_one
+        endif
+        assign saving = addons | times: pct | divided_by: 100
+        assign full = main.price | plus: addons
+        assign set_price = full | minus: saving
+      -%}
+      <article class="gift-set-card" {{ block.shopify_attributes }}>
+        <a class="gift-set-visual{% unless has_mug %} no-mug{% endunless %}" href="{{ link | strip }}">
+          <span class="gift-set-main">{% if block.settings.main_image %}{{ block.settings.main_image | image_url: width: 800 | image_tag: loading: 'lazy', sizes: '(max-width: 700px) 60vw, 25vw', alt: main.title }}{% else %}<img src="{{ main_img | asset_url }}" width="800" height="960" loading="lazy" alt="{{ main.title | escape }}">{% endif %}</span>
+          {%- if has_ornament -%}<span class="gift-set-addon gift-set-ornament"><i aria-hidden="true">+</i>{% if block.settings.ornament_image %}{{ block.settings.ornament_image | image_url: width: 500 | image_tag: loading: 'lazy', alt: ornament.title }}{% else %}<img src="{{ orn_img | asset_url }}" width="800" height="800" loading="lazy" alt="{{ ornament.title | escape }}">{% endif %}</span>{%- endif -%}
+          {%- if has_mug -%}<span class="gift-set-addon gift-set-mug"><i aria-hidden="true">+</i>{% if block.settings.mug_image %}{{ block.settings.mug_image | image_url: width: 500 | image_tag: loading: 'lazy', alt: mug.title }}{% else %}<img src="{{ mug_img | asset_url }}" width="800" height="640" loading="lazy" alt="{{ mug.title | escape }}">{% endif %}</span>{%- endif -%}
+        </a>
+        <div class="gift-set-body">
+          <h3>{{ block.settings.title | escape }}</h3>
+          <p class="gift-set-items">{{ main.title | split: ' – ' | first | escape }}{% if has_ornament %} + ornament{% endif %}{% if has_mug %} + mug{% endif %}</p>
+          {%- if addon_count > 0 -%}
+            <p class="gift-set-price"><span>{{ 'common.from' | t }}</span> <strong>{{ set_price | money }}</strong> {% if saving > 0 %}<s>{{ full | money }}</s> <span class="gift-set-badge">{{ pct }}% off the {% if addon_count > 1 %}add-ons{% else %}ornament{% endif %}</span>{% endif %}</p>
+          {%- endif -%}
+          <a class="button" href="{{ link | strip }}">{{ block.settings.button | escape }}{% render 'icon', name: 'arrow', size: 17 %}</a>
+        </div>
+      </article>
+    {%- endfor -%}
+  </div>
+  <p class="small gift-set-note">{{ section.settings.note | escape }}</p>
+</section>
+<style>
+  .gift-set{border-top:1px solid #ded6c8}
+  .gift-set .section-heading>p{max-width:430px;color:#81745e}
+  .gift-set-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:28px}
+  .gift-set-card{background:#fbf6ee;border:1px solid #efe4d3;border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+  .gift-set-visual{display:grid;grid-template-columns:1.25fr 1fr;grid-template-rows:1fr 1fr;gap:10px;padding:18px;background:linear-gradient(160deg,#f4d9de55,#dfe8da88)}
+  .gift-set-visual img{width:100%;height:100%;object-fit:contain;border-radius:8px;background:#fff}
+  .gift-set-main{grid-row:span 2;display:flex}
+  .gift-set-main img{object-fit:cover;aspect-ratio:5/6}
+  .gift-set-visual.no-mug .gift-set-ornament{grid-row:span 2}
+  .gift-set-addon{position:relative;display:flex;min-height:0}
+  .gift-set-addon i{position:absolute;left:-17px;top:50%;transform:translateY(-50%);z-index:1;width:26px;height:26px;border-radius:50%;background:#292a25;color:#fff;font:600 17px/26px Arial;text-align:center;font-style:normal}
+  .gift-set-mug img{background:#f6f3ee}
+  .gift-set-body{padding:20px 22px 24px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .gift-set-body h3{font:1.6rem/1.2 var(--display);letter-spacing:-.03em}
+  .gift-set-items{color:#81745e;font-size:.9375rem}
+  .gift-set-price{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 8px;font-size:1.0625rem}
+  .gift-set-price>span:first-child{font-size:.75rem;color:#8f7f66}
+  .gift-set-price s{color:#8f7f66;font-size:.875rem}
+  .gift-set-badge{background:#dfe8da;color:#34472f;border-radius:999px;padding:2px 10px;font-size:.75rem;font-weight:600}
+  .gift-set-body .button{margin-top:auto;align-self:start}
+  .gift-set-note{margin-top:22px}
+  @media(max-width:700px){.gift-set-visual{padding:12px;gap:8px}.gift-set-body{padding:16px 16px 20px}.gift-set-body h3{font-size:1.4rem}.gift-set-body .button{align-self:stretch}}
+</style>
+
+{% schema %}
+{
+  "name": "Matching gift sets",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "UPLOAD ONCE, GIFT THREE TIMES"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Make It a Matching Gift Set"
+    },
+    {
+      "type": "textarea",
+      "id": "text",
+      "label": "Text",
+      "default": "Start with a blanket or portrait. Before checkout we put the same pet on a matching ornament and mug, and the set price is applied in your bag."
+    },
+    {
+      "type": "product",
+      "id": "ornament_product",
+      "label": "Ornament",
+      "info": "Defaults to the Custom Pet Christmas Ornament"
+    },
+    {
+      "type": "product",
+      "id": "mug_product",
+      "label": "Mug",
+      "info": "Defaults to the product with handle personalized-pet-coffee-mug. Hidden until it is available."
+    },
+    {
+      "type": "range",
+      "id": "percent_one",
+      "label": "Discount with one add-on",
+      "info": "Keep in line with the discount \"Matching add-on 15% off\".",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "%",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "percent_both",
+      "label": "Discount with both add-ons",
+      "info": "Keep in line with the discount \"Matching set 20% off both add-ons\".",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "%",
+      "default": 20
+    },
+    {
+      "type": "text",
+      "id": "note",
+      "label": "Note",
+      "default": "Example sets. Yours is made from your own pet photo, the same portrait on every piece."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "set",
+      "name": "Gift set",
+      "settings": [
+        {
+          "type": "select",
+          "id": "main",
+          "label": "Main product",
+          "options": [
+            { "value": "blanket", "label": "Blanket" },
+            { "value": "portrait", "label": "Portrait" }
+          ],
+          "default": "blanket"
+        },
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Product",
+          "info": "Defaults to the store's blanket or portrait"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "The Cozy Set"
+        },
+        {
+          "type": "text",
+          "id": "button",
+          "label": "Button",
+          "default": "Start with the blanket"
+        },
+        {
+          "type": "image_picker",
+          "id": "main_image",
+          "label": "Main image"
+        },
+        {
+          "type": "image_picker",
+          "id": "ornament_image",
+          "label": "Ornament image"
+        },
+        {
+          "type": "image_picker",
+          "id": "mug_image",
+          "label": "Mug image"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 4,
+  "presets": [
+    {
+      "name": "Matching gift sets",
+      "blocks": [
+        { "type": "set", "settings": { "main": "blanket", "title": "The Cozy Set", "button": "Start with the blanket" } },
+        { "type": "set", "settings": { "main": "portrait", "title": "The Keepsake Set", "button": "Start with the portrait" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

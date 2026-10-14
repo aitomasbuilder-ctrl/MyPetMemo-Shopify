@@ -1,0 +1,68 @@
+/* MyPetMemo matching add-on offer (cart, before checkout): warm cream, beige, sage and soft pink. */
+.mpu {
+  --mpu-cream: #fbf6ee; --mpu-beige: #efe4d3; --mpu-sage: #8fa58a; --mpu-sage-2: #dfe8da; --mpu-pink: #f4d9de; --mpu-ink: #2f2a28; --mpu-muted: #6d6460;
+  width: min(760px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: 22px;
+  background: var(--mpu-cream); color: var(--mpu-ink); font-family: Montserrat, "Helvetica Neue", Arial, sans-serif;
+  box-shadow: 0 24px 60px rgba(47, 42, 40, .25); overflow: auto;
+}
+.mpu::backdrop { background: rgba(47, 42, 40, .55); }
+.mpu *, .mpu *::before, .mpu *::after { box-sizing: border-box; }
+.mpu [hidden] { display: none !important; }
+.mpu__inner { position: relative; padding: 26px 26px 20px; }
+.mpu__close {
+  position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; border: 0; border-radius: 50%;
+  background: #fff; color: var(--mpu-ink); font-size: 24px; line-height: 1; cursor: pointer;
+}
+.mpu__head { display: flex; gap: 16px; align-items: center; padding-right: 36px; }
+.mpu__main-img { width: 88px; height: 88px; object-fit: cover; border-radius: 14px; background: var(--mpu-pink); flex: none; }
+.mpu__eyebrow { margin: 0 0 4px; color: #9a5b68; font-size: 13px; font-weight: 700; }
+.mpu__title { margin: 0 0 6px; font: 700 clamp(22px, 3.2vw, 30px)/1.15 "Playfair Display", Georgia, serif; }
+.mpu__sub { margin: 0; color: var(--mpu-muted); font-size: 15px; line-height: 1.45; }
+.mpu__offers { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 20px 0 14px; }
+.mpu__card { display: flex; flex-direction: column; background: #fff; border-radius: 18px; overflow: hidden; border: 1px solid var(--mpu-beige); }
+.mpu__media { position: relative; aspect-ratio: 1 / 1; background: linear-gradient(180deg, #fbf3f4, var(--mpu-beige)); }
+.mpu__media img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.mpu__card--mug .mpu__media { background: #f6f3ee; }
+.mpu__card--ornament .mpu__media { background: #fff; }
+.mpu__loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; text-align: center; color: var(--mpu-muted); font-size: 14px; }
+.mpu__spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--mpu-sage-2); border-top-color: var(--mpu-sage); animation: mpu-spin 1s linear infinite; }
+@keyframes mpu-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .mpu__spinner { animation-duration: 3s; } }
+.mpu__body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.mpu__name { margin: 0; font-size: 17px; font-weight: 700; }
+.mpu__desc { margin: 0; color: var(--mpu-muted); font-size: 14px; }
+.mpu__price { margin: 4px 0 8px; font-size: 18px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; }
+.mpu__price s { color: var(--mpu-muted); font-size: 15px; }
+.mpu__badge { background: var(--mpu-sage-2); color: #34472f; border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+.mpu__badge:empty { display: none; }
+.mpu__add {
+  margin-top: auto; width: 100%; min-height: 48px; border-radius: 999px; border: 2px solid var(--mpu-ink); background: #fff;
+  color: var(--mpu-ink); font: 700 16px/1 Montserrat, sans-serif; cursor: pointer;
+}
+.mpu__add:hover:not(:disabled) { background: var(--mpu-pink); }
+.mpu__add.is-added { background: var(--mpu-sage-2); border-color: var(--mpu-sage); color: #2f4a2a; }
+.mpu__add:disabled { opacity: .55; cursor: default; }
+.mpu__add:focus-visible, .mpu__continue:focus-visible, .mpu__close:focus-visible { outline: 3px solid #4a90e2; outline-offset: 2px; }
+.mpu__summary { border-top: 1px solid var(--mpu-beige); padding-top: 12px; }
+.mpu__saving { margin: 0 0 4px; color: #34472f; font-weight: 700; }
+.mpu__total { margin: 0; display: flex; justify-content: space-between; font-size: 17px; }
+.mpu__error { margin: 8px 0 0; color: #b42318; font-size: 14px; }
+.mpu__foot { margin-top: 14px; text-align: center; }
+.mpu__continue {
+  width: 100%; min-height: 54px; border: 0; border-radius: 999px; background: var(--mpu-ink); color: #fff;
+  font: 700 17px/1 Montserrat, sans-serif; cursor: pointer;
+}
+.mpu__continue:hover { background: #4a423f; }
+.mpu__secure { margin: 8px 0 0; color: var(--mpu-muted); font-size: 13px; }
+@media (max-width: 600px) {
+  .mpu { inset: 0; width: 100%; max-width: none; height: 100%; max-height: none; margin: 0; border-radius: 0; }
+  .mpu__inner { padding: 18px 16px calc(16px + env(safe-area-inset-bottom)); min-height: 100%; display: flex; flex-direction: column; }
+  .mpu__main-img { width: 64px; height: 64px; }
+  .mpu__offers { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .mpu__body { padding: 10px 10px 12px; }
+  .mpu__name { font-size: 15px; }
+  .mpu__desc { font-size: 12px; }
+  .mpu__price { font-size: 16px; }
+  .mpu__add { min-height: 44px; font-size: 14px; }
+  .mpu__foot { position: sticky; bottom: 0; background: var(--mpu-cream); padding-top: 10px; margin-top: auto; }
+}

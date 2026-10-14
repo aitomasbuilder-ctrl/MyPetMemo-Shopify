@@ -1,0 +1,102 @@
+{% doc %}
+  Matching add-on offer shown when a shopper with a personalized blanket or portrait clicks Checkout: a matching
+  ornament and mug made from the same approved pet artwork (assets/pet-upsell.js), at a bundle price.
+  The bundle prices themselves are Shopify automatic discounts (Discounts → "Matching ornament / mug"); the
+  percentages below only label the offer and must match them.
+  @param {object} s - main-cart section settings
+{% enddoc %}
+{%- liquid
+  assign ornament = s.upsell_ornament | default: all_products['custom-pet-christmas-ornament']
+  assign memorial = s.upsell_memorial_ornament | default: all_products['pet-memorial-ornament']
+  assign mug = s.upsell_mug | default: all_products['personalized-pet-coffee-mug']
+-%}
+{%- capture offers -%}
+  {%- for slot in (1..3) -%}
+    {%- case slot -%}
+      {%- when 1 -%}{%- assign p = ornament -%}{%- assign key = 'ornament' -%}{%- assign family = 'ornament' -%}{%- assign extra = 'year' -%}{%- assign fallback = '1200x1200' -%}{%- assign name_max = 14 -%}
+      {%- when 2 -%}{%- assign p = memorial -%}{%- assign key = 'memorial' -%}{%- assign family = 'ornament' -%}{%- assign extra = 'memorial' -%}{%- assign fallback = '1200x1200' -%}{%- assign name_max = 14 -%}
+      {%- when 3 -%}{%- assign p = mug -%}{%- assign key = 'mug' -%}{%- assign family = 'mug' -%}{%- assign extra = 'line' -%}{%- assign fallback = '2475x1155' -%}{%- assign name_max = 14 -%}
+    {%- endcase -%}
+    {%- if p != blank and p.available -%}
+      {%- assign pick = p.selected_or_first_available_variant -%}
+      {%- if family == 'ornament' -%}
+        {%- for v in p.variants -%}{%- if v.available and v.title contains 'ircle' -%}{%- assign pick = v -%}{%- break -%}{%- endif -%}{%- endfor -%}
+      {%- endif -%}
+      {%- assign fw = fallback | split: 'x' | first | plus: 0 -%}{%- assign fh = fallback | split: 'x' | last | plus: 0 -%}
+      "{{ key }}": {
+        "key": {{ key | json }}, "family": {{ family | json }}, "title": {{ p.title | split: ' – ' | first | json }},
+        "productId": {{ p.id }}, "handle": {{ p.handle | json }}, "url": {{ p.url | json }}, "variantId": {{ pick.id }},
+        "optionNames": {{ p.options | json }}, "extraFields": {{ extra | json }}, "nameMax": {{ name_max }},
+        "variants": [{% for v in p.variants %}{"id": {{ v.id }}, "title": {{ v.title | json }}, "options": {{ v.options | json }}, "price": {{ v.price }}, "available": {{ v.available }}, "sku": {{ v.sku | json }}}{% unless forloop.last %},{% endunless %}{% endfor %}],
+        "fallbackPrint": {"width": {{ fw }}, "height": {{ fh }}}, "printDpi": 150, "safeInset": {% if family == 'mug' %}0.05{% else %}0.06{% endif %},
+        "approveEndpoint": {{ s.upsell_approve_endpoint | json }}, "templateEndpoint": {{ s.upsell_template_endpoint | json }},
+        "cartAddUrl": {{ routes.cart_add_url | append: '.js' | json }}, "cartJsUrl": {{ routes.cart_url | append: '.js' | json }}
+      },
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Montserrat:wght@500;600;700;800&family=Pacifico&family=Playfair+Display:wght@700&display=swap">
+{{ 'pet-upsell.css' | asset_url | stylesheet_tag }}
+
+<dialog class="mpu" data-pet-upsell aria-labelledby="UpsellTitle">
+  <div class="mpu__inner">
+    <button type="button" class="mpu__close" data-upsell-close aria-label="Back to your bag">×</button>
+    <header class="mpu__head">
+      <img class="mpu__main-img" data-upsell-main-img alt="" width="88" height="88" hidden>
+      <div>
+        <p class="mpu__eyebrow">{{ s.upsell_eyebrow | escape }}</p>
+        <h2 class="mpu__title" id="UpsellTitle">{{ s.upsell_heading | escape }}</h2>
+        <p class="mpu__sub">{{ s.upsell_subheading | escape }}</p>
+      </div>
+    </header>
+    <div class="mpu__offers" data-upsell-offers></div>
+    <div class="mpu__summary" aria-live="polite">
+      <p class="mpu__saving" data-upsell-saving hidden></p>
+      <p class="mpu__total"><span>{{ 'cart.subtotal' | t }}</span> <strong data-upsell-total></strong></p>
+      <p class="mpu__error" data-upsell-error role="alert" hidden></p>
+    </div>
+    <footer class="mpu__foot">
+      <button type="button" class="mpu__continue" data-upsell-continue>{{ s.upsell_skip_label | escape }}</button>
+      <p class="mpu__secure">{{ s.upsell_secure_text | escape }}</p>
+    </footer>
+  </div>
+  <template data-upsell-card>
+    <article class="mpu__card" data-offer>
+      <div class="mpu__media"><img data-offer-img alt="" hidden><div class="mpu__loading" data-offer-loading><span class="mpu__spinner" aria-hidden="true"></span><span data-offer-loading-text></span></div></div>
+      <div class="mpu__body">
+        <h3 class="mpu__name" data-offer-title></h3>
+        <p class="mpu__desc" data-offer-desc></p>
+        <p class="mpu__price"><s data-offer-was></s> <strong data-offer-now></strong> <span class="mpu__badge" data-offer-badge></span></p>
+        <button type="button" class="mpu__add" data-offer-add aria-pressed="false"></button>
+      </div>
+    </article>
+  </template>
+  <script type="application/json" data-upsell-config>
+    {
+      "offers": { {{ offers | strip | remove_last: ',' }} },
+      "percentOne": {{ s.upsell_percent_one | default: 15 }},
+      "percentBoth": {{ s.upsell_percent_both | default: 20 }},
+      "mainFamilies": ["blanket", "portrait"],
+      "moneyFormat": {{ shop.money_format | json }},
+      "checkoutUrl": "/checkout",
+      "cartUpdateUrl": {{ routes.cart_update_url | append: '.js' | json }},
+      "cartChangeUrl": {{ routes.cart_change_url | append: '.js' | json }},
+      "cartJsUrl": {{ routes.cart_url | append: '.js' | json }},
+      "text": {
+        "skip": {{ s.upsell_skip_label | json }},
+        "continue": {{ s.upsell_continue_label | json }},
+        "ornament": {{ s.upsell_ornament_text | json }},
+        "mug": {{ s.upsell_mug_text | json }},
+        "addOrnament": "+ Add Ornament",
+        "addMug": "+ Add Mug"
+      }
+    }
+  </script>
+</dialog>
+<script src="{{ 'pet-backgrounds.js' | asset_url }}" defer></script>
+<script src="{{ 'pet-portrait.js' | asset_url }}" defer></script>
+<script src="{{ 'pet-studio.js' | asset_url }}" defer></script>
+<script src="{{ 'pet-upsell.js' | asset_url }}" defer></script>

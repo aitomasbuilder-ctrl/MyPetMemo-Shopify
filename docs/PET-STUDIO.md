@@ -197,3 +197,28 @@ If the approval endpoint is unreachable, the storefront still adds the item with
 
 `cd backend && npm test` runs the unit tests (design signing, rendering, two designs in one order,
 duplicate/concurrent webhooks, artwork mismatch, render failure and retry, approval endpoint CORS).
+
+## Matching add-ons before checkout (AOV upsell)
+
+Shopify Basic can't add upsells inside checkout (Checkout UI extensions need Plus). So the offer is a modal on the
+cart page that opens when the shopper presses **Checkout** with a personalized blanket or portrait in the bag
+(`snippets/pet-upsell.liquid`, `assets/pet-upsell.js`, `assets/pet-upsell.css`, settings in the **Shopping bag** section).
+
+- **Same pet, no re-upload.** When a blanket or portrait is added, `pet-studio.js` saves the approved artwork, photo,
+  name/lettering, background and style in the browser (IndexedDB `handoff:<Design ID>`). On another device the offer
+  rebuilds it from the cart line's uploaded `_artwork` / `_Original photo` files.
+- Each add-on is laid out by the same engine (`MyPetMemoStudio.makeAddon`), signed by the same approval endpoint and
+  added with the same line properties as on its own product page, plus `_MyPetMemo add-on`, `_MyPetMemo bundle`
+  (the main Design ID) and a visible "Matching set" line. The order pipeline then renders one print file per line.
+- No extra AI calls: the add-ons reuse the approved artwork.
+- Anything failing (script missing, timeout after 8 s, network) sends the shopper straight to checkout. The offer is
+  shown once per design per session.
+- **Prices** are Shopify automatic discounts (no app, $0): "Matching add-on 15% off" (buy 1 from collection
+  *Bundle main products*, get 1 from *Bundle add-ons* at 15%) and "Matching set 20% off both add-ons" (get 2 at 20%).
+  Both are limited to once per order and don't combine with other product discounts, so the best one wins and they
+  never stack with "Buy 2 ornaments". Collections are by tag: `bundle-main` (blankets, portrait) and `bundle-addon`
+  (ornaments) or a title containing "Pet Coffee Mug". Change the percentages in **Discounts**, then the matching
+  numbers in the Shopping bag section, Featured keepsakes text and Matching gift sets section.
+- Homepage: `sections/matching-gift-set.liquid` ("Make It a Matching Gift Set"). Its example pictures
+  (`assets/gift-set-*.webp`) were drawn by the studio engine from one golden retriever, so every piece shows the same
+  pet; each can be replaced with an image in the theme editor.
