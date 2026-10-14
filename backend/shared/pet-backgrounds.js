@@ -238,7 +238,14 @@
     { id: 'sunshine', name: 'Sunshine', kind: 'solid', color: '#ffe08a' },
     { id: 'navy', name: 'Navy', kind: 'solid', color: '#1b2a4e' },
     { id: 'charcoal', name: 'Charcoal', kind: 'solid', color: '#2f3640' },
-    { id: 'white', name: 'White', kind: 'solid', color: '#ffffff' }
+    { id: 'white', name: 'White', kind: 'solid', color: '#ffffff' },
+    // Portrait (wall art) colours
+    { id: 'soft-pink', name: 'Soft Pink', kind: 'solid', color: '#f4d9de' },
+    { id: 'warm-cream', name: 'Warm Cream', kind: 'solid', color: '#f6eddc' },
+    { id: 'beige', name: 'Beige', kind: 'solid', color: '#e6d6bf' },
+    { id: 'sage-green', name: 'Sage Green', kind: 'solid', color: '#c5d3bd' },
+    { id: 'light-blue', name: 'Light Blue', kind: 'solid', color: '#d3e4f1' },
+    { id: 'terracotta', name: 'Terracotta', kind: 'solid', color: '#c9765a' }
   ];
   var BY_ID = {};
   LIST.forEach(function (b) { BY_ID[b.id] = b; });
@@ -265,5 +272,42 @@
     return svg(def, 96, 96, def.kind === 'pattern' ? 340 : 1000);
   }
 
-  return { list: LIST, byId: BY_ID, svg: svg, swatchSvg: swatchSvg, isHex: function (c) { return HEX.test(c || ''); } };
+
+  /* Portrait style decoration drawn between the background and the pet (watercolor wash, classic oval, memorial
+   * glow). d = { kind, cx, cy, r, color }: centre and radius as fractions of the print width / height (r of the width).
+   * Gradients only (no filters), so browsers and the print renderer draw the same thing. */
+  function decorSvg(d, w, h) {
+    var vw = 1000, vh = f(vw * h / w);
+    var cx = d.cx * vw, cy = d.cy * vh, r = d.r * vw, c = HEX.test(d.color || '') ? d.color : '#ffffff', body = '', defs = '';
+    var grad = function (id, stops) {
+      return '<radialGradient id="' + id + '">' + stops.map(function (s) { return '<stop offset="' + s[0] + '" stop-color="' + c + '" stop-opacity="' + s[1] + '"/>'; }).join('') + '</radialGradient>';
+    };
+    if (d.kind === 'wash') {
+      defs = grad('d0', [[0, 0.75], [0.5, 0.55], [0.8, 0.22], [1, 0]]) + grad('d1', [[0, 0.5], [0.6, 0.3], [1, 0]]);
+      var rnd = seeded(97);
+      body += '<ellipse cx="' + f(cx) + '" cy="' + f(cy) + '" rx="' + f(r) + '" ry="' + f(r * 0.92) + '" fill="url(#d0)"/>';
+      for (var i = 0; i < 9; i++) {
+        var a = rnd() * Math.PI * 2, dd = r * (0.35 + rnd() * 0.45), rr = r * (0.28 + rnd() * 0.32);
+        body += '<ellipse cx="' + f(cx + Math.cos(a) * dd) + '" cy="' + f(cy + Math.sin(a) * dd * 0.9) + '" rx="' + f(rr) + '" ry="' + f(rr * (0.65 + rnd() * 0.35)) + '" transform="rotate(' + f(rnd() * 180) + ' ' + f(cx + Math.cos(a) * dd) + ' ' + f(cy + Math.sin(a) * dd * 0.9) + ')" fill="url(#d1)" opacity="' + f(0.55 + rnd() * 0.4) + '"/>';
+      }
+      for (var k = 0; k < 14; k++) {
+        var b = rnd() * Math.PI * 2, e = r * (0.95 + rnd() * 0.35), s = r * (0.008 + rnd() * 0.022);
+        body += '<circle cx="' + f(cx + Math.cos(b) * e) + '" cy="' + f(cy + Math.sin(b) * e * 0.9) + '" r="' + f(s) + '" fill="' + c + '" opacity="' + f(0.25 + rnd() * 0.3) + '"/>';
+      }
+    } else if (d.kind === 'vignette') {
+      defs = grad('d0', [[0, 0.6], [0.62, 0.42], [0.86, 0.16], [1, 0]]);
+      body += '<ellipse cx="' + f(cx) + '" cy="' + f(cy) + '" rx="' + f(r) + '" ry="' + f(r * 1.24) + '" fill="url(#d0)"/>' +
+        '<ellipse cx="' + f(cx) + '" cy="' + f(cy) + '" rx="' + f(r * 0.9) + '" ry="' + f(r * 1.13) + '" fill="none" stroke="#b8975a" stroke-opacity="0.75" stroke-width="' + f(r * 0.012) + '"/>';
+    } else if (d.kind === 'halo') {
+      defs = grad('d0', [[0, 0.95], [0.45, 0.7], [0.75, 0.28], [1, 0]]);
+      body += '<ellipse cx="' + f(cx) + '" cy="' + f(cy) + '" rx="' + f(r) + '" ry="' + f(r) + '" fill="url(#d0)"/>';
+      [[-0.78, -0.5, 0.05], [0.82, -0.36, 0.04], [-0.6, 0.62, 0.032], [0.7, 0.55, 0.045], [0.05, -0.95, 0.03]].forEach(function (p) {
+        body += shape(STAR, cx + p[0] * r, cy + p[1] * r, p[2] * r, 0, c, ' opacity="0.9"');
+      });
+    }
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="' + Math.round(w) + '" height="' + Math.round(h) + '" viewBox="0 0 ' + vw + ' ' + vh + '" preserveAspectRatio="none">' +
+      '<defs>' + defs + '</defs>' + body + '</svg>';
+  }
+
+  return { list: LIST, byId: BY_ID, svg: svg, swatchSvg: swatchSvg, decorSvg: decorSvg, isHex: function (c) { return HEX.test(c || ''); } };
 });

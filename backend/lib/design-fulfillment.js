@@ -2,6 +2,7 @@
 // Turns each approved design line of a paid order into a validated print file:
 // Printify variant (by SKU) -> exact print area -> artwork checked against the approved hash ->
 // rendered server side -> stored -> download re-checked. Throws on any failure so the order is held.
+// Digital portraits skip Printify: they are rendered at the approved file size (300 dpi) for download.
 const sharp = require('sharp');
 const { renderDesign, sha256 } = require('./render');
 const { allowedHost, defaultHosts } = require('./design');
@@ -29,23 +30,30 @@ async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetc
   const out = [];
   for (const item of items) {
     if (item.kind !== 'design') { out.push(item); continue; }
-    const mapping = await catalog.variantForSku(item.sku);
-    if (!mapping.is_enabled) throw new Error(`printify_variant_disabled:${item.sku}`);
-    const area = await catalog.printArea(mapping);
+    let mapping = null, area;
+    if (item.digital) {
+      area = { width: item.design.print.w, height: item.design.print.h };
+      if (Math.max(area.width, area.height) < 3000) throw new Error('digital_file_too_small');
+    } else {
+      mapping = await catalog.variantForSku(item.sku);
+      if (!mapping.is_enabled) throw new Error(`printify_variant_disabled:${item.sku}`);
+      area = await catalog.printArea(mapping);
+    }
     const artwork = await download(item.artwork_url, { fetchImpl, hosts, label: 'artwork' });
     const artworkCheck = await checkArtwork(artwork, item.design.artwork);
     const bg = item.design.background;
     const backgroundImage = bg.kind === 'image' ? await download(bg.image_url, { fetchImpl, hosts, label: 'background' }) : null;
-    const file = await render({ design: item.design, artwork, backgroundImage, width: area.width, height: area.height });
+    const file = await render({ design: item.design, artwork, backgroundImage, width: area.width, height: area.height, ...(item.digital ? { dpi: 300 } : {}) });
     const ext = file.format === 'png' ? 'png' : 'jpg';
-    const url = await put(`print-files/${order.id}/${item.line_id}-${item.design_id}.${ext}`, file.buffer, file.format === 'png' ? 'image/png' : 'image/jpeg');
+    const folder = item.digital ? 'digital' : 'print-files';
+    const url = await put(`${folder}/${order.id}/${item.line_id}-${item.design_id}.${ext}`, file.buffer, file.format === 'png' ? 'image/png' : 'image/jpeg');
     const head = await fetchImpl(url, { method: 'HEAD' });
     const length = Number(head.headers && head.headers.get ? head.headers.get('content-length') : NaN);
     if (!head.ok || (Number.isFinite(length) && length !== file.buffer.length)) throw new Error('print_file_upload_unverified');
     out.push({
       ...item,
-      blueprint_id: mapping.blueprint_id, print_provider_id: mapping.print_provider_id, printify_variant_id: mapping.printify_variant_id,
-      position: area.position, print_file_url: url,
+      ...(mapping ? { blueprint_id: mapping.blueprint_id, print_provider_id: mapping.print_provider_id, printify_variant_id: mapping.printify_variant_id, position: area.position } : {}),
+      print_file_url: url,
       production: { design_id: item.design_id, width: file.width, height: file.height, sha256: file.sha256, bytes: file.buffer.length, artwork_check: artworkCheck, url }
     });
   }

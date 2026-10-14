@@ -10,6 +10,8 @@ const Q_STATE = `query OrderState($id: ID!) { order(id: $id) { id name metafield
 const M_SET = `mutation SetState($metafields: [MetafieldsSetInput!]!) { metafieldsSet(metafields: $metafields) { metafields { id compareDigest } userErrors { field message code } } }`;
 const Q_ORDER = `query OrderForRetry($id: ID!) { order(id: $id) { legacyResourceId name email displayFinancialStatus shippingAddress { firstName lastName phone countryCodeV2 provinceCode address1 address2 city zip } lineItems(first: 100) { nodes { id quantity sku product { legacyResourceId } variant { legacyResourceId } customAttributes { key value } } } } }`;
 const M_TAG = `mutation Tag($id: ID!, $tags: [String!]!) { tagsAdd(id: $id, tags: $tags) { userErrors { field message } } }`;
+const Q_FO_LINES = `query DigitalLines($id: ID!) { order(id: $id) { fulfillmentOrders(first: 20) { nodes { id status lineItems(first: 100) { nodes { id remainingQuantity lineItem { id } } } } } } }`;
+const M_FULFIL = `mutation Fulfil($fulfillment: FulfillmentInput!, $message: String) { fulfillmentCreate(fulfillment: $fulfillment, message: $message) { fulfillment { id status } userErrors { field message } } }`;
 const M_HOLD = `mutation Hold($id: ID!, $hold: FulfillmentOrderHoldInput!) { fulfillmentOrderHold(id: $id, fulfillmentHold: $hold) { fulfillmentHold { id } userErrors { field message } } }`;
 
 function shopifyStore({ shop = process.env.SHOPIFY_SHOP_DOMAIN, token, getToken, fetchImpl = fetch } = {}) {
@@ -57,6 +59,32 @@ function shopifyStore({ shop = process.env.SHOPIFY_SHOP_DOMAIN, token, getToken,
         if (errs.length) throw new Error(errs.map(x => x.message).join('; '));
       }
     },
+    // Digital portraits: one fulfillment per line, with the download link as its tracking link. Shopify's
+    // shipping-confirmation email (when notify is true) gives the customer the link. With notify false the link is
+    // only stored on the order (metafield lines) and the order is tagged for a manual send.
+    fulfillDigital: async (orderId, items, { notify = true } = {}) => {
+      if (!notify) { await gql(M_TAG, { id: gid(orderId), tags: ['digital-ready'] }); return 'held'; }
+      const d = await gql(Q_FO_LINES, { id: gid(orderId) });
+      const fos = (d.order ? d.order.fulfillmentOrders.nodes : []).filter(f => f.status === 'OPEN' || f.status === 'IN_PROGRESS');
+      for (const item of items) {
+        const lineGid = `gid://shopify/LineItem/${item.line_id}`;
+        const fo = fos.find(f => f.lineItems.nodes.some(l => l.lineItem.id === lineGid && l.remainingQuantity > 0));
+        if (!fo) throw new Error(`digital_line_not_open:${item.line_id}`);
+        const foLine = fo.lineItems.nodes.find(l => l.lineItem.id === lineGid);
+        const r = await gql(M_FULFIL, {
+          fulfillment: {
+            notifyCustomer: true,
+            trackingInfo: { company: 'MyPetMemo digital download', number: String(item.design_id || ''), url: item.print_file_url },
+            lineItemsByFulfillmentOrder: [{ fulfillmentOrderId: fo.id, fulfillmentOrderLineItems: [{ id: foLine.id, quantity: foLine.remainingQuantity }] }]
+          },
+          message: 'Your digital pet portrait is ready. Use the tracking link to download your high-resolution file.'
+        });
+        const errs = r.fulfillmentCreate.userErrors;
+        if (errs.length) throw new Error(errs.map(x => x.message).join('; '));
+      }
+      try { await gql(M_TAG, { id: gid(orderId), tags: ['digital-delivered'] }); } catch (e) { console.error('tag failed', e.message); }
+      return 'sent';
+    },
     // The order in the same shape as the orders/paid webhook payload (fields the gate uses).
     fetchOrder: async id => {
       const d = await gql(Q_ORDER, { id: gid(id) });
@@ -76,4 +104,4 @@ function shopifyStore({ shop = process.env.SHOPIFY_SHOP_DOMAIN, token, getToken,
     }
   };
 }
-module.exports = { shopifyStore, Q_STATE, M_SET, M_HOLD, Q_ORDER, M_TAG };
+module.exports = { shopifyStore, Q_STATE, M_SET, M_HOLD, Q_ORDER, M_TAG, Q_FO_LINES, M_FULFIL };

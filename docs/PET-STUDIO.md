@@ -84,6 +84,31 @@ as Year / Dates / Message.
 The Shopify mug product must come from Printify (so its variants carry Printify SKUs, which is how the backend finds
 the Printify variant and the print area) and use the template suffix `pet-mug`.
 
+## Pet portraits (wall art and digital download)
+
+`templates/product.pet-portrait.json` uses its own section, `sections/main-pet-portrait.liquid` (family `portrait`),
+with the same engine (`assets/pet-studio.js`) plus `assets/pet-portrait.js` / `.css`:
+
+* Flow: upload → one AI portrait (the same worker as the other products) → choose **style**, **background color**,
+  name, custom text, **size** and **frame** → live preview → **Approve my design** → **Add to cart**. Nothing is
+  charged before checkout. Any change after approving clears the approval, so the cart always gets the approved version.
+* Styles: Modern Minimalist, Watercolor, Classic Portrait (gold oval), Memorial Portrait (soft glow, name and dates).
+  They are made in the browser from the one AI portrait, so switching style costs no AI request. The styled artwork
+  is what gets approved and printed. Section setting *AI service paints each style* sends `style` to the worker
+  instead (only if the worker supports it; each style is then its own AI request).
+* Background colors are instant and never regenerate the artwork. `?bg=color/f4d9de` preselects a color.
+* Preview: Close-up (framed), In a room (three rooms, drawn at true scale, so 8 × 10 looks small and 24 × 36 large),
+  Before / after slider with the original photo, and Zoom (Fit, 2×, 3×).
+* Variants: options **Size** and **Frame**. Frame values are read by name: *Black frame*, *White frame*,
+  *Natural wood frame*, *Canvas, no frame*, *Digital download*. Sizes a frame does not come in are greyed out.
+  Physical variants carry the Printify SKUs (framed canvas, gallery canvas); the print area and wrap come from Printify.
+* Digital download: a variant whose SKU starts with `MPM-DIGITAL` (no shipping). The design is made at
+  4800 × 6000 px (section setting). After payment the backend renders the file at full size, stores it in Vercel Blob
+  and fulfills the line with the download link, so Shopify emails the customer (env `DIGITAL_DELIVERY=hold` only
+  tags the order `digital-ready` instead). Orders with only digital items never create a Printify order.
+* The cart line shows Style, Pet name, Custom text, Dates (memorial), Background, Frame/size and, for digital,
+  *Delivery: Digital download, emailed after payment*.
+
 ## Reviews
 
 Reviews come from the **MyPetMemo review** metaobjects (Shopify admin → Content → Metaobjects): name, rating
@@ -129,6 +154,8 @@ decides the card order.
 | templates/product.pet-ornament.json | Generic ornament template |
 | templates/product.pet-ornament-christmas.json / -memorial.json | Christmas and memorial ornament pages |
 | templates/product.pet-mug.json | Personalized coffee mug page |
+| sections/main-pet-portrait.liquid, templates/product.pet-portrait.json | Personalized pet portrait page |
+| assets/pet-portrait.js / .css | Portrait styles, frames, rooms and portrait page styles |
 | sections/main-pet-category.liquid, templates/collection.pet-category.json | Blanket and ornament selection pages |
 | sections/featured-products.liquid, snippets/product-card.liquid, snippets/product-link.liquid | Homepage cards link to the category pages |
 | locales/en.default.json | Store text (homepage card titles) |

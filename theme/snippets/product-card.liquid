@@ -53,7 +53,7 @@
     {% else %}
       {{ 'product-1' | placeholder_svg_tag: 'card-image placeholder' }}
     {% endif %}
-    <span class="product-tag">{% if family == 'portrait' %}{{ 'catalog.digital_tag' | t }}{% else %}{{ 'catalog.personal_tag' | t }}{% endif %}</span>
+    <span class="product-tag">{% if family == 'portrait' %}{{ 'catalog.portrait_tag' | t }}{% else %}{{ 'catalog.personal_tag' | t }}{% endif %}</span>
     <span class="round-link">{% render 'icon', name: 'arrow-up' %}</span>
   </a>
   <div class="product-card-heading"><h3><a href="{{ link }}">{{ title | escape }}</a></h3>{% if item != blank %}<span>{% if price_varies %}<small>{{ 'common.from' | t }} </small>{% endif %}{{ price | money }}</span>{% endif %}</div>

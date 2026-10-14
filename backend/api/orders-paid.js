@@ -27,7 +27,7 @@ async function handler(req, res, deps = {}) {
     // Production is OFF unless explicitly enabled. Default creates Printify drafts only.
     const mode = process.env.PRINTIFY_MODE === 'production' ? 'production' : 'draft';
     const wired = deps.store ? deps : { ...productionDeps(), ...deps };
-    const run = () => processPaidOrder(order, { store: wired.store, printify: wired.printify, prepare: wired.prepare, gateOptions: wired.gateOptions, mode });
+    const run = () => processPaidOrder(order, { store: wired.store, printify: wired.printify, prepare: wired.prepare, deliver: wired.deliver, gateOptions: wired.gateOptions, mode });
     if (hasDesignLines(order)) {
       const work = run().then(r => console.log('orders-paid', order.id, JSON.stringify(r)), e => console.error('orders-paid background failed', order.id, e.message));
       if (background(work, deps)) {

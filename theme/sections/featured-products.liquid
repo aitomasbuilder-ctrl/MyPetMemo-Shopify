@@ -3,7 +3,7 @@
   assign ornaments = section.settings.ornament_collection | default: collections['pet-ornaments']
   assign blanket = blankets.products.first | default: settings.blanket_product | default: all_products['custom-pet-portrait-blanket']
   assign ornament = ornaments.products.first | default: settings.ornament_product | default: all_products['custom-pet-christmas-ornament']
-  assign portrait = settings.portrait_product | default: all_products['digital-pet-portrait']
+  assign portrait = settings.portrait_product | default: all_products['personalized-pet-portrait'] | default: all_products['digital-pet-portrait']
 %}{% render 'product-card', item: blanket, kind: 'blanket', category: blankets, sample_images: section.settings.sample_images %}{% render 'product-card', item: ornament, kind: 'ornament', category: ornaments, sample_images: section.settings.sample_images %}{% render 'product-card', item: portrait, kind: 'portrait', sample_images: section.settings.sample_images %}</div></section>
 
 {% schema %}
