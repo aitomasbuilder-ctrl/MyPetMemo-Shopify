@@ -286,3 +286,25 @@ test('backgrounds: new Christmas and memorial designs exist and render to valid 
     assert.equal(backgrounds.svg(bg, 300, 300), backgrounds.svg(bg, 300, 300), `${id} is deterministic`);
   }
 });
+
+test('mug: design keeps sides 2, render draws the same side on both halves of the wrap', async () => {
+  const art = await artworkPng();
+  const d = design.normalise(input(art, { family: 'mug', print: { w: 2475, h: 1155 }, background: { id: 'white' }, pet: { cx: 0.5, cy: 0.5, w: 0.5, rot: 0 }, name: null }), { hosts });
+  assert.equal(d.family, 'mug'); assert.equal(d.sides, 2); assert.equal(d.shape, undefined);
+  assert.equal(design.normalise(input(art), { hosts }).sides, undefined, 'blankets are unchanged');
+  const r = await renderDesign({ design: d, artwork: art, width: 2475, height: 1155 });
+  assert.equal(r.width, 2475); assert.equal(r.height, 1155);
+  const { data, info } = await sharp(r.buffer).raw().toBuffer({ resolveWithObject: true });
+  const red = (x, y) => { const i = (y * info.width + x) * info.channels; return data[i] > 180 && data[i + 1] < 80; };
+  const PW = Math.round(2475 / 2);
+  assert.ok(red(Math.round(PW / 2), 577), 'pet in the middle of the left side');
+  assert.ok(red(2475 - PW + Math.round(PW / 2), 577), 'pet in the middle of the right side');
+  assert.ok(!red(PW, 577) && !red(5, 577) && !red(2470, 577), 'white between the two pets and at the handle');
+});
+
+test('mug: patterns run across the wrap at the scale of one side', async () => {
+  const art = await artworkPng();
+  const d = design.normalise(input(art, { family: 'mug', print: { w: 2000, h: 1000 }, background: { id: 'pink-hearts' }, name: null }), { hosts });
+  const r = await renderDesign({ design: d, artwork: art, width: 2000, height: 1000 });
+  assert.equal(r.width, 2000);
+});

@@ -1,4 +1,4 @@
-# Pet studio: personalized blanket and ornament pages
+# Pet studio: personalized blanket, ornament and mug pages
 
 The blanket product page lets a customer upload a pet photo, get an illustrated portrait, choose a
 background, add a name, adjust the layout, pick a size, approve the preview and add it to the cart.
@@ -61,6 +61,29 @@ name in the same font, at half its size, and move with it. They travel in the si
 (`lines`, position, size), are rendered into the print file by `backend/lib/render.js`, and show in the cart
 as Year / Dates / Message.
 
+## Mugs
+
+`templates/product.pet-mug.json` runs the same section with **Product type = Mug** (Printify *Accent Coffee Mug*,
+11 oz and 15 oz, white outside with a colored handle and inside):
+
+* The preview is a drawn mug. Its handle and inside take the color of the selected variant (the option whose name
+  contains "Color"; known names such as Black, Navy, Pink, Light Blue map to a color, anything else shows white).
+  The color option buttons get a matching dot, and 11oz / 15oz show as "11 oz · 325 ml".
+* The design area is **one side** of the mug: half of the Printify wrap (`round(print width / 2)` by the print height).
+  The same side is printed on both halves of the wrap (design `sides: 2`), so the mug shows the design in either hand.
+  The handle sits at the wrap edges, so each side is centred a quarter turn from the handle.
+* Styles: **Name below** (default), **Name on top**, **Big portrait** (large pet on the bottom edge, name across the
+  chest). Picking a style re-places the pet and the text, like Reset.
+* Section setting **Extra text under the name = One line of text** adds a free text line with suggestion chips
+  (shown in the cart as Text). The cart line also shows *Printed on: Both sides*.
+* Print file: the background covers the whole wrap. Patterns continue around the mug at the scale of one side;
+  gradients and image backgrounds fill each side like the preview. Pet, name and text are drawn on each side and
+  cropped to it (backend/lib/render.js).
+* The cart image is a mug mockup of the approved design.
+
+The Shopify mug product must come from Printify (so its variants carry Printify SKUs, which is how the backend finds
+the Printify variant and the print area) and use the template suffix `pet-mug`.
+
 ## Reviews
 
 Reviews come from the **MyPetMemo review** metaobjects (Shopify admin → Content → Metaobjects): name, rating
@@ -105,6 +128,7 @@ decides the card order.
 | templates/product.pet-blanket.json | Template used by the three blankets |
 | templates/product.pet-ornament.json | Generic ornament template |
 | templates/product.pet-ornament-christmas.json / -memorial.json | Christmas and memorial ornament pages |
+| templates/product.pet-mug.json | Personalized coffee mug page |
 | sections/main-pet-category.liquid, templates/collection.pet-category.json | Blanket and ornament selection pages |
 | sections/featured-products.liquid, snippets/product-card.liquid, snippets/product-link.liquid | Homepage cards link to the category pages |
 | locales/en.default.json | Store text (homepage card titles) |
