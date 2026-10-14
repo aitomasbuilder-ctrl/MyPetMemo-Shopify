@@ -3,6 +3,7 @@
     "api/orders-paid.js": { "maxDuration": 300, "memory": 2048, "includeFiles": "{fonts,shared}/**" },
     "api/fulfillment-retry.js": { "maxDuration": 300, "memory": 2048, "includeFiles": "{fonts,shared}/**" },
     "api/designs.js": { "maxDuration": 10, "includeFiles": "{fonts,shared}/**" },
-    "api/print-template.js": { "maxDuration": 20 }
+    "api/print-template.js": { "maxDuration": 20 },
+    "api/portrait.js": { "maxDuration": 60, "memory": 1024 }
   }
 }

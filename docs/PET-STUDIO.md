@@ -178,10 +178,12 @@ default to christmas-trees, memorial products to clouds, unless the metafield `m
 | POST /api/designs | Approves a design: validates it and returns `{ id, token }` |
 | GET /api/print-template?sku= | Printify print-area size for a variant (cached a day) |
 | POST /api/orders-paid | Shopify `orders/paid` webhook |
+| POST /api/portrait | Pet photo (multipart `image`) → vector-style portrait on flat green (`{ image, background: 'chroma' }`), via Gemini. Needs `GEMINI_API_KEY` |
 | POST /api/fulfillment-retry | `{ "order_id": 123, "force": false }` with `Authorization: Bearer $ADMIN_API_SECRET`; re-runs a held order |
 
 Environment variables: see backend/.env.example. New ones: `DESIGN_SIGNING_SECRET`, `ADMIN_API_SECRET`,
-`BLOB_READ_WRITE_TOKEN` (connect a Vercel Blob store), optional `STOREFRONT_ORIGINS`, `ALLOWED_ASSET_HOSTS`.
+`BLOB_READ_WRITE_TOKEN` (connect a Vercel Blob store), optional `STOREFRONT_ORIGINS`, `ALLOWED_ASSET_HOSTS`,
+`GEMINI_API_KEY` (+ optional `GEMINI_IMAGE_MODEL`, `PORTRAITS_PER_HOUR`) for /api/portrait.
 
 ## Fulfillment states (order metafield `mypetmemo.fulfillment`)
 
@@ -236,3 +238,11 @@ cart page that opens when the shopper presses **Checkout** with a personalized b
 
 Background swatches now include the brand pastels Blush Pink, Warm Cream, Beige, Sage, Pale Blue, Lavender and
 Warm Taupe (`pet-backgrounds.js`, kept identical in `theme/assets` and `backend/shared`).
+
+## Vector portrait style (AI)
+
+`/api/portrait` asks Gemini (`gemini-2.5-flash-image`, about $0.04 per portrait) to redraw the shopper's own pet as a
+clean flat-vector portrait: head and upper chest, same breed, markings, colors, expression and collar, on flat green.
+The studio keys out the green and places the pet on the chosen pastel background, so switching backgrounds never
+re-generates and the preview is the same artwork that is printed. To switch the store to it, set each studio
+section's "Portrait generation URL" to `https://mypetmemo-shopify.vercel.app/api/portrait`.
