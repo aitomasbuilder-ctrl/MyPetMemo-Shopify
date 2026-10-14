@@ -31,7 +31,7 @@ test('portrait: style, frame and decor are part of the signed design', async () 
   const d = design.normalise(portrait(art), { hosts });
   assert.equal(d.family, 'portrait'); assert.equal(d.style, 'watercolor'); assert.equal(d.frame, 'black');
   assert.deepEqual(d.decor, { kind: 'wash', cx: 0.5, cy: 0.4, r: 0.4, color: '#d99aa6' });
-  assert.equal(d.background.name, 'Soft Pink');
+  assert.equal(d.background.name, 'Blush Pink');
   const classic = design.normalise(portrait(art, { style: 'classic', decor: { kind: 'vignette', cx: 0.5, cy: 0.4, r: 0.33, color: '#c3a9ad' } }), { hosts });
   assert.notEqual(design.designId(d), design.designId(classic), 'another style is another design');
   assert.equal(design.normalise(portrait(art, { style: 'cubist' }), { hosts }).style, 'modern');

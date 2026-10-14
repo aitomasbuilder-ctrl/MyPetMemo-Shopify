@@ -154,8 +154,8 @@
         "heading": "",
         "subheading": "Upload a photo of your pet. We turn it into an illustrated portrait for your coffee mug that you can personalize and preview before you buy.",
         "review_noun": "reviews",
-        "pattern_ids": "white,cream,blush,sky,mint,lavender,sunshine,pink-hearts,red-hearts,rainbow-hearts,paw-prints,florals,clouds,starry-night,tropical-leaves,christmas-trees,sunset,ocean,sage,lilac,navy,charcoal",
-        "default_background": "white",
+        "pattern_ids": "soft-pink,warm-cream,beige,sage-green,light-blue,pale-lavender,warm-taupe,white,pink-hearts,red-hearts,rainbow-hearts,paw-prints,florals,clouds,starry-night,tropical-leaves,christmas-trees,sunset,ocean,navy,charcoal",
+        "default_background": "soft-pink",
         "swatches_visible": 11,
         "name_placeholder": "e.g. Buddy",
         "name_max": 14,
@@ -181,7 +181,9 @@
         "line_label": "Add your own text (optional)",
         "line_placeholder": "Write your own or pick one above",
         "line_suggestions": "Best Dog Mom Ever,Best Cat Dad Ever,Dog Mom,Cat Mom,Fur Mama,My Best Friend",
-        "mug_note": "Your design is printed on both sides of the mug, so it shows in either hand."
+        "mug_note": "Your design is printed on both sides of the mug, so it shows in either hand.",
+        "gallery_large": true,
+        "photo_files": "mug-gallery-1-golden-retriever-hand.png | Hand holding a personalized pet mug with a golden retriever portrait on blush pink\nmug-gallery-2-corgi-table.png | Personalized corgi portrait mug on sage green, on a wooden breakfast table\nmug-gallery-3-golden-retriever-with-mug.png | Golden retriever lying beside its matching portrait mug\nmug-gallery-4-tabby-cat-closeup.png | Close-up of a tabby cat portrait mug on lavender, on a cream knit blanket\nmug-gallery-5-french-bulldog-hands.png | Hands in a knit sweater holding a French bulldog portrait mug with paw prints\nmug-gallery-6-black-labrador.png | Black labrador portrait mug on beige with coffee and cookies\nmug-gallery-7-beagle-gift.png | Beagle portrait mug with pink hearts next to a gift box\nmug-gallery-8-border-collie-both-sides.png | Two border collie portrait mugs showing the design printed on both sides"
       }
     },
     "steps": {

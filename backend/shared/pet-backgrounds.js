@@ -240,12 +240,14 @@
     { id: 'charcoal', name: 'Charcoal', kind: 'solid', color: '#2f3640' },
     { id: 'white', name: 'White', kind: 'solid', color: '#ffffff' },
     // Portrait (wall art) colours
-    { id: 'soft-pink', name: 'Soft Pink', kind: 'solid', color: '#f4d9de' },
+    { id: 'soft-pink', name: 'Blush Pink', kind: 'solid', color: '#f4d9de' },
     { id: 'warm-cream', name: 'Warm Cream', kind: 'solid', color: '#f6eddc' },
     { id: 'beige', name: 'Beige', kind: 'solid', color: '#e6d6bf' },
     { id: 'sage-green', name: 'Sage Green', kind: 'solid', color: '#c5d3bd' },
-    { id: 'light-blue', name: 'Light Blue', kind: 'solid', color: '#d3e4f1' },
-    { id: 'terracotta', name: 'Terracotta', kind: 'solid', color: '#c9765a' }
+    { id: 'light-blue', name: 'Pale Blue', kind: 'solid', color: '#d3e4f1' },
+    { id: 'terracotta', name: 'Terracotta', kind: 'solid', color: '#c9765a' },
+    { id: 'pale-lavender', name: 'Lavender', kind: 'solid', color: '#e4dcf1' },
+    { id: 'warm-taupe', name: 'Warm Taupe', kind: 'solid', color: '#cfc0ad' }
   ];
   var BY_ID = {};
   LIST.forEach(function (b) { BY_ID[b.id] = b; });

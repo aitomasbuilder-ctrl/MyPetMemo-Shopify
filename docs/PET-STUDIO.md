@@ -222,3 +222,17 @@ cart page that opens when the shopper presses **Checkout** with a personalized b
 - Homepage: `sections/matching-gift-set.liquid` ("Make It a Matching Gift Set"). Its example pictures
   (`assets/gift-set-*.webp`) were drawn by the studio engine from one golden retriever, so every piece shows the same
   pet; each can be replaced with an image in the theme editor.
+
+## Large photo gallery (mug page)
+
+`main-pet-studio` has two settings for a big product-photo gallery:
+
+- **Large photo gallery** (`gallery_large`): the page opens on the first product photo with a swipeable row of
+  rounded thumbnails underneath, previous/next arrows and swipe on phones. Once the shopper uploads a photo the
+  preview shows their design again ("Your design" is the first thumbnail). Colors: cream, beige, caramel, cocoa.
+- **Gallery photos from Files** (`photo_files`): file names from Content → Files, one per line, each optionally
+  followed by `|` and the alt text. When filled they replace the product's own photos, so the gallery works before
+  the product has media. The mug template uses the eight `mug-gallery-*.png` files.
+
+Background swatches now include the brand pastels Blush Pink, Warm Cream, Beige, Sage, Pale Blue, Lavender and
+Warm Taupe (`pet-backgrounds.js`, kept identical in `theme/assets` and `backend/shared`).

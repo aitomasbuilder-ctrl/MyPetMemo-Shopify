@@ -1162,8 +1162,21 @@
         el.thumbs.appendChild(b);
       });
       el.thumbDesign.addEventListener('click', () => this.toggleGallery(false));
-      this.root.querySelector('[data-gallery-prev]').addEventListener('click', () => this.showGalleryImage(this.state.galleryIndex - 1));
-      this.root.querySelector('[data-gallery-next]').addEventListener('click', () => this.showGalleryImage(this.state.galleryIndex + 1));
+      this.root.querySelector('[data-gallery-prev]').addEventListener('click', () => this.stepGallery(-1));
+      this.root.querySelector('[data-gallery-next]').addEventListener('click', () => this.stepGallery(1));
+      if (config.galleryLarge) {
+        // Large photo gallery: open on the first photo until the shopper has a design; swipe the main photo on phones.
+        this.root.dataset.galleryStyle = 'large';
+        this.toggleGallery(true);
+        let x0 = null;
+        el.gallery.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') x0 = e.clientX; });
+        el.gallery.addEventListener('pointerup', e => {
+          if (x0 === null) return;
+          const dx = e.clientX - x0; x0 = null;
+          if (Math.abs(dx) > 40) this.stepGallery(dx < 0 ? 1 : -1);
+        });
+        el.gallery.addEventListener('pointercancel', () => { x0 = null; });
+      }
       el.gallery.addEventListener('keydown', e => {
         if (e.key === 'ArrowLeft') this.showGalleryImage(this.state.galleryIndex - 1);
         if (e.key === 'ArrowRight') this.showGalleryImage(this.state.galleryIndex + 1);
@@ -1179,7 +1192,28 @@
     }
     markThumb(i) {
       if (!this.el.thumbs) return;
-      Array.from(this.el.thumbs.children).forEach((b, j) => b.setAttribute('aria-current', String(j === i + 1)));
+      Array.from(this.el.thumbs.children).forEach((b, j) => {
+        const on = j === i + 1;
+        b.setAttribute('aria-current', String(on));
+        if (on && this.config.galleryLarge) {
+          // Keep the selected thumbnail in view without scrolling the page.
+          const row = this.el.thumbs, left = b.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft, right = left + b.offsetWidth;
+          if (left < row.scrollLeft) row.scrollTo({ left: left - 8, behavior: 'smooth' });
+          else if (right > row.scrollLeft + row.clientWidth) row.scrollTo({ left: right - row.clientWidth + 8, behavior: 'smooth' });
+        }
+      });
+    }
+    /** Previous / next. With a design, "Your design" sits before the first photo. */
+    stepGallery(dir) {
+      const n = this.config.media.length;
+      if (!n) return;
+      const withDesign = !!this.state.artwork;
+      const pos = this.state.galleryOpen ? this.state.galleryIndex + (withDesign ? 1 : 0) : 0;
+      const total = n + (withDesign ? 1 : 0);
+      const next = (pos + dir + total) % total;
+      if (withDesign && next === 0) { this.toggleGallery(false); return; }
+      if (!this.state.galleryOpen) this.toggleGallery(true);
+      this.showGalleryImage(next - (withDesign ? 1 : 0));
     }
     showGalleryImage(index) {
       const media = this.config.media;
@@ -2598,6 +2632,7 @@
             this.state.art = { blob: art.blob, sha256: art.sha256, w: art.w, h: art.h };
           }
           this.state.pet = saved.pet || this.state.pet;
+          if (this.state.galleryOpen) this.toggleGallery(false);
           if (saved.isDefault) this.defaultLayout = this.layoutKey();
           if (this.isPortrait() && saved.approvedKey) this.state.approvedKey = saved.approvedKey;
           this.state.addedId = saved.addedId || null;
