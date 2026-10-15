@@ -2,7 +2,9 @@
   "sections": {
     "main": {
       "type": "main-pet-portrait",
-      "settings": {}
+      "settings": {
+        "ai_endpoint": "https://mypetmemo-shopify.vercel.app/api/portrait"
+      }
     },
     "steps": {
       "type": "pet-studio-steps",

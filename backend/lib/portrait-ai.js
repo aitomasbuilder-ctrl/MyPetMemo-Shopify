@@ -18,6 +18,8 @@ const PROMPT = [
   'and a little more space below the chest.',
   `Remove the original background completely. Place the pet on a perfectly flat, solid pure green background (${CHROMA}),`,
   'with no shadow, vignette, floor or other objects, and do not use that green anywhere on the pet.',
+  'Show only the animal: leave out blankets, pillows, furniture, toys, hands and people that touch or cover it,',
+  'and draw the chest fur that would be underneath. Keep only a collar, tag, harness or bandana the pet is actually wearing.',
   'If there are several animals, portray only the most prominent one. No text, no border, no watermark.'
 ].join(' ');
 
