@@ -210,7 +210,7 @@
       .finally(() => { busy = false; submitter.removeAttribute('aria-busy'); });
   });
   el.next.addEventListener('click', () => { if (!cards.some(c => c.busy)) goToCheckout(); });
-  el.close.addEventListener('click', () => { root.close(); window.location.reload(); });
+  el.close.addEventListener('click', () => { if (main) markSeen(prop(main.item, 'Design ID')); root.close(); window.location.reload(); });
   root.addEventListener('cancel', e => { e.preventDefault(); el.close.click(); });
 
   // Right after a blanket or portrait is added (its page sends the shopper to /cart?addons=1), offer the add-ons at once.
