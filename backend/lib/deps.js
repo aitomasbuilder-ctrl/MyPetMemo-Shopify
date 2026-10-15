@@ -9,8 +9,12 @@ const config = require('../config/printify-variants.json');
 
 function productionDeps() {
   let cat;
+  const store = shopifyStore();
   return {
-    store: shopifyStore(),
+    store,
+    // Digital portraits: Shopify fulfils the line with the download link and emails the customer
+    // (DIGITAL_DELIVERY=hold keeps the link on the order for a manual check instead).
+    deliver: (order, items) => store.fulfillDigital(order.id, items, { notify: process.env.DIGITAL_DELIVERY !== 'hold' }),
     printify: client(),
     prepare: (order, items) => {
       cat = cat || catalog({ overrides: config.studio_products || {} });

@@ -15,7 +15,10 @@ const ID = /^\d{1,20}$/;
 const NAME_MAX = 24;
 const CAPTION_MAX = 32;   // per line (year, dates or a short message under the name)
 const CAPTION_LINES = 4;   // dates and message, each may wrap once on star and heart ornaments
-const FAMILIES = new Set(['blanket', 'ornament', 'mug']);
+const FAMILIES = new Set(['blanket', 'ornament', 'mug', 'portrait']);
+const STYLES = new Set(['modern', 'watercolor', 'classic', 'memorial']);          // portrait artwork styles
+const FRAMES = new Set(['black', 'white', 'wood', 'canvas', 'digital']);           // portrait finishes (preview + order info)
+const DECOR = new Set(['wash', 'vignette', 'halo']);
 const SHAPES = new Set(['circle', 'heart', 'star', 'snowflake']); // ornament outlines (preview only; Printify cuts the blank)
 
 class DesignError extends Error {
@@ -102,6 +105,16 @@ function normaliseCaption(c) {
   };
 }
 
+/** Portrait style decoration behind the pet (see decorSvg in shared/pet-backgrounds.js). */
+function normaliseDecor(d) {
+  if (!d || typeof d !== 'object') return null;
+  if (!DECOR.has(d.kind)) throw new DesignError('decor_unknown');
+  return {
+    kind: d.kind, cx: num(d.cx, -0.5, 1.5, 'decor.cx'), cy: num(d.cy, -0.5, 1.5, 'decor.cy'), r: num(d.r, 0.02, 2, 'decor.r'),
+    color: str(String(d.color || '').toLowerCase(), HEX, 'decor.color')
+  };
+}
+
 /** Validates client input and returns the canonical design (fixed key order, rounded numbers). */
 function normalise(input, { hosts = defaultHosts() } = {}) {
   if (!input || typeof input !== 'object') throw new DesignError('design_missing');
@@ -109,12 +122,18 @@ function normalise(input, { hosts = defaultHosts() } = {}) {
   const family = FAMILIES.has(input.family) ? input.family : 'blanket';
   const shape = family === 'ornament' ? (SHAPES.has(input.shape) ? input.shape : 'circle') : undefined;
   const caption = normaliseCaption(input.caption);
+  const portrait = family === 'portrait' ? {
+    style: STYLES.has(input.style) ? input.style : 'modern',
+    frame: FRAMES.has(input.frame) ? input.frame : 'canvas'
+  } : null;
+  const decor = family === 'portrait' ? normaliseDecor(input.decor) : null;
   return {
     v: VERSION,
     family,
     ...(shape ? { shape } : {}),
     // Mugs: positions are fractions of one side (half the wrap); the same side is printed on both halves.
     ...(family === 'mug' ? { sides: 2 } : {}),
+    ...(portrait || {}),
     product_id: str(input.product_id, ID, 'product_id'),
     variant_id: str(input.variant_id, ID, 'variant_id'),
     sku: String(input.sku || '').slice(0, 64),
@@ -128,6 +147,7 @@ function normalise(input, { hosts = defaultHosts() } = {}) {
     },
     name: normaliseName(input.name),
     ...(caption ? { caption } : {}),
+    ...(decor ? { decor } : {}),
     artwork: { sha256: str(String(a.sha256 || '').toLowerCase(), SHA, 'artwork.sha256'), w: Math.round(num(a.w, 64, 20000, 'artwork.w')), h: Math.round(num(a.h, 64, 20000, 'artwork.h')) }
   };
 }

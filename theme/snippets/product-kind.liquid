@@ -1,0 +1,18 @@
+{% doc %}
+  Resolves the MyPetMemo product family.
+  @param {product} item - Product to identify
+  @param {string} [override] - Explicit product family
+{% enddoc %}
+{%- liquid
+  assign kind = 'other'
+  if override != blank and override != 'auto'
+    assign kind = override
+  elsif item.id == settings.blanket_product.id or item.handle == 'custom-pet-portrait-blanket'
+    assign kind = 'blanket'
+  elsif item.id == settings.ornament_product.id or item.handle == 'christmas-pet-ornament'
+    assign kind = 'ornament'
+  elsif item.id == settings.portrait_product.id or item.handle == 'personalized-pet-portrait' or item.handle == 'digital-pet-portrait'
+    assign kind = 'portrait'
+  endif
+  echo kind
+-%}

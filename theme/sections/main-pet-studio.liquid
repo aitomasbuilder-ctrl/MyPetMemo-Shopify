@@ -174,7 +174,10 @@
 
         <div class="mps__drop-hint" data-drop-hint hidden><span>Drop your photo here</span></div>
       </div>
-      {%- if product.media.size > 0 -%}
+      {%- assign photo_files = section.settings.photo_files | newline_to_br | split: '<br />' -%}
+      {%- assign has_photo_files = false -%}
+      {%- for f in photo_files -%}{%- if f != blank -%}{%- assign has_photo_files = true -%}{%- endif -%}{%- endfor -%}
+      {%- if product.media.size > 0 or has_photo_files -%}
         <div class="mps__thumbs" role="group" aria-label="Your design and product photos" data-thumbs>
           <button type="button" class="mps__thumb-btn mps__thumb-btn--design" data-thumb-design aria-current="true" aria-label="Your design">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.4 5 6.9 5c2 0 3.5 1.1 5.1 3 1.6-1.9 3.1-3 5.1-3 3.5 0 5.7 3.6 4.4 6.8C19.5 16.4 12 21 12 21z"/></svg>
@@ -533,7 +536,8 @@
       "cartUpdateUrl": {{ routes.cart_update_url | append: '.js' | json }},
       "currentVariantId": {{ current_variant.id | json }},
       "variants": [{% for variant in product.variants %}{"id": {{ variant.id }}, "title": {{ variant.title | json }}, "options": {{ variant.options | json }}, "price": {{ variant.price }}, "compareAtPrice": {{ variant.compare_at_price | default: 0 }}, "available": {{ variant.available }}, "sku": {{ variant.sku | json }}}{% unless forloop.last %},{% endunless %}{% endfor %}],
-      "media": [{% assign first_media = true %}{% for media in product.media %}{% if media.media_type == 'image' %}{% unless first_media %},{% endunless %}{"src": {{ media | image_url: width: 1600 | json }}, "thumb": {{ media | image_url: width: 200 | json }}, "alt": {{ media.alt | default: product.title | json }}}{% assign first_media = false %}{% endif %}{% endfor %}],
+      "galleryLarge": {{ section.settings.gallery_large | json }},
+      "media": [{% assign first_media = true %}{% if has_photo_files %}{% for f in photo_files %}{% assign fparts = f | split: '|' %}{% assign fname = fparts.first | strip %}{% assign falt = product.title | append: ' photo ' | append: forloop.index %}{% if fparts.size > 1 %}{% assign falt = fparts.last | strip %}{% endif %}{% if fname != blank %}{% unless first_media %},{% endunless %}{"src": {{ fname | file_img_url: '1600x1600' | json }}, "thumb": {{ fname | file_img_url: '240x240' | json }}, "alt": {{ falt | json }}}{% assign first_media = false %}{% endif %}{% endfor %}{% else %}{% for media in product.media %}{% if media.media_type == 'image' %}{% unless first_media %},{% endunless %}{"src": {{ media | image_url: width: 1600 | json }}, "thumb": {{ media | image_url: width: 200 | json }}, "alt": {{ media.alt | default: product.title | json }}}{% assign first_media = false %}{% endif %}{% endfor %}{% endif %}],
       "patterns": {{ section.settings.pattern_ids | json }},
       "defaultBackground": {{ default_bg | json }},
       "aiEndpoint": {{ section.settings.ai_endpoint | json }},
@@ -559,6 +563,8 @@
   "tag": "div",
   "class": "section-pet-studio",
   "settings": [
+    { "type": "checkbox", "id": "gallery_large", "label": "Large photo gallery", "info": "Opens on the first product photo with thumbnails underneath, until the shopper has a design.", "default": false },
+    { "type": "textarea", "id": "photo_files", "label": "Gallery photos from Files", "info": "Optional. File names from Content → Files, one per line, each optionally followed by | and the alt text. When filled, these replace the product photos in the gallery." },
     { "type": "select", "id": "family", "label": "Product type", "default": "blanket", "options": [{ "value": "blanket", "label": "Blanket" }, { "value": "ornament", "label": "Ornament (shape from the variant)" }, { "value": "mug", "label": "Mug (design printed on both sides)" }] },
     { "type": "text", "id": "heading", "label": "Heading", "info": "Leave empty to use the product title (the part before the dash)." },
     { "type": "text", "id": "subheading", "label": "Subheading", "default": "Upload a photo of your pet. We turn it into an illustrated portrait you can personalize and preview before you buy." },

@@ -51,7 +51,7 @@
 .mps__gallery-thumbs button { flex: 0 0 56px; height: 56px; padding: 0; border: 2px solid transparent; border-radius: 8px; overflow: hidden; background: none; cursor: pointer; }
 .mps__gallery-thumbs button[aria-current="true"] { border-color: var(--mps-navy); }
 .mps__gallery-thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.mps__gallery-nav { position: absolute; top: 44%; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); box-shadow: 0 2px 8px rgba(0,0,0,.15); font-size: 26px; line-height: 1; cursor: pointer; color: var(--mps-navy); }
+.mps__gallery-nav { position: absolute; top: 44%; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); box-shadow: 0 2px 8px rgba(0,0,0,.15); font-size: 26px; line-height: 1; cursor: pointer; z-index: 2; color: var(--mps-navy); }
 .mps__gallery-nav--prev { left: 12px; } .mps__gallery-nav--next { right: 12px; }
 
 .mps__spinner { grid-row: span 2; width: 24px; height: 24px; border-radius: 50%; border: 3px solid #d6dae4; border-top-color: var(--mps-navy); animation: mps-spin .9s linear infinite; }
@@ -293,7 +293,7 @@
 
 @media (max-width: 899px) {
   .mps { padding: 12px 16px 96px; }
-  .mps__layout { grid-template-columns: 1fr; gap: 18px; }
+  .mps__layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
   .mps__stage-col { position: static; }
   .mps__stage, .mps__thumbs { width: 100%; }
   .mps__thumb-btn { flex-basis: 56px; width: 56px; height: 56px; }
@@ -334,3 +334,24 @@
 .mps__style .mps__option-main { font-size: 14px; text-align: center; }
 .mps__mug-note { margin-top: -4px; }
 @media (max-width: 899px) { .mps__styles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* Large photo gallery (mug page): big photo, swipeable thumbnail row underneath, cocoa / caramel controls. */
+.mps[data-gallery-style="large"] { --mps-cocoa: #5a3e2b; --mps-caramel: #c08a54; --mps-beige: #efe4d3; --mps-cream-2: #fbf6ee; }
+.mps[data-gallery-style="large"] .mps__gallery { background: var(--mps-cream-2); }
+.mps[data-gallery-style="large"] .mps__gallery-main { touch-action: pan-y; user-select: none; }
+.mps[data-gallery-style="large"] .mps__gallery-main img { -webkit-user-drag: none; }
+.mps[data-gallery-style="large"] .mps__gallery-nav { top: 50%; transform: translateY(-50%); background: rgba(251, 246, 238, .95); color: var(--mps-cocoa); border: 1px solid var(--mps-beige); box-shadow: 0 2px 10px rgba(90, 62, 43, .15); }
+.mps[data-gallery-style="large"] .mps__gallery-nav:hover { background: var(--mps-beige); }
+.mps[data-gallery-style="large"] .mps__gallery-nav:focus-visible { outline: 3px solid var(--mps-caramel); outline-offset: 2px; }
+.mps[data-gallery-style="large"] .mps__thumbs { gap: 10px; margin-top: 12px; padding: 3px 3px 6px; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.mps[data-gallery-style="large"] .mps__thumbs::-webkit-scrollbar { display: none; }
+.mps[data-gallery-style="large"] .mps__thumb-btn { flex: 0 0 76px; width: 76px; height: 76px; border: 1px solid var(--mps-beige); border-radius: 12px; background: #fff; scroll-snap-align: start; transition: border-color .15s, box-shadow .15s, opacity .15s; opacity: .85; }
+.mps[data-gallery-style="large"] .mps__thumb-btn:hover { opacity: 1; border-color: var(--mps-caramel); }
+.mps[data-gallery-style="large"] .mps__thumb-btn img { object-fit: contain; background: #fff; }
+.mps[data-gallery-style="large"] .mps__thumb-btn[aria-current="true"] { opacity: 1; border-color: var(--mps-caramel); box-shadow: 0 0 0 2px var(--mps-caramel); }
+.mps[data-gallery-style="large"] .mps__thumb-btn--design { background: var(--mps-cream-2); color: var(--mps-cocoa); }
+.mps[data-gallery-style="large"] .mps__thumb-btn:focus-visible { outline: 3px solid var(--mps-caramel); }
+@media (max-width: 749px) {
+  .mps[data-gallery-style="large"] .mps__thumb-btn { flex-basis: 64px; width: 64px; height: 64px; }
+  .mps[data-gallery-style="large"] .mps__gallery-nav { width: 36px; height: 36px; font-size: 22px; }
+}

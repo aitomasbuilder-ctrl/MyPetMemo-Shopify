@@ -4,6 +4,7 @@
   @param {string} [kind] - MyPetMemo family
   @param {boolean} [sample_images] - Use the approved illustrations
   @param {collection} [category] - Category page the card opens; its lowest price is shown as "from"
+  @param {string} [tag] - Label shown on the image instead of the default one
 {% enddoc %}
 {% liquid
   assign family = kind
@@ -53,7 +54,7 @@
     {% else %}
       {{ 'product-1' | placeholder_svg_tag: 'card-image placeholder' }}
     {% endif %}
-    <span class="product-tag">{% if family == 'portrait' %}{{ 'catalog.digital_tag' | t }}{% else %}{{ 'catalog.personal_tag' | t }}{% endif %}</span>
+    <span class="product-tag">{% if tag != blank %}{{ tag | escape }}{% elsif family == 'portrait' %}{{ 'catalog.portrait_tag' | t }}{% else %}{{ 'catalog.personal_tag' | t }}{% endif %}</span>
     <span class="round-link">{% render 'icon', name: 'arrow-up' %}</span>
   </a>
   <div class="product-card-heading"><h3><a href="{{ link }}">{{ title | escape }}</a></h3>{% if item != blank %}<span>{% if price_varies %}<small>{{ 'common.from' | t }} </small>{% endif %}{{ price | money }}</span>{% endif %}</div>

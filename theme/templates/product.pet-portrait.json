@@ -1,0 +1,162 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-pet-portrait",
+      "settings": {}
+    },
+    "steps": {
+      "type": "pet-studio-steps",
+      "blocks": {
+        "s1": {
+          "type": "step",
+          "settings": {
+            "title": "Upload",
+            "text": "Choose a clear photo of one pet with its face visible."
+          }
+        },
+        "s2": {
+          "type": "step",
+          "settings": {
+            "title": "AI creates",
+            "text": "In about 60 seconds we turn your photo into artwork that keeps your pet’s look."
+          }
+        },
+        "s3": {
+          "type": "step",
+          "settings": {
+            "title": "Preview",
+            "text": "Pick the style, color, size and frame, see it on a wall, then approve. You pay only after you approve."
+          }
+        }
+      },
+      "block_order": [
+        "s1",
+        "s2",
+        "s3"
+      ],
+      "settings": {
+        "heading": "Upload. AI creates. Preview.",
+        "subheading": "No payment required to preview."
+      }
+    },
+    "transform": {
+      "type": "transformation",
+      "settings": {
+        "heading": "From your camera roll to your wall.",
+        "kind": "portrait"
+      }
+    },
+    "photos": {
+      "type": "photo-guide",
+      "settings": {}
+    },
+    "faq": {
+      "type": "faq",
+      "blocks": {
+        "0": {
+          "type": "question",
+          "settings": {
+            "question": "How does the free preview work?",
+            "answer": "<p>Upload a photo of your pet. In about a minute we turn it into artwork and show it to you. Choose the style, background color, name, size and frame, then approve the design. You pay nothing until checkout, and only after you approve.</p>"
+          }
+        },
+        "1": {
+          "type": "question",
+          "settings": {
+            "question": "Will my pet still look like my pet?",
+            "answer": "<p>Yes. The portrait is made from your actual photo, so it keeps your pet’s face, fur colors and markings. If something looks off, tap Regenerate artwork or upload another photo before you approve.</p>"
+          }
+        },
+        "2": {
+          "type": "question",
+          "settings": {
+            "question": "Does changing the background color change my pet?",
+            "answer": "<p>No. The color changes instantly and your pet’s artwork stays exactly the same.</p>"
+          }
+        },
+        "3": {
+          "type": "question",
+          "settings": {
+            "question": "Which sizes and frames can I choose?",
+            "answer": "<p>Framed prints come in black or white frames. Gallery canvas comes without a frame. You can also buy a digital download with no shipping and no frame. The page only shows sizes our print partner really makes.</p>"
+          }
+        },
+        "4": {
+          "type": "question",
+          "settings": {
+            "question": "How do I get the digital download?",
+            "answer": "<p>After payment we prepare a high-resolution file of the exact design you approved and email you a download link. Nothing is shipped.</p>"
+          }
+        },
+        "5": {
+          "type": "question",
+          "settings": {
+            "question": "Will my print look like the preview?",
+            "answer": "<p>Yes. We print the exact design you approve: the same artwork, color, text and placement, at full print resolution. Colors can look slightly different on paper and canvas than on a screen.</p>"
+          }
+        },
+        "6": {
+          "type": "question",
+          "settings": {
+            "question": "What makes a great pet photo?",
+            "answer": "<p>Bright, even light and a sharp image work best. Keep the camera at your pet’s eye level with the full face and ears visible, and nothing covering your pet.</p>"
+          }
+        },
+        "7": {
+          "type": "question",
+          "settings": {
+            "question": "Can I change my design after adding it to the cart?",
+            "answer": "<p>Yes, until you check out. Edit it on this page, approve the new version and add it, then remove the old one from your cart.</p>"
+          }
+        },
+        "8": {
+          "type": "question",
+          "settings": {
+            "question": "How long does delivery take?",
+            "answer": "<p>Each portrait is made to order by our print partner. See our shipping policy for current production and delivery estimates, and contact us before ordering if you need it by a certain date.</p>"
+          }
+        },
+        "9": {
+          "type": "question",
+          "settings": {
+            "question": "What if an item arrives damaged or incorrect?",
+            "answer": "<p>Contact us with your order number and clear photos. We review production defects, printing issues and incorrect items under the store’s refund and replacement policy. Because each portrait is personalized, we can’t accept returns for a change of mind.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "settings": {}
+    },
+    "guarantee": {
+      "type": "guarantee",
+      "settings": {}
+    },
+    "related": {
+      "type": "featured-products",
+      "settings": {
+        "eyebrow": "MORE FROM MYPETMEMO",
+        "heading": "Their face on your favorite things."
+      }
+    }
+  },
+  "order": [
+    "main",
+    "steps",
+    "transform",
+    "photos",
+    "faq",
+    "guarantee",
+    "related"
+  ]
+}

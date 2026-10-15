@@ -18,16 +18,21 @@
     "eyebrow": "MADE FROM THE PETS YOU LOVE",
     "blanket_title": "Custom Pet Portrait Blanket",
     "ornament_title": "Pet Ornament",
-    "portrait_title": "Digital Pet Portrait",
+    "portrait_title": "Personalized Pet Portrait",
     "blanket_short": "A little closer. A little cozier.",
     "ornament_short": "Personalized keepsakes for celebrations and memories.",
-    "portrait_short": "Your favorite face, wherever you go.",
+    "portrait_short": "Framed wall art or a digital file, made from your photo.",
     "blanket_action": "Create my blanket",
     "ornament_action": "Create my ornament",
     "portrait_action": "Create my portrait",
+    "mug_title": "Personalized Pet Coffee Mug",
+    "mug_short": "Their face on your morning coffee.",
+    "mug_action": "Create my mug",
+    "addon_tag": "MATCHING GIFT",
+    "portrait_tag": "Framed or digital",
     "blanket_description": "Turn your favorite pet photo into a soft, personalized blanket. A familiar face, made for your favorite place.",
     "ornament_description": "A familiar face for your favorite tradition. Turn your pet photo into a personalized ornament to hang year after year.",
-    "portrait_description": "A personalized, high-resolution pet portrait for your phone, your walls, and the next gift you have in mind."
+    "portrait_description": "Your pet photo turned into personalized artwork. Choose the style, color, size and frame, and preview it before you buy."
   },
   "common": {
     "from": "from",
@@ -87,6 +92,7 @@
   "hero": {
     "create": "Create my keepsake",
     "christmas": "Shop Christmas gifts",
+    "portrait": "Create a pet portrait",
     "trust_1": "Made from your photo",
     "trust_2": "A gift like no other",
     "trust_3": "Thoughtfully personal",

@@ -1,10 +1,27 @@
-<section class="section wrap" id="bestsellers"><div class="section-heading"><div><p class="eyebrow">{{ section.settings.eyebrow | escape }}</p><h2>{{ section.settings.heading | escape }}</h2></div><a class="text-link" href="{{ routes.all_products_collection_url }}">{{ 'catalog.shop_all' | t }}{% render 'icon', name: 'arrow', size: 17 %}</a></div><div class="product-grid">{% liquid
+<section class="section wrap featured-keepsakes" id="bestsellers"><div class="section-heading"><div><p class="eyebrow">{{ section.settings.eyebrow | escape }}</p><h2>{{ section.settings.heading | escape }}</h2></div><a class="text-link" href="{{ routes.all_products_collection_url }}">{{ 'catalog.shop_all' | t }}{% render 'icon', name: 'arrow', size: 17 %}</a></div>{% liquid
   assign blankets = section.settings.blanket_collection | default: collections['pet-blankets']
   assign ornaments = section.settings.ornament_collection | default: collections['pet-ornaments']
   assign blanket = blankets.products.first | default: settings.blanket_product | default: all_products['custom-pet-portrait-blanket']
   assign ornament = ornaments.products.first | default: settings.ornament_product | default: all_products['custom-pet-christmas-ornament']
-  assign portrait = settings.portrait_product | default: all_products['digital-pet-portrait']
-%}{% render 'product-card', item: blanket, kind: 'blanket', category: blankets, sample_images: section.settings.sample_images %}{% render 'product-card', item: ornament, kind: 'ornament', category: ornaments, sample_images: section.settings.sample_images %}{% render 'product-card', item: portrait, kind: 'portrait', sample_images: section.settings.sample_images %}</div></section>
+  assign portrait = settings.portrait_product | default: all_products['personalized-pet-portrait'] | default: all_products['digital-pet-portrait']
+  assign mug = section.settings.mug_product | default: all_products['personalized-pet-coffee-mug']
+  assign addon_tag = 'catalog.addon_tag' | t
+%}<div class="product-grid featured-main">{% render 'product-card', item: blanket, kind: 'blanket', category: blankets, sample_images: section.settings.sample_images %}{% render 'product-card', item: portrait, kind: 'portrait', sample_images: section.settings.sample_images %}</div>
+  <div class="featured-addons"><div class="featured-addons-intro"><p class="eyebrow">{{ section.settings.addons_eyebrow | escape }}</p><h3>{{ section.settings.addons_heading | escape }}</h3><p>{{ section.settings.addons_text | escape }}</p></div><div class="product-grid featured-addon-grid">{% render 'product-card', item: ornament, kind: 'ornament', category: ornaments, sample_images: section.settings.sample_images, tag: addon_tag %}{% if mug != blank and mug.available %}{% render 'product-card', item: mug, kind: 'mug', sample_images: false, tag: addon_tag %}{% endif %}</div></div>
+</section>
+<style>
+  .featured-keepsakes .featured-main{grid-template-columns:repeat(2,minmax(0,1fr));gap:32px}
+  .featured-keepsakes .featured-main .product-card h3{font-size:1.25rem;max-width:none}
+  .featured-keepsakes .card-image{width:100%;aspect-ratio:1;object-fit:cover}
+  .featured-addons{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:32px;align-items:center;margin-top:56px;padding:32px;border-radius:10px;background:#eeebe3}
+  .featured-addons-intro .eyebrow{margin-bottom:12px}
+  .featured-addons-intro h3{font:1.9rem/1.2 var(--display);letter-spacing:-.03em}
+  .featured-addons-intro p:not(.eyebrow){margin-top:12px;color:#81745e;font-size:.9375rem}
+  .featured-addon-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+  .featured-addon-grid .product-card>p{font-size:.875rem}
+  @media(max-width:1000px){.featured-addons{grid-template-columns:1fr;gap:22px;padding:24px}}
+  @media(max-width:700px){.featured-keepsakes .featured-main{grid-template-columns:1fr;gap:37px}.featured-addons{margin-top:40px;padding:20px 16px}.featured-addon-grid{grid-template-columns:1fr 1fr;gap:14px}.featured-addon-grid .product-card h3{font-size:.875rem}.featured-addon-grid .product-card>p{display:none}.featured-addon-grid .product-card-heading{display:block}.featured-addon-grid .product-card-heading>span{display:block;margin-top:4px}}
+</style>
 
 {% schema %}
 {
@@ -39,6 +56,35 @@
       "id": "ornament_collection",
       "label": "Ornament card opens",
       "info": "Defaults to the pet-ornaments collection"
+    },
+    {
+      "type": "header",
+      "content": "Matching gifts"
+    },
+    {
+      "type": "product",
+      "id": "mug_product",
+      "label": "Mug",
+      "info": "Defaults to the product with handle personalized-pet-coffee-mug. Hidden until it is available."
+    },
+    {
+      "type": "text",
+      "id": "addons_eyebrow",
+      "label": "Eyebrow",
+      "default": "COMPLETE THE GIFT"
+    },
+    {
+      "type": "text",
+      "id": "addons_heading",
+      "label": "Heading",
+      "default": "Matching keepsakes, same pet."
+    },
+    {
+      "type": "textarea",
+      "id": "addons_text",
+      "label": "Text",
+      "info": "Keep the percentages in line with the Matching add-on discounts.",
+      "default": "Add an ornament or mug made from the same portrait. 15% off with any blanket or portrait, 20% off when you add both."
     }
   ],
   "presets": [

@@ -84,6 +84,31 @@ as Year / Dates / Message.
 The Shopify mug product must come from Printify (so its variants carry Printify SKUs, which is how the backend finds
 the Printify variant and the print area) and use the template suffix `pet-mug`.
 
+## Pet portraits (wall art and digital download)
+
+`templates/product.pet-portrait.json` uses its own section, `sections/main-pet-portrait.liquid` (family `portrait`),
+with the same engine (`assets/pet-studio.js`) plus `assets/pet-portrait.js` / `.css`:
+
+* Flow: upload → one AI portrait (the same worker as the other products) → choose **style**, **background color**,
+  name, custom text, **size** and **frame** → live preview → **Approve my design** → **Add to cart**. Nothing is
+  charged before checkout. Any change after approving clears the approval, so the cart always gets the approved version.
+* Styles: Modern Minimalist, Watercolor, Classic Portrait (gold oval), Memorial Portrait (soft glow, name and dates).
+  They are made in the browser from the one AI portrait, so switching style costs no AI request. The styled artwork
+  is what gets approved and printed. Section setting *AI service paints each style* sends `style` to the worker
+  instead (only if the worker supports it; each style is then its own AI request).
+* Background colors are instant and never regenerate the artwork. `?bg=color/f4d9de` preselects a color.
+* Preview: Close-up (framed), In a room (three rooms, drawn at true scale, so 8 × 10 looks small and 24 × 36 large),
+  Before / after slider with the original photo, and Zoom (Fit, 2×, 3×).
+* Variants: options **Size** and **Frame**. Frame values are read by name: *Black frame*, *White frame*,
+  *Natural wood frame*, *Canvas, no frame*, *Digital download*. Sizes a frame does not come in are greyed out.
+  Physical variants carry the Printify SKUs (framed canvas, gallery canvas); the print area and wrap come from Printify.
+* Digital download: a variant whose SKU starts with `MPM-DIGITAL` (no shipping). The design is made at
+  4800 × 6000 px (section setting). After payment the backend renders the file at full size, stores it in Vercel Blob
+  and fulfills the line with the download link, so Shopify emails the customer (env `DIGITAL_DELIVERY=hold` only
+  tags the order `digital-ready` instead). Orders with only digital items never create a Printify order.
+* The cart line shows Style, Pet name, Custom text, Dates (memorial), Background, Frame/size and, for digital,
+  *Delivery: Digital download, emailed after payment*.
+
 ## Reviews
 
 Reviews come from the **MyPetMemo review** metaobjects (Shopify admin → Content → Metaobjects): name, rating
@@ -129,6 +154,8 @@ decides the card order.
 | templates/product.pet-ornament.json | Generic ornament template |
 | templates/product.pet-ornament-christmas.json / -memorial.json | Christmas and memorial ornament pages |
 | templates/product.pet-mug.json | Personalized coffee mug page |
+| sections/main-pet-portrait.liquid, templates/product.pet-portrait.json | Personalized pet portrait page |
+| assets/pet-portrait.js / .css | Portrait styles, frames, rooms and portrait page styles |
 | sections/main-pet-category.liquid, templates/collection.pet-category.json | Blanket and ornament selection pages |
 | sections/featured-products.liquid, snippets/product-card.liquid, snippets/product-link.liquid | Homepage cards link to the category pages |
 | locales/en.default.json | Store text (homepage card titles) |
@@ -151,10 +178,12 @@ default to christmas-trees, memorial products to clouds, unless the metafield `m
 | POST /api/designs | Approves a design: validates it and returns `{ id, token }` |
 | GET /api/print-template?sku= | Printify print-area size for a variant (cached a day) |
 | POST /api/orders-paid | Shopify `orders/paid` webhook |
+| POST /api/portrait | Pet photo (multipart `image`) → vector-style portrait on flat green (`{ image, background: 'chroma' }`), via Gemini. Needs `GEMINI_API_KEY` |
 | POST /api/fulfillment-retry | `{ "order_id": 123, "force": false }` with `Authorization: Bearer $ADMIN_API_SECRET`; re-runs a held order |
 
 Environment variables: see backend/.env.example. New ones: `DESIGN_SIGNING_SECRET`, `ADMIN_API_SECRET`,
-`BLOB_READ_WRITE_TOKEN` (connect a Vercel Blob store), optional `STOREFRONT_ORIGINS`, `ALLOWED_ASSET_HOSTS`.
+`BLOB_READ_WRITE_TOKEN` (connect a Vercel Blob store), optional `STOREFRONT_ORIGINS`, `ALLOWED_ASSET_HOSTS`,
+`GEMINI_API_KEY` (+ optional `GEMINI_IMAGE_MODEL`, `PORTRAITS_PER_HOUR`) for /api/portrait.
 
 ## Fulfillment states (order metafield `mypetmemo.fulfillment`)
 
@@ -170,3 +199,50 @@ If the approval endpoint is unreachable, the storefront still adds the item with
 
 `cd backend && npm test` runs the unit tests (design signing, rendering, two designs in one order,
 duplicate/concurrent webhooks, artwork mismatch, render failure and retry, approval endpoint CORS).
+
+## Matching add-ons before checkout (AOV upsell)
+
+Shopify Basic can't add upsells inside checkout (Checkout UI extensions need Plus). So the offer is a modal on the
+cart page that opens when the shopper presses **Checkout** with a personalized blanket or portrait in the bag
+(`snippets/pet-upsell.liquid`, `assets/pet-upsell.js`, `assets/pet-upsell.css`, settings in the **Shopping bag** section).
+
+- **Same pet, no re-upload.** When a blanket or portrait is added, `pet-studio.js` saves the approved artwork, photo,
+  name/lettering, background and style in the browser (IndexedDB `handoff:<Design ID>`). On another device the offer
+  rebuilds it from the cart line's uploaded `_artwork` / `_Original photo` files.
+- Each add-on is laid out by the same engine (`MyPetMemoStudio.makeAddon`), signed by the same approval endpoint and
+  added with the same line properties as on its own product page, plus `_MyPetMemo add-on`, `_MyPetMemo bundle`
+  (the main Design ID) and a visible "Matching set" line. The order pipeline then renders one print file per line.
+- No extra AI calls: the add-ons reuse the approved artwork.
+- Anything failing (script missing, timeout after 8 s, network) sends the shopper straight to checkout. The offer is
+  shown once per design per session.
+- **Prices** are Shopify automatic discounts (no app, $0): "Matching add-on 15% off" (buy 1 from collection
+  *Bundle main products*, get 1 from *Bundle add-ons* at 15%) and "Matching set 20% off both add-ons" (get 2 at 20%).
+  Both are limited to once per order and don't combine with other product discounts, so the best one wins and they
+  never stack with "Buy 2 ornaments". Collections are by tag: `bundle-main` (blankets, portrait) and `bundle-addon`
+  (ornaments) or a title containing "Pet Coffee Mug". Change the percentages in **Discounts**, then the matching
+  numbers in the Shopping bag section, Featured keepsakes text and Matching gift sets section.
+- Homepage: `sections/matching-gift-set.liquid` ("Make It a Matching Gift Set"). Its example pictures
+  (`assets/gift-set-*.webp`) were drawn by the studio engine from one golden retriever, so every piece shows the same
+  pet; each can be replaced with an image in the theme editor.
+
+## Large photo gallery (mug page)
+
+`main-pet-studio` has two settings for a big product-photo gallery:
+
+- **Large photo gallery** (`gallery_large`): the page opens on the first product photo with a swipeable row of
+  rounded thumbnails underneath, previous/next arrows and swipe on phones. Once the shopper uploads a photo the
+  preview shows their design again ("Your design" is the first thumbnail). Colors: cream, beige, caramel, cocoa.
+- **Gallery photos from Files** (`photo_files`): file names from Content → Files, one per line, each optionally
+  followed by `|` and the alt text. When filled they replace the product's own photos, so the gallery works before
+  the product has media. The mug template uses the eight `mug-gallery-*.png` files.
+
+Background swatches now include the brand pastels Blush Pink, Warm Cream, Beige, Sage, Pale Blue, Lavender and
+Warm Taupe (`pet-backgrounds.js`, kept identical in `theme/assets` and `backend/shared`).
+
+## Vector portrait style (AI)
+
+`/api/portrait` asks Gemini (`gemini-2.5-flash-image`, about $0.04 per portrait) to redraw the shopper's own pet as a
+clean flat-vector portrait: head and upper chest, same breed, markings, colors, expression and collar, on flat green.
+The studio keys out the green and places the pet on the chosen pastel background, so switching backgrounds never
+re-generates and the preview is the same artwork that is printed. To switch the store to it, set each studio
+section's "Portrait generation URL" to `https://mypetmemo-shopify.vercel.app/api/portrait`.

@@ -9,7 +9,7 @@
       assign item = settings.ornament_product | default: all_products['custom-pet-christmas-ornament']
     when 'portrait'
       assign category = nil
-      assign item = settings.portrait_product | default: all_products['digital-pet-portrait']
+      assign item = settings.portrait_product | default: all_products['personalized-pet-portrait'] | default: all_products['digital-pet-portrait']
     else
       assign category = collections['pet-blankets']
       assign item = settings.blanket_product | default: all_products['custom-pet-portrait-blanket']

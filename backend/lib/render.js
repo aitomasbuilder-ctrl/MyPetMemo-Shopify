@@ -10,6 +10,8 @@
 //   mugs (design.sides = 2): W above is one side, round(print width / 2); pet and text are drawn on the left
 //         side and again on the right side (offset print width - side width), each cropped to its side.
 //         Patterns run across the whole wrap at the scale of one side; gradients and images fill each side.
+//   portraits: design.decor (watercolor wash, classic oval, memorial glow) is the shared SVG decorSvg() drawn
+//         over the background and under the pet, exactly like the preview.
 const crypto = require('node:crypto');
 const sharp = require('sharp');
 const backgrounds = require('../shared/pet-backgrounds');
@@ -113,6 +115,7 @@ async function renderDesign({ design, artwork, backgroundImage, width, height, f
   } else {
     base = await backgroundLayer(design.background, W, H, backgroundImage);
     layers = await designLayers(design, artwork, W, H);
+    if (design.decor) layers.unshift({ input: await sharp(Buffer.from(backgrounds.decorSvg(design.decor, W, H)), { limitInputPixels: false }).png().toBuffer(), left: 0, top: 0 });
   }
   let out = sharp(base, { limitInputPixels: false }).composite(layers).withMetadata({ density: dpi });
   out = format === 'png' ? out.png({ compressionLevel: 6 }) : out.flatten({ background: '#ffffff' }).jpeg({ quality: 92, chromaSubsampling: '4:4:4', mozjpeg: false });

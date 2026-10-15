@@ -4,10 +4,12 @@
 // Two kinds of personalized lines:
 //   ornament: the ornament product, with _approved and an uploaded _print_file_url
 //   design:   any product personalized in the pet studio, with a signed _design token and an _artwork file
+//             (digital portraits, SKU MPM-DIGITAL-…, are rendered and emailed instead of going to Printify)
 const config = require('../config/printify-variants.json');
 const design = require('./design');
 
 const PAID_STATUSES = new Set(['paid']);
+const isDigitalSku = sku => /^MPM-DIGITAL/i.test(String(sku || ''));
 const byShopifyVariant = new Map(config.variants.map(v => [v.shopify_variant_id, v]));
 
 function props(line) {
@@ -38,6 +40,7 @@ function designLine(line, p, reasons, { verify, hosts }) {
   else if (!design.allowedHost(p._artwork, hosts)) reasons.push(`artwork_host_not_allowed:${line.id}`);
   return {
     kind: 'design', line_id: line.id, quantity: Number(line.quantity) || 1, sku: line.sku || d.sku,
+    digital: isDigitalSku(line.sku || d.sku),
     design: d, design_id: checked.id, artwork_url: p._artwork
   };
 }
@@ -58,4 +61,4 @@ function checkOrder(order, { verify = t => design.verify(t), hosts = design.defa
   return reasons.length ? { ok: false, reasons } : { ok: true, items };
 }
 
-module.exports = { checkOrder };
+module.exports = { checkOrder, isDigitalSku };

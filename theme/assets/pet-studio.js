@@ -1,4 +1,4 @@
-/* MyPetMemo pet studio (personalized blankets, ornaments and mugs)
+/* MyPetMemo pet studio (personalized blankets, ornaments, mugs and wall portraits)
  * Upload → AI portrait (transparent) → background, name, placement → approve & add to cart.
  * The approved design is signed by the MyPetMemo backend and travels with the cart line; the print
  * file is rendered server side after payment from the same design data (see backend/lib/render.js).
@@ -375,9 +375,10 @@
 
   /* ---------- views (main stage and full editor share one design) ---------- */
   class View {
-    constructor(studio, canvas, { interactive }) {
+    constructor(studio, canvas, { interactive, scene = false }) {
       this.studio = studio;
       this.canvas = canvas;
+      this.scene = scene;
       this.ctx = canvas.getContext('2d');
       this.interactive = interactive;
       this.pointers = new Map();
@@ -412,6 +413,11 @@
         this.drawEditing(ctx, box);
         return;
       }
+      if (s.isPortrait() && this.scene && !this.isEditing()) {
+        s.drawScene(ctx, this.w, this.h, { dpr: this.dpr });
+        this.canvas.dataset.editing = 'false';
+        return;
+      }
       // blanket or ornament on the stage
       ctx.save();
       ctx.shadowColor = 'rgba(27, 42, 78, 0.22)';
@@ -434,6 +440,7 @@
         s.drawHole(ctx, box.x, box.y, box.w, box.h);
       } else {
         s.drawDesign(ctx, box.x, box.y, box.w, box.h, { dpr: this.dpr, placeholder: !s.state.artwork });
+        if (s.isPortrait()) s.drawBleed(ctx, box);
       }
       this.drawEditing(ctx, box);
     }
@@ -517,6 +524,7 @@
     }
     down(e) {
       const s = this.studio;
+      if (this.compareDrag(e, 'down')) return;
       if (!s.state.artwork || s.state.galleryOpen) return;
       if (!this.isEditing()) {
         // Tapping the design on the main stage opens the Adjust panel.
@@ -544,6 +552,7 @@
     }
     move(e) {
       const s = this.studio;
+      if (this.compareDrag(e, 'move')) return;
       if (!this.isEditing()) return;
       const [x, y] = this.point(e);
       if (this.pointers.has(e.pointerId)) this.pointers.set(e.pointerId, { x, y });
@@ -578,6 +587,7 @@
     }
     up(e) {
       const s = this.studio;
+      if (this.compareDrag(e, 'up')) return;
       if (this.tapStart && !this.isEditing()) {
         const moved = dist(this.tapStart.x, this.tapStart.y, e.clientX, e.clientY);
         if (moved < 8 && Date.now() - this.tapStart.t < 500 && e.type === 'pointerup') {
@@ -597,8 +607,27 @@
       }
       if (this.pointers.size === 0 && this.gesture) { this.gesture = null; s.changed({ placement: true, commit: true }); }
     }
+    /** Before / after view: dragging anywhere on the preview moves the divider. */
+    compareDrag(e, phase) {
+      const s = this.studio;
+      if (!this.scene || !s.isPortrait() || s.sceneMode() !== 'compare' || this.isEditing()) return false;
+      if (phase === 'down') { this.comparing = true; try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } }
+      if (phase === 'up') { this.comparing = false; return true; }
+      if (!this.comparing) return true;
+      e.preventDefault();
+      const r = this.canvas.getBoundingClientRect();
+      s.state.compareX = clamp((e.clientX - r.left) / r.width, 0.02, 0.98);
+      this.render();
+      return true;
+    }
     key(e) {
       const s = this.studio;
+      if (s.isPortrait() && this.scene && s.sceneMode() === 'compare' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        e.preventDefault();
+        s.state.compareX = clamp(s.state.compareX + (e.key === 'ArrowLeft' ? -0.05 : 0.05), 0.02, 0.98);
+        this.render();
+        return;
+      }
       if (!this.isEditing()) return;
       if (e.key === 'Tab') return;
       if (e.key === 'Enter' || e.key === ' ') {
@@ -722,8 +751,12 @@
         font: q('[data-font]'), fill: q('[data-fill]'), stroke: q('[data-stroke]'), nameSize: q('[data-name-size]'),
         gallery: q('[data-gallery]'), galleryMain: q('[data-gallery-main]'), galleryThumbs: q('[data-gallery-thumbs]'),
         thumbs: q('[data-thumbs]'), thumbDesign: q('[data-thumb-design]'), email: q('[data-email-input]'), consent: q('[data-marketing-consent]'),
-        extras: qa('[data-extra]'), suggestions: qa('[data-suggest]'), styles: qa('[data-style]')
+        extras: qa('[data-extra]'), suggestions: qa('[data-suggest]'), styles: qa('[data-style]'),
+        artStyles: qa('[data-art-style]'), scenes: qa('[data-scene]'), roomNav: q('[data-room-nav]'), roomName: q('[data-room-name]'),
+        zoomDialog: q('[data-zoom-dialog]'), zoomImg: q('[data-zoom-img]'), memorialOnly: qa('[data-memorial-only]'),
+        approvedBadge: q('[data-approved]'), frameHint: q('[data-frame-hint]'), digitalNote: q('[data-digital-note]')
       };
+      this.P = window.MyPetMemoPortrait || null;
       this.state = {
         phase: 'empty',            // empty | generating | ready | error
         photo: null,               // { blob, hash, url }
@@ -735,6 +768,12 @@
         name: { text: '', cx: 0.5, cy: 0.12, size: 0.13, rot: 0, font: 'fredoka', fill: '#ffffff', stroke: '#2a2230' },
         extra: { year: '', dates: '', message: '' },   // optional lines under the name (see captionLines)
         style: 'below',            // mug layout (see placeMug)
+        artStyle: 'modern',        // portrait artwork style (pet-portrait.js STYLES)
+        baseArt: null,             // portraits: { img, art } the unstyled AI portrait; styles are derived from it
+        scene: 'close',            // portraits: close | room | compare
+        roomIndex: 0,
+        compareX: 0.5,
+        approvedKey: null,         // portraits: the design the shopper approved (any change clears it)
         selected: null,
         adjustOpen: false,
         editorOpen: false,
@@ -745,6 +784,8 @@
       };
       this.templates = new Map();
       this.svgCache = new Map();
+      this.styleCache = new Map();
+      this.decorCache = new Map();
       this.generationId = 0;
       this.measureCtx = createCanvas(4, 4).getContext('2d');
 
@@ -755,7 +796,8 @@
       this.initGallery();
       this.initReviews();
       this.initSticky();
-      this.views = [new View(this, root.querySelector('[data-canvas]'), { interactive: () => this.state.adjustOpen })];
+      if (this.isPortrait()) this.initPortrait();
+      this.views = [new View(this, root.querySelector('[data-canvas]'), { interactive: () => this.state.adjustOpen, scene: true })];
       if (this.el.dialog) this.editorView = new View(this, root.querySelector('[data-editor-canvas]'), { interactive: () => this.state.editorOpen });
       this.loadFonts();
       this.updateUI();
@@ -905,7 +947,11 @@
 
       const param = new URLSearchParams(window.location.search).get('bg');
       const match = v => v && this.backgrounds.find(b => b.id === v || v.endsWith('-' + b.id) || v.endsWith('/' + b.id));
-      const initial = match(param) || match(this.config.defaultBackground) || this.backgrounds[0];
+      // ?bg=color/f4d9de: the swatch with that colour, or that exact colour as a custom background
+      const hex = /^colou?r\/#?([0-9a-f]{6})$/i.exec(param || '');
+      const byColor = hex && (this.backgrounds.find(b => b.kind === 'solid' && b.color.toLowerCase() === `#${hex[1].toLowerCase()}`)
+        || { id: 'custom', kind: 'solid', name: `#${hex[1].toUpperCase()}`, color: `#${hex[1].toLowerCase()}` });
+      const initial = byColor || match(param) || match(this.config.defaultBackground) || this.backgrounds[0];
       if (initial) this.selectBackground(initial, { silent: true });
     }
     selectBackground(bg, opts = {}) {
@@ -919,6 +965,7 @@
         if (on && b.classList.contains('is-extra')) this.el.swatches.dataset.collapsed = 'false';
       });
       this.el.bgNames.forEach(n => { n.textContent = bg.name; });
+      if (this.isPortrait()) this.applyStyleText();
       this.el.stage.style.setProperty('--mps-stage', tint(bg.color, 0.6));
       if (this.el.dialog) this.el.dialog.style.setProperty('--mps-stage', tint(bg.color, 0.6));
       if (bg.kind === 'image') {
@@ -952,7 +999,9 @@
         this.svgCache.set(key, entry);
         if (this.svgCache.size > 12) this.svgCache.delete(this.svgCache.keys().next().value);
         const svg = this.B.svg(bg, w, h);
-        loadImage('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)).then(img => { entry.img = img; this.renderAll(); }).catch(() => {});
+        this.pendingLoads = (this.pendingLoads || 0) + 1;
+        loadImage('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)).then(img => { entry.img = img; this.renderAll(); }).catch(() => {})
+          .finally(() => { this.pendingLoads--; });
       }
       return entry.img;
     }
@@ -982,6 +1031,14 @@
             dot.setAttribute('aria-hidden', 'true');
             button.prepend(dot);
             button.classList.add('mps__option--color');
+          }
+          const frame = this.isPortrait() && this.P.frameKind(button.dataset.optionValue);
+          if (frame && /frame|finish|format/i.test((config.optionNames || [])[index] || '')) {
+            const chip = document.createElement('span');
+            chip.className = `mps__frame-chip mps__frame-chip--${frame}`;
+            chip.setAttribute('aria-hidden', 'true');
+            button.prepend(chip);
+            button.classList.add('mps__option--frame');
           }
           button.addEventListener('click', () => { this.selectedOptions[index] = button.dataset.optionValue; this.resolveVariant(index); });
           button.addEventListener('keydown', e => this.radioKeys(e, group, '[data-option-value]'));
@@ -1019,7 +1076,8 @@
         url.searchParams.set('variant', variant.id);
         window.history.replaceState(window.history.state, '', url);
       }
-      if (before && shapeBefore !== this.shape() && this.isDefaultLayout()) { this.placeDefault(); }
+      if (this.isPortrait()) this.portraitOptions();
+      if (before && (shapeBefore !== this.shape() || this.isPortrait()) && this.isDefaultLayout()) { this.placeDefault(); }
       else if (before) this.keepPetAnchored(before);
       this.fetchTemplate(variant);
       this.changed({ design: !opts.silent, price: true });
@@ -1031,6 +1089,10 @@
     }
     /** The whole Printify print area. */
     wrapSize(variant = this.state.variant) {
+      if (this.isPortrait() && this.isDigital(variant)) {
+        const d = this.config.digitalPrint || {};
+        return { width: d.width || 4800, height: d.height || 6000, source: 'digital' };
+      }
       const fromPrintify = variant && this.templates.get(variant.id);
       if (fromPrintify) return fromPrintify;
       const inches = !this.isMug() && variant && parseInches(variant.options[0] || variant.title);
@@ -1041,7 +1103,7 @@
     }
     async fetchTemplate(variant) {
       const endpoint = this.config.templateEndpoint;
-      if (!endpoint || !variant || !variant.sku || this.templates.has(variant.id)) return;
+      if (!endpoint || !variant || !variant.sku || this.templates.has(variant.id) || (this.isPortrait() && this.isDigital(variant))) return;
       this.templates.set(variant.id, null);
       try {
         const url = new URL(endpoint);
@@ -1100,8 +1162,21 @@
         el.thumbs.appendChild(b);
       });
       el.thumbDesign.addEventListener('click', () => this.toggleGallery(false));
-      this.root.querySelector('[data-gallery-prev]').addEventListener('click', () => this.showGalleryImage(this.state.galleryIndex - 1));
-      this.root.querySelector('[data-gallery-next]').addEventListener('click', () => this.showGalleryImage(this.state.galleryIndex + 1));
+      this.root.querySelector('[data-gallery-prev]').addEventListener('click', () => this.stepGallery(-1));
+      this.root.querySelector('[data-gallery-next]').addEventListener('click', () => this.stepGallery(1));
+      if (config.galleryLarge) {
+        // Large photo gallery: open on the first photo until the shopper has a design; swipe the main photo on phones.
+        this.root.dataset.galleryStyle = 'large';
+        this.toggleGallery(true);
+        let x0 = null;
+        el.gallery.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') x0 = e.clientX; });
+        el.gallery.addEventListener('pointerup', e => {
+          if (x0 === null) return;
+          const dx = e.clientX - x0; x0 = null;
+          if (Math.abs(dx) > 40) this.stepGallery(dx < 0 ? 1 : -1);
+        });
+        el.gallery.addEventListener('pointercancel', () => { x0 = null; });
+      }
       el.gallery.addEventListener('keydown', e => {
         if (e.key === 'ArrowLeft') this.showGalleryImage(this.state.galleryIndex - 1);
         if (e.key === 'ArrowRight') this.showGalleryImage(this.state.galleryIndex + 1);
@@ -1117,7 +1192,28 @@
     }
     markThumb(i) {
       if (!this.el.thumbs) return;
-      Array.from(this.el.thumbs.children).forEach((b, j) => b.setAttribute('aria-current', String(j === i + 1)));
+      Array.from(this.el.thumbs.children).forEach((b, j) => {
+        const on = j === i + 1;
+        b.setAttribute('aria-current', String(on));
+        if (on && this.config.galleryLarge) {
+          // Keep the selected thumbnail in view without scrolling the page.
+          const row = this.el.thumbs, left = b.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft, right = left + b.offsetWidth;
+          if (left < row.scrollLeft) row.scrollTo({ left: left - 8, behavior: 'smooth' });
+          else if (right > row.scrollLeft + row.clientWidth) row.scrollTo({ left: right - row.clientWidth + 8, behavior: 'smooth' });
+        }
+      });
+    }
+    /** Previous / next. With a design, "Your design" sits before the first photo. */
+    stepGallery(dir) {
+      const n = this.config.media.length;
+      if (!n) return;
+      const withDesign = !!this.state.artwork;
+      const pos = this.state.galleryOpen ? this.state.galleryIndex + (withDesign ? 1 : 0) : 0;
+      const total = n + (withDesign ? 1 : 0);
+      const next = (pos + dir + total) % total;
+      if (withDesign && next === 0) { this.toggleGallery(false); return; }
+      if (!this.state.galleryOpen) this.toggleGallery(true);
+      this.showGalleryImage(next - (withDesign ? 1 : 0));
     }
     showGalleryImage(index) {
       const media = this.config.media;
@@ -1135,6 +1231,7 @@
       const s = this.state;
       if (s.phase === 'generating' || this.adding) return;
       if (!s.artwork) { this.el.fileInput.click(); return; }
+      if (this.isPortrait() && !this.isApproved()) { this.approveDesign(); return; }
       this.approveAndAdd();
     }
     async handleFile(file) {
@@ -1180,13 +1277,18 @@
       if (this.state.photo) this.generate();
       else this.el.fileInput.click();
     }
+    /** "Regenerate artwork": a fresh AI portrait from the same photo (counts towards the daily limit). */
+    regenerate() {
+      if (!this.state.photo || this.state.phase === 'generating') return;
+      this.generate({ force: true });
+    }
     generationsToday() {
       try {
         const list = JSON.parse(localStorage.getItem('mps-generations') || '[]').filter(t => Date.now() - t < 864e5);
         return list;
       } catch (e) { return []; }
     }
-    async generate() {
+    async generate({ force = false } = {}) {
       const id = ++this.generationId;
       if (this.abortController) this.abortController.abort();
       const controller = new AbortController();
@@ -1198,7 +1300,9 @@
       this.startProgress();
       const started = performance.now();
       try {
-        let art = await kv.get(`art:${photo.hash}`);
+        // With an AI service that paints each style itself, every style is its own (cached) portrait.
+        const artKey = this.isPortrait() && this.config.aiStyles ? `art:${photo.hash}:${this.state.artStyle}` : `art:${photo.hash}`;
+        let art = force ? null : await kv.get(artKey);
         let fromCache = !!(art && art.blob);
         if (!fromCache) {
           const used = this.generationsToday();
@@ -1210,14 +1314,19 @@
           try { localStorage.setItem('mps-generations', JSON.stringify(used.concat(Date.now()))); } catch (e) { /* private mode */ }
           const blob = await canvasToBlob(canvas, 'image/png');
           art = { blob, sha256: await sha256Hex(blob), w: canvas.width, h: canvas.height };
-          kv.set(`art:${photo.hash}`, { ...art, at: Date.now() });
+          kv.set(artKey, { ...art, at: Date.now() });
         }
         if (id !== this.generationId) return;
         const img = await loadImage(URL.createObjectURL(art.blob));
         const hadArtwork = !!this.state.artwork;
-        this.state.artwork = img;
-        this.state.art = { blob: art.blob, sha256: art.sha256, w: art.w, h: art.h };
-        if (!hadArtwork || SHAPE_FIT[this.shape()] || this.isMug()) this.placeDefault(); else { this.placePet(); this.clampAll(); }
+        if (this.isPortrait()) {
+          await this.setBaseArt(img, { blob: art.blob, sha256: art.sha256, w: art.w, h: art.h });
+          if (id !== this.generationId) return;
+        } else {
+          this.state.artwork = img;
+          this.state.art = { blob: art.blob, sha256: art.sha256, w: art.w, h: art.h };
+        }
+        if (!hadArtwork || SHAPE_FIT[this.shape()] || this.isMug() || this.isPortrait()) this.placeDefault(); else { this.placePet(); this.clampAll(); }
         this.stopProgress();
         this.setPhase('ready');
         this.setPhotoStatus(fromCache ? 'Portrait ready (saved from before)' : 'Portrait ready');
@@ -1248,6 +1357,7 @@
       form.append('image', this.state.photo.blob, 'pet.jpg');
       form.append('product', String(this.config.productId));
       form.append('shape', 'blanket');
+      if (this.isPortrait() && this.config.aiStyles) form.append('style', this.state.artStyle);
       this.setProgress(0.06, 'Uploading your photo…');
       const res = await fetch(this.config.aiEndpoint, { method: 'POST', body: form, signal, headers: { Accept: 'application/json, image/png' } });
       if (!res.ok) {
@@ -1372,7 +1482,8 @@
     safe() { return clamp(this.config.safeInset || 0.05, 0, 0.2); }
     shape() { return this.config.family === 'ornament' ? shapeFromOptions(this.state.variant && this.state.variant.options) || 'circle' : null; }
     isMug() { return this.config.family === 'mug'; }
-    familyKey() { return ['ornament', 'mug'].includes(this.config.family) ? this.config.family : 'blanket'; }
+    isPortrait() { return this.config.family === 'portrait' && !!this.P; }
+    familyKey() { return ['ornament', 'mug', 'portrait'].includes(this.config.family) ? this.config.family : 'blanket'; }
     /** Accent colour of the selected mug (handle and inside), from its colour option; white when it has none. */
     mugColor() {
       const v = this.state.variant;
@@ -1422,7 +1533,7 @@
     }
     /** Whether a text edit re-flows the layout: star and heart layouts re-fit on every edit until the shopper moves something. */
     reflow(wasDefault, linesChanged) {
-      if (SHAPE_FIT[this.shape()] || this.isMug()) return wasDefault || !this.state.artwork;
+      if (SHAPE_FIT[this.shape()] || this.isMug() || this.isPortrait()) return wasDefault || !this.state.artwork;
       return wasDefault && linesChanged;
     }
     layoutKey() {
@@ -1433,6 +1544,25 @@
       const f = FONTS[key] || FONTS.fredoka;
       return `${f.weight} ${px}px "${f.family}", "Arial Rounded MT Bold", Arial, sans-serif`;
     }
+    /** The part of the print area that is seen from the front (portraits on canvas: the wrapped edges are not). */
+    faceRect() {
+      if (!this.isPortrait()) return { x: 0, y: 0, w: 1, h: 1 };
+      const p = this.printSize(), inches = this.sizeInches();
+      if (!inches || p.source !== 'printify' || this.isDigital()) return { x: 0, y: 0, w: 1, h: 1 };
+      // Printify canvas print areas include the wrap: (W + 2b) x (H + 2b) inches at one dpi. Solve for b.
+      const { w: W, h: H } = inches, PW = p.width, PH = p.height;
+      if (Math.abs(PW - PH) < 1) return { x: 0, y: 0, w: 1, h: 1 };
+      const b = (PH * W - PW * H) / (2 * (PW - PH));
+      if (!(b > 0.05 && b < 4)) return { x: 0, y: 0, w: 1, h: 1 };
+      const fx = b / (W + 2 * b), fy = b / (H + 2 * b);
+      return { x: fx, y: fy, w: 1 - 2 * fx, h: 1 - 2 * fy };
+    }
+    /** Where the pet's head and the text may go, in print fractions (the face inset by the safe margin). */
+    safeRect() {
+      const p = this.printSize(), f = this.faceRect();
+      const sx = this.safe(), sy = sx * (p.width * f.w) / (p.height * f.h);
+      return { x0: f.x + sx * f.w, y0: f.y + sy * f.h, x1: f.x + f.w * (1 - sx), y1: f.y + f.h * (1 - sy) };
+    }
     /** Name font size (fraction of print width) after shrinking it to fit inside the safe area. */
     nameSize() {
       const n = this.state.name;
@@ -1440,7 +1570,7 @@
       const ctx = this.measureCtx;
       ctx.font = this.font(100);
       const w = ctx.measureText(n.text).width / 100; // width per unit font size
-      const maxW = 1 - 2 * this.safe();
+      const r = this.safeRect(), maxW = r.x1 - r.x0;
       return Math.min(n.size, maxW / Math.max(w, 0.01) * 0.98);
     }
     /** Optional lines under the name, from the year / dates / message fields this product offers. */
@@ -1449,6 +1579,7 @@
       if (this.config.extraFields === 'year') return [clean(e.year)].filter(Boolean);
       if (this.config.extraFields === 'memorial') return [clean(e.dates), clean(e.message)].filter(Boolean);
       if (this.config.extraFields === 'line') return [clean(e.message)].filter(Boolean);
+      if (this.config.extraFields === 'portrait') return [this.state.artStyle === 'memorial' ? clean(e.dates) : '', clean(e.message)].filter(Boolean);
       return [];
     }
     /** The name or its caption lines exist (both are moved together as one "name" element). */
@@ -1468,7 +1599,8 @@
       }
       const ns = n.text ? this.nameSize() : 0;
       const widest = Math.max(...lines.map(l => ctx.measureText(l).width / 100), 0.01);
-      const maxW = n.cap ? 0.9 : (this.shape() ? 0.62 : 1 - 2 * this.safe());
+      const sr = this.safeRect();
+      const maxW = n.cap ? 0.9 : (this.shape() ? 0.62 : sr.x1 - sr.x0);
       const base = n.text ? ns * (n.cap || CAPTION_RATIO) : n.size * (n.cap || 0.6);
       const size = Math.min(base, (maxW / widest) * 0.98, 0.3);
       const k = lines.length;
@@ -1525,13 +1657,13 @@
     /** Keeps the name inside the safe area and the pet's top and sides inside it (the pet may run off the bottom edge). */
     clampAll() {
       const p = this.printSize();
-      const sx = this.safe(), sy = sx * p.width / p.height;
+      const r = this.safeRect();
       const pet = this.state.pet, e = this.halfExtents('pet');
       if (e) {
         // A pet wider than the safe area may shift a little but never far off centre.
-        pet.cx = e.hx * 2 <= 1 - 2 * sx ? clamp(pet.cx, sx + e.hx, 1 - sx - e.hx) : clamp(pet.cx, 0.4, 0.6);
+        pet.cx = e.hx * 2 <= r.x1 - r.x0 ? clamp(pet.cx, r.x0 + e.hx, r.x1 - e.hx) : clamp(pet.cx, 0.4, 0.6);
         const low = SHAPE_FIT[this.shape()] ? 0.95 : 0.6;
-        pet.cy = clamp(pet.cy, sy + e.hy, Math.max(sy + e.hy, low + e.hy));
+        pet.cy = clamp(pet.cy, r.y0 + e.hy, Math.max(r.y0 + e.hy, low + e.hy));
       }
       const name = this.state.name, n = this.halfExtents('name');
       if (n) {
@@ -1539,8 +1671,8 @@
         const g = this.geometry('name', { x: 0, y: 0, w: p.width, h: p.height });
         const ox = g.x / p.width - name.cx, oy = g.y / p.height - name.cy;
         const bx = name.cx + ox, by = name.cy + oy;
-        name.cx = (n.hx * 2 <= 1 - 2 * sx ? clamp(bx, sx + n.hx, 1 - sx - n.hx) : 0.5) - ox;
-        name.cy = (n.hy * 2 <= 1 - 2 * sy ? clamp(by, sy + n.hy, 1 - sy - n.hy) : 0.5) - oy;
+        name.cx = (n.hx * 2 <= r.x1 - r.x0 ? clamp(bx, r.x0 + n.hx, r.x1 - n.hx) : 0.5) - ox;
+        name.cy = (n.hy * 2 <= r.y1 - r.y0 ? clamp(by, r.y0 + n.hy, r.y1 - n.hy) : 0.5) - oy;
       }
     }
     placePet() {
@@ -1564,8 +1696,8 @@
     }
     placeDefault() {
       const s = this.state;
-      if (this.isMug()) {
-        this.placeMug();
+      if (this.isMug() || this.isPortrait()) {
+        if (this.isMug()) this.placeMug(); else this.placePortrait();
         this.clampAll();
         this.defaultLayout = s.artwork ? this.layoutKey() : null;
         return;
@@ -1901,6 +2033,313 @@
       this.renderAll();
     }
 
+
+    /* ----- portraits: artwork styles, frames, room and close-up scenes, before/after, zoom, approval -----
+     * The AI portrait is generated once per photo. Styles are derived from it in the browser (pet-portrait.js), so
+     * changing the background, frame, size or text never calls the AI again, and the approved PNG is what is printed. */
+    initPortrait() {
+      const { el } = this;
+      el.artStyles.forEach(b => {
+        b.addEventListener('click', () => this.setArtStyle(b.dataset.artStyle));
+        b.addEventListener('keydown', e => this.radioKeys(e, b.parentElement, '[data-art-style]'));
+      });
+      el.scenes.forEach(b => b.addEventListener('click', () => this.setScene(b.dataset.scene)));
+      this.root.querySelectorAll('[data-room-step]').forEach(b => b.addEventListener('click', () => {
+        const n = this.P.ROOMS.length;
+        this.state.roomIndex = (this.state.roomIndex + Number(b.dataset.roomStep) + n) % n;
+        this.setScene('room');
+      }));
+      this.root.querySelectorAll('[data-regenerate]').forEach(b => b.addEventListener('click', () => this.regenerate()));
+      this.root.querySelectorAll('[data-zoom]').forEach(b => b.addEventListener('click', () => this.openZoom()));
+      this.root.querySelectorAll('[data-zoom-close]').forEach(b => b.addEventListener('click', () => el.zoomDialog && el.zoomDialog.close()));
+      this.root.querySelectorAll('[data-zoom-level]').forEach(b => b.addEventListener('click', () => this.setZoom(Number(b.dataset.zoomLevel))));
+      const wanted = new URLSearchParams(window.location.search).get('style');
+      this.setArtStyle(this.P.STYLES[wanted] ? wanted : (this.config.defaultStyle || 'modern'), { silent: true });
+      this.setScene(this.config.defaultScene || 'close', { silent: true });
+    }
+    /** Artwork style. Re-styles the cached AI portrait (or asks the AI for that style when it paints styles itself). */
+    async setArtStyle(style, opts = {}) {
+      const { P } = this, s = this.state;
+      if (!P.STYLES[style]) style = 'modern';
+      const prev = s.artStyle, wasDefault = this.isDefaultLayout();
+      s.artStyle = style;
+      this.el.artStyles.forEach(b => { const on = b.dataset.artStyle === style; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+      this.el.memorialOnly.forEach(n => { n.hidden = style !== 'memorial'; });
+      this.applyStyleText();
+      if (opts.silent || prev === style) { if (!opts.silent) this.changed({ design: true }); return; }
+      if (s.baseArt && this.config.aiStyles) { this.generate(); return; }
+      if (s.baseArt) await this.restyle();
+      if (wasDefault || !s.artwork) this.placeDefault();
+      else this.applyStyleFade();
+      this.changed({ design: true });
+    }
+    /** Name font and colours follow the style and the background (text stays readable on dark colours). */
+    applyStyleText() {
+      if (!this.isPortrait()) return;
+      const s = this.state, st = this.P.STYLES[s.artStyle], bg = s.background.color || '#ffffff';
+      s.name.font = st.font;
+      s.name.fill = this.P.textColor(s.artStyle, bg);
+      s.name.stroke = /^#[0-9a-f]{6}$/i.test(bg) ? bg.toLowerCase() : '#ffffff';
+      if (this.el.font) { this.el.font.value = s.name.font; this.el.fill.value = s.name.fill; this.el.stroke.value = s.name.stroke; }
+    }
+    applyStyleFade() {
+      const s = this.state, st = this.P.STYLES[s.artStyle];
+      const fade = this.hasLabel() ? Math.max(st.fade, 0.16) : st.fade;
+      if (fade) s.pet.fade = fade; else delete s.pet.fade;
+    }
+    async setBaseArt(img, art) {
+      this.state.baseArt = { img, art };
+      await this.restyle();
+    }
+    async restyle() {
+      const s = this.state, base = s.baseArt;
+      if (!base) return;
+      const style = this.config.aiStyles ? 'modern' : s.artStyle;
+      const key = `${base.art.sha256}:${style}`;
+      let entry = this.styleCache.get(key);
+      if (!entry) {
+        const canvas = this.P.stylize(base.img, style);
+        if (!canvas) entry = { img: base.img, art: base.art };
+        else {
+          const blob = await canvasToBlob(canvas, 'image/png');
+          entry = { img: canvas, art: { blob, sha256: await sha256Hex(blob), w: canvas.width, h: canvas.height } };
+        }
+        this.styleCache.set(key, entry);
+      }
+      s.artwork = entry.img;
+      s.art = entry.art;
+      this.fadeCache = null;
+    }
+    /** Default portrait layout: name and text at the bottom of the visible face, the pet above them (its lower edge
+     *  softly faded), or, without text, the pet standing on the bottom edge. */
+    placePortrait() {
+      const s = this.state, p = this.printSize(), r = this.safeRect(), f = this.faceRect();
+      const st = this.P.STYLES[s.artStyle] || this.P.STYLES.modern;
+      delete s.name.cap; delete s.name.breaks;
+      Object.assign(s.name, { cx: 0.5, cy: r.y1 - 0.06, size: round4(st.nameSize * f.w), rot: 0 });
+      const block = () => { const g = this.geometry('name', { x: 0, y: 0, w: p.width, h: p.height }); return g ? { top: (g.y - g.h / 2) / p.height, bottom: (g.y + g.h / 2) / p.height } : null; };
+      let b = block();
+      if (b) { s.name.cy = round4(s.name.cy + (r.y1 - 0.005) - b.bottom); b = block(); }
+      if (!s.artwork) return;
+      const aspect = s.artwork.height / s.artwork.width;
+      const top = r.y0 + 0.02 * f.h;
+      const bottom = b ? b.top - 0.02 * f.h : f.y + f.h;
+      const w = Math.max(0.2, Math.min(((bottom - top) * p.height) / (p.width * aspect), (r.x1 - r.x0) * 0.94));
+      const h = this.petHeightFrac(w);
+      s.pet = { cx: 0.5, cy: round4(bottom - h / 2), w: round4(w), rot: 0 };
+      this.applyStyleFade();
+    }
+    /** Style decoration (watercolor wash, classic oval, memorial glow) placed behind the pet's head. */
+    decor() {
+      if (!this.isPortrait() || !this.state.artwork) return null;
+      const s = this.state, st = this.P.STYLES[s.artStyle];
+      if (!st || !st.decor) return null;
+      const ph = this.petHeightFrac(s.pet.w);
+      const lift = { wash: 0.06, vignette: 0.1, halo: 0.24 }[st.decor];
+      const k = { wash: 0.66, vignette: 0.56, halo: 0.6 }[st.decor];
+      return { kind: st.decor, cx: round4(s.pet.cx), cy: round4(s.pet.cy - ph * lift), r: round4(s.pet.w * k), color: this.P.decorColor(st.decor, s.background.color || '#ffffff') };
+    }
+    decorImage(d, w, h) {
+      const key = `${JSON.stringify(d)}|${w}x${h}`;
+      let entry = this.decorCache.get(key);
+      if (!entry) {
+        entry = { img: null };
+        this.decorCache.set(key, entry);
+        if (this.decorCache.size > 16) this.decorCache.delete(this.decorCache.keys().next().value);
+        this.pendingLoads = (this.pendingLoads || 0) + 1;
+        loadImage('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(this.B.decorSvg(d, w, h)))
+          .then(img => { entry.img = img; this.renderAll(); })
+          .catch(() => {})
+          .finally(() => { this.pendingLoads--; });
+      }
+      return entry.img;
+    }
+    /** Runs a drawing function, waits for pattern and decor images it asked for, and draws again. */
+    async drawWhenReady(fn) {
+      fn();
+      for (let n = 0; n < 60 && (this.pendingLoads || 0) > 0; n++) await new Promise(r => setTimeout(r, 50));
+      fn();
+    }
+    frameKind(variant = this.state.variant) {
+      if (!variant) return 'black';
+      for (const o of variant.options) { const k = this.P.frameKind(o); if (k) return k; }
+      return /^MPM-DIGITAL/i.test(variant.sku || '') ? 'digital' : 'canvas';
+    }
+    isDigital(variant = this.state.variant) {
+      return !!variant && (/^MPM-DIGITAL/i.test(variant.sku || '') || (!!this.P && variant.options.some(o => this.P.frameKind(o) === 'digital')));
+    }
+    sizeInches(variant = this.state.variant) {
+      if (!variant) return null;
+      for (const o of variant.options) { const i = parseInches(o); if (i && i.w >= 4 && i.h >= 4) return i; }
+      return null;
+    }
+    /** Size buttons: only sizes this frame comes in, each with its price; digital hides the size choice. */
+    portraitOptions() {
+      const { config, el } = this, names = config.optionNames || [];
+      const si = names.findIndex(n => /size/i.test(n)), fi = names.findIndex(n => /frame|finish|format/i.test(n));
+      const v = this.state.variant, digital = this.isDigital();
+      const money = c => formatMoney(c, config.moneyFormat);
+      el.optionGroups.forEach(group => {
+        const index = Number(group.dataset.optionGroup) - 1;
+        if (index !== si) return;
+        const wrap = group.closest('.mps__group');
+        if (wrap) wrap.hidden = digital;
+        group.querySelectorAll('[data-option-value]').forEach(btn => {
+          const val = btn.dataset.optionValue;
+          const all = config.variants.filter(x => x.options[si] === val);
+          btn.hidden = all.length > 0 && all.every(x => this.isDigital(x));
+          const match = all.find(x => x.available && (fi < 0 || x.options[fi] === v.options[fi]));
+          btn.disabled = !match && val !== v.options[si];
+          const sub = btn.querySelector('[data-size-sub]');
+          if (sub) sub.textContent = match ? money(match.price) : 'Other frames';
+        });
+      });
+      if (el.frameHint) {
+        const sizes = config.variants.filter(x => x.available && fi >= 0 && x.options[fi] === v.options[fi] && !this.isDigital(x)).map(x => this.sizeInches(x)).filter(Boolean);
+        const all = new Set(config.variants.filter(x => !this.isDigital(x)).map(x => x.options[si]));
+        el.frameHint.textContent = !digital && sizes.length && sizes.length < all.size ? `${this.P.FRAMES[this.frameKind()].label} comes in ${sizes.map(i => `${i.w} × ${i.h} in`).join(' and ')}.` : '';
+        el.frameHint.hidden = !el.frameHint.textContent;
+      }
+      if (el.digitalNote) el.digitalNote.hidden = !digital;
+      this.updateSceneButtons();
+    }
+    sceneMode() {
+      const m = this.state.scene;
+      if (m === 'room' && this.isDigital()) return 'close';
+      if (m === 'compare' && !(this.photoImg && this.state.artwork)) return 'close';
+      return m;
+    }
+    setScene(mode, opts = {}) {
+      this.state.scene = mode;
+      this.updateSceneButtons();
+      if (!opts.silent) { this.renderAll(); this.persistSoon(); }
+    }
+    updateSceneButtons() {
+      const { el } = this, mode = this.sceneMode();
+      el.scenes.forEach(b => {
+        b.setAttribute('aria-pressed', String(b.dataset.scene === mode));
+        b.disabled = (b.dataset.scene === 'room' && this.isDigital()) || (b.dataset.scene === 'compare' && !(this.state.photo && this.state.artwork));
+      });
+      if (el.roomNav) el.roomNav.hidden = mode !== 'room';
+      if (el.roomName) el.roomName.textContent = this.P.ROOMS[this.state.roomIndex % this.P.ROOMS.length].label;
+    }
+    /** The visible face of the print (wrapped edges cropped) drawn into x/y/w/h. */
+    drawFace(ctx, x, y, w, h, dpr = 1) {
+      const f = this.faceRect(), FW = w / f.w, FH = h / f.h;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+      this.drawDesign(ctx, x - f.x * FW, y - f.y * FH, FW, FH, { dpr, placeholder: !this.state.artwork });
+      ctx.restore();
+    }
+    /** Inches of the visible face (digital files: the file's proportions at 8 inches wide). */
+    faceInches() {
+      const i = this.sizeInches();
+      if (i && !this.isDigital()) return i;
+      const p = this.printSize();
+      return { w: 8, h: 8 * p.height / p.width };
+    }
+    /** Main preview: the framed portrait close up, in a room at true scale, or before/after. */
+    drawScene(ctx, W, H, { dpr = 1, mode = this.sceneMode(), exporting = false } = {}) {
+      const { P } = this, s = this.state, kind = this.frameKind(), inches = this.faceInches();
+      const bg = s.background.color || '#ffffff', edge = P.shade(bg, -0.12);
+      const art = (c, x, y, w, h) => this.drawFace(c, x, y, w, h, dpr);
+      if (mode === 'room') {
+        const room = P.ROOMS[s.roomIndex % P.ROOMS.length], ppi = H / P.ROOM_H;
+        ctx.save();
+        const a = room.draw(ctx, W, H, ppi);
+        ctx.restore();
+        const fw = inches.w * ppi, fh = inches.h * ppi, o = P.outerInches(kind) * ppi;
+        P.drawFramed(ctx, W * a.cx - fw / 2, a.bottom - o - fh, fw, fh, kind, ppi, art, { edgeColor: edge });
+        return;
+      }
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#f7f2eb'); g.addColorStop(1, '#ece4d8');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      const o = P.outerInches(kind), d = kind === 'canvas' ? 0.5 : 0;
+      // On the page the view buttons cover the top of the stage, so the piece sits a little lower there.
+      const top = exporting ? 0.08 : 0.13, bottom = exporting ? 0.08 : 0.05, room = H * (1 - top - bottom);
+      const ppi = Math.min((W * 0.84) / (inches.w + 2 * o + d), room / (inches.h + 2 * o + d));
+      const fw = inches.w * ppi, fh = inches.h * ppi, x = (W - fw) / 2, y = H * top + (room - fh) / 2;
+      P.drawFramed(ctx, x, y, fw, fh, kind, ppi, art, { edgeColor: edge });
+      if (mode === 'compare') this.drawCompare(ctx, x, y, fw, fh);
+      else if (kind === 'digital' && s.artwork) {
+        const p = this.printSize(), label = `Digital file · ${p.width} × ${p.height} px`;
+        ctx.save();
+        ctx.font = `600 ${Math.max(11, Math.round(W * 0.026))}px Montserrat, Arial, sans-serif`;
+        ctx.fillStyle = 'rgba(27, 42, 78, 0.75)'; ctx.textAlign = 'center';
+        ctx.fillText(label, W / 2, Math.min(H - 8, y + fh + (H - y - fh) / 2 + 4));
+        ctx.restore();
+      }
+    }
+    drawCompare(ctx, x, y, w, h) {
+      const img = this.photoImg;
+      if (!img) return;
+      const cx = x + w * this.state.compareX;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x, y, cx - x, h); ctx.clip();
+      const k = Math.max(w / img.width, h / img.height);
+      ctx.drawImage(img, x + (w - img.width * k) / 2, y + (h - img.height * k) / 2, img.width * k, img.height * k);
+      ctx.restore();
+      ctx.save();
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(cx - 1.5, y, 3, h);
+      ctx.beginPath(); ctx.arc(cx, y + h / 2, 16, 0, TAU); ctx.fill();
+      ctx.strokeStyle = 'rgba(27, 42, 78, 0.35)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = '#1b2a4e'; ctx.font = '700 13px Montserrat, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('‹ ›', cx, y + h / 2 + 1);
+      const tag = (text, tx, align) => {
+        ctx.font = '700 12px Montserrat, Arial, sans-serif';
+        const tw = ctx.measureText(text).width + 16, bx = align === 'left' ? tx : tx - tw;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'; ctx.fillRect(bx, y + 10, tw, 24);
+        ctx.fillStyle = '#1b2a4e'; ctx.textAlign = 'center'; ctx.fillText(text, bx + tw / 2, y + 22);
+      };
+      if (cx - x > 70) tag('Your photo', x + 10, 'left');
+      if (x + w - cx > 80) tag('Your portrait', x + w - 10, 'right');
+      ctx.restore();
+    }
+    /** Edges of a canvas print that wrap around the frame, dimmed in the Adjust view. */
+    drawBleed(ctx, box) {
+      const f = this.faceRect();
+      if (f.w >= 1 && f.h >= 1) return;
+      const fx = box.x + f.x * box.w, fy = box.y + f.y * box.h, fw = f.w * box.w, fh = f.h * box.h;
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.rect(fx, fy, fw, fh); ctx.fill('evenodd');
+      ctx.setLineDash([4, 4]); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(27, 42, 78, 0.45)'; ctx.strokeRect(fx, fy, fw, fh);
+      ctx.restore();
+    }
+    /** Large close-up of the artwork with zoom levels (rendered at print-like resolution). */
+    async openZoom() {
+      const { el } = this;
+      if (!el.zoomDialog || !this.state.artwork) return;
+      const inches = this.faceInches(), long = 2000;
+      const W = inches.w >= inches.h ? long : Math.round(long * inches.w / inches.h), H = Math.round(W * inches.h / inches.w);
+      const canvas = createCanvas(W, H), ctx = canvas.getContext('2d');
+      await this.drawWhenReady(() => this.drawFace(ctx, 0, 0, W, H, 1));
+      el.zoomImg.src = canvas.toDataURL('image/jpeg', 0.9);
+      if (el.zoomDialog.showModal) el.zoomDialog.showModal(); else el.zoomDialog.setAttribute('open', '');
+      this.setZoom(1);
+    }
+    setZoom(z) {
+      const { el } = this;
+      el.zoomImg.style.width = `${z * 100}%`;
+      this.root.querySelectorAll('[data-zoom-level]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.zoomLevel) === z)));
+    }
+    designKey() {
+      const s = this.state, p = this.printSize();
+      return JSON.stringify([this.layoutKey(), s.artStyle, s.background.id, s.background.color, s.variant && s.variant.id, s.name.text, s.name.font, s.name.fill, this.captionLines(), s.art && s.art.sha256, p.width, p.height]);
+    }
+    isApproved() { return !!this.state.approvedKey && this.state.approvedKey === this.designKey(); }
+    /** "Approve my design": the shopper confirms this exact version; the next click adds it to the cart. */
+    approveDesign() {
+      if (!this.state.artwork) return;
+      if (!this.validateName()) { this.el.nameInput.focus(); return; }
+      this.state.approvedKey = this.designKey();
+      this.el.cartStatus.textContent = 'Design approved. Add it to your cart when you’re ready.';
+      this.root.dispatchEvent(new CustomEvent('pet-studio:approved', { bubbles: true }));
+      this.updateUI();
+      this.persistSoon();
+    }
+
     /* ----- drawing (keep identical to backend/lib/render.js) ----- */
     drawDesign(ctx, x, y, W, H, { dpr = 1, placeholder = false } = {}) {
       const s = this.state, bg = s.background;
@@ -1917,6 +2356,12 @@
       } else if (bg.kind !== 'solid') {
         const pw = Math.round(W * dpr / 50) * 50 || 50;
         const img = this.patternImage(pw, Math.round(pw * H / W));
+        if (img) ctx.drawImage(img, x, y, W, H);
+      }
+      const decor = this.decor();
+      if (decor) {
+        const dw = Math.round(W * dpr / 50) * 50 || 50;
+        const img = this.decorImage(decor, dw, Math.round(dw * H / W));
         if (img) ctx.drawImage(img, x, y, W, H);
       }
       if (s.artwork) {
@@ -2003,11 +2448,10 @@
         ctx.restore();
         return;
       }
-      const p = this.printSize();
-      const ix = this.safe() * box.w, iy = this.safe() * p.width / p.height * box.h;
+      const r = this.safeRect();
       ctx.save();
       ctx.setLineDash([8, 6]); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(214, 69, 69, 0.6)';
-      ctx.strokeRect(box.x + ix, box.y + iy, box.w - ix * 2, box.h - iy * 2);
+      ctx.strokeRect(box.x + r.x0 * box.w, box.y + r.y0 * box.h, (r.x1 - r.x0) * box.w, (r.y1 - r.y0) * box.h);
       ctx.restore();
     }
     renderAll() {
@@ -2018,6 +2462,10 @@
     /* ----- state changes ----- */
     /** Any change to the design withdraws an earlier approval: the next add needs a new approval. */
     changed({ design = false, placement = false, price = false, commit = false } = {}) {
+      if (this.isPortrait() && this.state.approvedKey && !this.isApproved()) {
+        this.state.approvedKey = null;
+        this.el.cartStatus.textContent = 'You changed the design. Approve it again before adding it to your cart.';
+      }
       if (design || placement) {
         this.clampAll();
         if (this.state.addedId) {
@@ -2104,6 +2552,7 @@
       else if (s.phase === 'generating') label = 'Creating your design…';
       else if (!has) label = s.photo ? 'Upload a different photo' : 'Upload your pet’s photo';
       else if (!available) label = 'Sold out';
+      else if (this.isPortrait()) label = this.isApproved() ? 'Add to cart' : 'Approve my design';
       else label = 'Approve & add to cart';
       el.primaries.forEach(b => {
         b.querySelector('[data-primary-label]').textContent = label;
@@ -2120,6 +2569,18 @@
       el.approveNote.hidden = !has || s.phase === 'generating';
       this.root.querySelectorAll('[data-target="name"]').forEach(b => { b.disabled = !this.hasLabel(); });
       if (s.selected === 'name' && !this.hasLabel()) s.selected = 'pet';
+      if (this.isPortrait()) {
+        if (el.approvedBadge) el.approvedBadge.hidden = !(has && this.isApproved());
+        this.root.querySelectorAll('[data-regenerate]').forEach(b => { b.disabled = s.phase === 'generating' || !s.photo; b.hidden = !has; });
+        this.root.querySelectorAll('[data-zoom]').forEach(b => { b.hidden = !has; });
+        this.root.querySelectorAll('[data-has-art]').forEach(n => { n.hidden = !has; });
+        if (s.photo && this.photoImgUrl !== s.photo.url) {
+          const url = s.photo.url;
+          this.photoImgUrl = url;
+          loadImage(url).then(img => { if (this.photoImgUrl === url) { this.photoImg = img; this.updateSceneButtons(); this.renderAll(); } }).catch(() => {});
+        }
+        this.updateSceneButtons();
+      }
     }
 
     /* ----- persistence (refresh recovery) ----- */
@@ -2131,6 +2592,7 @@
       const s = this.state;
       kv.set(`state:${this.config.productId}`, {
         at: Date.now(), photoHash: s.photo && s.photo.hash, pet: s.pet, name: s.name, extra: s.extra, style: s.style, addedId: s.addedId, isDefault: this.isDefaultLayout(),
+        artStyle: s.artStyle, scene: s.scene, approvedKey: s.approvedKey,
         background: { id: s.background.id, color: s.background.color, name: s.background.name },
         variantId: s.variant && s.variant.id
       });
@@ -2151,21 +2613,28 @@
       Object.assign(this.state.name, saved.name || {});
       Object.assign(this.state.extra, saved.extra || {});
       if (saved.style) this.setStyle(saved.style, { silent: true });
+      if (this.isPortrait() && saved.artStyle) { await this.setArtStyle(saved.artStyle, { silent: true }); this.state.scene = saved.scene || this.state.scene; }
       this.el.nameInput.value = this.state.name.text || '';
       this.el.extras.forEach(i => { i.value = this.state.extra[i.dataset.extra] || ''; });
       this.el.suggestions.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.suggest === this.state.extra.message)));
       const photo = await kv.get(`photo:${this.config.productId}`);
-      const art = saved.photoHash ? await kv.get(`art:${saved.photoHash}`) : null;
+      const art = saved.photoHash ? await kv.get(this.isPortrait() && this.config.aiStyles ? `art:${saved.photoHash}:${this.state.artStyle}` : `art:${saved.photoHash}`) : null;
       if (photo && photo.blob) {
         this.state.photo = { blob: photo.blob, hash: photo.hash, url: URL.createObjectURL(photo.blob) };
         this.setPhotoStatus('Your photo');
       }
       if (art && art.blob && photo && photo.hash === saved.photoHash) {
         try {
-          this.state.artwork = await loadImage(URL.createObjectURL(art.blob));
-          this.state.art = { blob: art.blob, sha256: art.sha256, w: art.w, h: art.h };
+          const img = await loadImage(URL.createObjectURL(art.blob));
+          if (this.isPortrait()) await this.setBaseArt(img, { blob: art.blob, sha256: art.sha256, w: art.w, h: art.h });
+          else {
+            this.state.artwork = img;
+            this.state.art = { blob: art.blob, sha256: art.sha256, w: art.w, h: art.h };
+          }
           this.state.pet = saved.pet || this.state.pet;
+          if (this.state.galleryOpen) this.toggleGallery(false);
           if (saved.isDefault) this.defaultLayout = this.layoutKey();
+          if (this.isPortrait() && saved.approvedKey) this.state.approvedKey = saved.approvedKey;
           this.state.addedId = saved.addedId || null;
           this.state.phase = 'ready';
           this.setPhotoStatus('Your design was restored');
@@ -2185,6 +2654,7 @@
       return {
         family: this.familyKey(),
         shape: this.shape() || undefined,
+        ...(this.isPortrait() ? { style: s.artStyle, frame: this.frameKind(), decor: this.decor() || undefined } : {}),
         product_id: String(this.config.productId),
         variant_id: String(s.variant.id),
         sku: s.variant.sku || '',
@@ -2222,6 +2692,13 @@
       return { id, unsigned: JSON.stringify(design) };
     }
     async exportPreview() {
+      if (this.isPortrait()) {
+        // Cart image: the framed portrait close up (digital files: the artwork itself).
+        const W = PREVIEW_EXPORT, i = this.faceInches(), H = this.isDigital() ? Math.round(W * i.h / i.w) : Math.round(W * 1.2);
+        const canvas = createCanvas(W, H), ctx = canvas.getContext('2d');
+        await this.drawWhenReady(() => (this.isDigital() ? this.drawFace(ctx, 0, 0, W, H, 1) : this.drawScene(ctx, W, H, { dpr: 1, mode: 'close', exporting: true })));
+        return canvasToBlob(canvas, 'image/jpeg', 0.88);
+      }
       const p = this.printSize();
       const W = PREVIEW_EXPORT, H = this.isMug() ? Math.round(PREVIEW_EXPORT * 0.8) : Math.round(PREVIEW_EXPORT * p.height / p.width);
       const canvas = createCanvas(W, H);
@@ -2263,6 +2740,7 @@
       if (this.adding) return;
       if (!s.artwork || !s.art) { this.el.fileInput.click(); return; }
       if (!s.variant || !s.variant.available) { this.el.cartStatus.textContent = 'This option is sold out. Please choose another one.'; return; }
+      if (this.isPortrait() && !this.isApproved()) { this.approveDesign(); return; }
       if (!this.validateName()) { this.el.nameInput.focus(); return; }
       this.adding = true;
       this.updateUI();
@@ -2280,29 +2758,13 @@
           return;
         }
         const preview = await this.exportPreview();
-        const form = new FormData();
-        form.append('id', String(s.variant.id));
-        form.append('quantity', '1');
-        if (design.name) form.append('properties[Pet name]', design.name.text);
-        const extra = this.state.extra, clean = t => String(t || '').replace(/\s+/g, ' ').trim();
-        if (this.config.extraFields === 'year' && clean(extra.year)) form.append('properties[Year]', clean(extra.year));
-        if (this.config.extraFields === 'memorial' && clean(extra.dates)) form.append('properties[Dates]', clean(extra.dates));
-        if (this.config.extraFields === 'memorial' && clean(extra.message)) form.append('properties[Message]', clean(extra.message));
-        if (this.config.extraFields === 'line' && clean(extra.message)) form.append('properties[Text]', clean(extra.message));
-        if (this.isMug()) form.append('properties[Printed on]', 'Both sides');
-        form.append('properties[Background]', design.background.name);
-        form.append('properties[Design ID]', approval.id);
-        form.append('properties[Design preview]', preview, `${approval.id}-preview.jpg`);
-        if (approval.token) form.append('properties[_design]', approval.token);
-        else form.append('properties[_design_unsigned]', approval.unsigned);
-        form.append('properties[_artwork]', s.art.blob, `${approval.id}-artwork.png`);
-        form.append('properties[_Original photo]', s.photo.blob, `${approval.id}-original.jpg`);
-        form.append('properties[_MyPetMemo family]', this.familyKey());
+        const form = this.cartForm(design, approval, preview);
         const res = await fetch(this.config.cartAddUrl, { method: 'POST', body: form, headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new StudioError('cart', json.description || json.message || 'We couldn’t add this to your cart. Please try again.');
         s.addedId = approval.id;
         this.persist();
+        this.saveHandoff(design, approval.id);
         await this.captureEmail();
         this.el.cartStatus.textContent = `Added to your cart (design ${approval.id}).`;
         this.root.dispatchEvent(new CustomEvent('pet-studio:added', { bubbles: true, detail: { item: json, design, id: approval.id, signed: !!approval.token } }));
@@ -2313,6 +2775,49 @@
         this.adding = false;
         this.updateUI();
       }
+    }
+    /** Cart line for an approved design: what the shopper sees (name, text, background, preview) and what the
+     *  backend needs (signed design, artwork, original photo). Product page and matching add-ons use the same. */
+    cartForm(design, approval, preview, more = {}) {
+      const s = this.state;
+      const form = new FormData();
+      form.append('id', String(s.variant.id));
+      form.append('quantity', '1');
+      if (design.name) form.append('properties[Pet name]', design.name.text);
+      const extra = this.state.extra, clean = t => String(t || '').replace(/\s+/g, ' ').trim();
+      if (this.config.extraFields === 'year' && clean(extra.year)) form.append('properties[Year]', clean(extra.year));
+      if (this.config.extraFields === 'memorial' && clean(extra.dates)) form.append('properties[Dates]', clean(extra.dates));
+      if (this.config.extraFields === 'memorial' && clean(extra.message)) form.append('properties[Message]', clean(extra.message));
+      if (this.config.extraFields === 'line' && clean(extra.message)) form.append('properties[Text]', clean(extra.message));
+      if (this.isMug()) form.append('properties[Printed on]', 'Both sides');
+      if (this.isPortrait()) {
+        form.append('properties[Style]', this.P.STYLES[s.artStyle].label);
+        if (clean(extra.message)) form.append('properties[Custom text]', clean(extra.message));
+        if (s.artStyle === 'memorial' && clean(extra.dates)) form.append('properties[Dates]', clean(extra.dates));
+        if (this.isDigital()) form.append('properties[Delivery]', 'Digital download, emailed after payment');
+      }
+      form.append('properties[Background]', design.background.name);
+      form.append('properties[Design ID]', approval.id);
+      form.append('properties[Design preview]', preview, `${approval.id}-preview.jpg`);
+      if (approval.token) form.append('properties[_design]', approval.token);
+      else form.append('properties[_design_unsigned]', approval.unsigned);
+      form.append('properties[_artwork]', s.art.blob, `${approval.id}-artwork.png`);
+      form.append('properties[_Original photo]', s.photo.blob, `${approval.id}-original.jpg`);
+      form.append('properties[_MyPetMemo family]', this.familyKey());
+      Object.entries(more).forEach(([k, v]) => { if (v) form.append(`properties[${k}]`, v); });
+      return form;
+    }
+    /** Keeps the approved pet (artwork, photo, name and lettering, background, style) in this browser so the cart
+     *  can offer a matching ornament or mug made from it without a second upload (assets/pet-upsell.js). */
+    saveHandoff(design, id) {
+      const s = this.state, bg = s.background;
+      kv.set(`handoff:${id}`, {
+        at: Date.now(), id, family: this.familyKey(), productId: this.config.productId,
+        art: s.art, photo: s.photo && s.photo.blob,
+        name: { text: s.name.text, font: s.name.font, fill: s.name.fill, stroke: s.name.stroke },
+        background: { id: bg.id, kind: bg.kind, name: bg.name, color: bg.color, image: bg.image, preview: bg.preview },
+        artStyle: this.isPortrait() ? s.artStyle : null, extra: { ...s.extra }
+      });
     }
     async captureEmail() {
       const email = this.el.email && this.el.email.value.trim();
@@ -2339,6 +2844,64 @@
     }
   }
 
+  /* ---------- matching add-ons (cart upsell) ----------
+   * Builds an ornament or mug from a design the shopper already approved: the same artwork, background, name and
+   * lettering, placed by that product's own default layout, signed by the backend and added to the cart with the
+   * same properties as the product page. No second upload and no second AI request. */
+  const quiet = new Proxy(function () {}, {
+    get: (t, k) => (k === Symbol.iterator ? [][Symbol.iterator].bind([]) : k === 'length' ? 0 : quiet),
+    set: () => true,
+    apply: () => quiet
+  });
+  async function makeAddon(config, source) {
+    const d = Object.create(PetStudio.prototype);
+    Object.assign(d, {
+      headless: true, root: document.createElement('div'), config, el: quiet,
+      B: window.MyPetMemoBackgrounds, P: window.MyPetMemoPortrait || null,
+      templates: new Map(), svgCache: new Map(), styleCache: new Map(), decorCache: new Map(),
+      generationId: 0, measureCtx: createCanvas(4, 4).getContext('2d')
+    });
+    ['changed', 'renderAll', 'updateUI', 'persistSoon', 'persist'].forEach(m => { d[m] = () => {}; });
+    const variant = config.variants.find(v => v.id === config.variantId && v.available) || config.variants.find(v => v.available) || config.variants[0];
+    const n = source.name || {};
+    d.state = {
+      phase: 'ready', photo: { blob: source.photo, hash: '' }, artwork: await loadImage(URL.createObjectURL(source.art.blob)),
+      art: { blob: source.art.blob, sha256: source.art.sha256, w: source.art.w, h: source.art.h },
+      background: { ...source.background }, bgImage: null,
+      pet: { cx: 0.5, cy: 0.6, w: 0.86, rot: 0 },
+      name: { text: Array.from(String(n.text || '').trim()).slice(0, config.nameMax || 24).join(''), cx: 0.5, cy: 0.12, size: 0.13, rot: 0, font: n.font || 'fredoka', fill: n.fill || '#ffffff', stroke: n.stroke || '#2a2230' },
+      extra: { year: '', dates: '', message: '', ...(config.extra || {}) },
+      style: config.style || 'below', artStyle: 'modern', variant, selected: null, adjustOpen: false, editorOpen: false, addedId: null
+    };
+    d.selectedOptions = variant.options.slice();
+    if (d.state.background.kind === 'image') {
+      d.state.bgImage = await loadImage(d.state.background.preview || d.state.background.image).catch(() => null);
+    }
+    await d.fetchTemplate(variant);
+    await d.fontsReady();
+    d.placeDefault();
+    return d;
+  }
+  Object.assign(PetStudio.prototype, {
+    /** Add-ons: the cart image of this product with the shopper's pet. */
+    async addonPreview() {
+      const blob = await this.exportPreview();
+      this.previewBlob = blob;
+      return blob;
+    },
+    /** Add-ons: sign the design and add it to the cart. `more` adds visible or hidden line properties. */
+    async addonAdd(more = {}) {
+      this.clampAll();
+      const design = this.designData();
+      const approval = await this.approve(design);
+      const preview = this.previewBlob || await this.exportPreview();
+      const res = await fetch(this.config.cartAddUrl, { method: 'POST', body: this.cartForm(design, approval, preview, more), headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new StudioError('cart', json.description || json.message || 'We couldn’t add this to your cart.');
+      return { id: approval.id, item: json, signed: !!approval.token };
+    }
+  });
+
   const init = (scope = document) => {
     scope.querySelectorAll('[data-pet-studio]').forEach(root => {
       if (root.__petStudio) return;
@@ -2350,5 +2913,8 @@
   else init();
   document.addEventListener('shopify:section:load', e => init(e.target));
 
-  window.MyPetMemoStudio = { formatMoney, parseInches, removeFlatBackground, NAME_BASELINE, NAME_STROKE, CAPTION_LINE };
+  window.MyPetMemoStudio = {
+    formatMoney, parseInches, removeFlatBackground, NAME_BASELINE, NAME_STROKE, CAPTION_LINE,
+    makeAddon, handoff: id => kv.get(`handoff:${id}`), loadImage, sha256Hex
+  };
 })();
