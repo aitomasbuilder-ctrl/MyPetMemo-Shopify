@@ -537,7 +537,7 @@
       "defaultStyle": {{ section.settings.default_style | json }},
       "defaultScene": "design",
       "moneyFormat": {{ shop.money_format | json }},
-      "cartUrl": {{ routes.cart_url | json }},
+      "cartUrl": {{ routes.cart_url | append: '?addons=1' | json }},
       "cartAddUrl": {{ routes.cart_add_url | append: '.js' | json }},
       "cartJsUrl": {{ routes.cart_url | append: '.js' | json }},
       "cartUpdateUrl": {{ routes.cart_update_url | append: '.js' | json }},

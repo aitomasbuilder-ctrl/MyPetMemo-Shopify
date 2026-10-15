@@ -553,7 +553,7 @@
       "extraFields": {{ section.settings.extra_fields | json }},
       "fallbackPrint": {% assign fb = section.settings.fallback_print_size | downcase | split: 'x' %}{% if fb.size == 2 %}{"width": {{ fb[0] | strip | plus: 0 }}, "height": {{ fb[1] | strip | plus: 0 }}}{% else %}null{% endif %},
       "moneyFormat": {{ shop.money_format | json }},
-      "cartUrl": {{ routes.cart_url | json }},
+      "cartUrl": {% if section.settings.family == 'blanket' %}{{ routes.cart_url | append: '?addons=1' | json }}{% else %}{{ routes.cart_url | json }}{% endif %},
       "cartAddUrl": {{ routes.cart_add_url | append: '.js' | json }},
       "cartJsUrl": {{ routes.cart_url | append: '.js' | json }},
       "cartUpdateUrl": {{ routes.cart_update_url | append: '.js' | json }},
