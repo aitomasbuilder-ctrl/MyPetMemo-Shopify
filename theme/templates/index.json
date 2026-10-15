@@ -12,32 +12,6 @@
       "type": "featured-products",
       "settings": {}
     },
-    "gift_set": {
-      "type": "matching-gift-set",
-      "blocks": {
-        "0": {
-          "type": "set",
-          "settings": {
-            "main": "blanket",
-            "title": "The Cozy Set",
-            "button": "Start with the blanket"
-          }
-        },
-        "1": {
-          "type": "set",
-          "settings": {
-            "main": "portrait",
-            "title": "The Keepsake Set",
-            "button": "Start with the portrait"
-          }
-        }
-      },
-      "block_order": [
-        "0",
-        "1"
-      ],
-      "settings": {}
-    },
     "how": {
       "type": "how-it-works",
       "blocks": {
@@ -281,7 +255,6 @@
     "hero",
     "transform",
     "featured",
-    "gift_set",
     "how",
     "styles",
     "gifting",

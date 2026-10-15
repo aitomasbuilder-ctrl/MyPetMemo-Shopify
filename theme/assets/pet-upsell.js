@@ -212,4 +212,14 @@
   el.next.addEventListener('click', () => { if (!cards.some(c => c.busy)) goToCheckout(); });
   el.close.addEventListener('click', () => { root.close(); window.location.reload(); });
   root.addEventListener('cancel', e => { e.preventDefault(); el.close.click(); });
+
+  // Right after a blanket or portrait is added (its page sends the shopper to /cart?addons=1), offer the add-ons at once.
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('addons')) {
+    params.delete('addons');
+    const q = params.toString();
+    history.replaceState(null, '', window.location.pathname + (q ? `?${q}` : '') + window.location.hash);
+    const start = () => { if (!busy && !root.open) open().catch(() => {}); };
+    if (document.readyState === 'complete') start(); else window.addEventListener('load', start, { once: true });
+  }
 })();
