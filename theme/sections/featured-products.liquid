@@ -6,8 +6,8 @@
   assign portrait = settings.portrait_product | default: all_products['personalized-pet-portrait'] | default: all_products['digital-pet-portrait']
   assign mug = section.settings.mug_product | default: all_products['personalized-pet-coffee-mug']
   assign addon_tag = 'catalog.addon_tag' | t
-%}<div class="product-grid featured-main">{% render 'product-card', item: blanket, kind: 'blanket', category: blankets, sample_images: section.settings.sample_images %}{% render 'product-card', item: portrait, kind: 'portrait', sample_images: section.settings.sample_images %}</div>
-  <div class="featured-addons"><div class="featured-addons-intro"><p class="eyebrow">{{ section.settings.addons_eyebrow | escape }}</p><h3>{{ section.settings.addons_heading | escape }}</h3><p>{{ section.settings.addons_text | escape }}</p></div><div class="product-grid featured-addon-grid">{% render 'product-card', item: ornament, kind: 'ornament', category: ornaments, sample_images: section.settings.sample_images, tag: addon_tag %}{% if mug != blank and mug.available %}{% render 'product-card', item: mug, kind: 'mug', sample_images: false, tag: addon_tag %}{% endif %}</div></div>
+%}<div class="product-grid featured-main">{% render 'product-card', item: blanket, kind: 'blanket', image: section.settings.blanket_image, category: blankets, sample_images: section.settings.sample_images %}{% render 'product-card', item: portrait, kind: 'portrait', image: section.settings.portrait_image, sample_images: section.settings.sample_images %}</div>
+  <div class="featured-addons"><div class="featured-addons-intro"><p class="eyebrow">{{ section.settings.addons_eyebrow | escape }}</p><h3>{{ section.settings.addons_heading | escape }}</h3><p>{{ section.settings.addons_text | escape }}</p></div><div class="product-grid featured-addon-grid">{% render 'product-card', item: ornament, kind: 'ornament', image: section.settings.ornament_image, category: ornaments, sample_images: section.settings.sample_images, tag: addon_tag %}{% if mug != blank and mug.available %}{% render 'product-card', item: mug, kind: 'mug', image: section.settings.mug_image, sample_images: false, tag: addon_tag %}{% endif %}</div></div>
 </section>
 <style>
   .featured-keepsakes .featured-main{grid-template-columns:repeat(2,minmax(0,1fr));gap:32px}
@@ -45,6 +45,10 @@
       "label": "Use MyPetMemo sample images",
       "default": true
     },
+    { "type": "image_picker", "id": "blanket_image", "label": "Blanket photo", "info": "Optional. Square photo, at least 1600 px." },
+    { "type": "image_picker", "id": "portrait_image", "label": "Portrait photo", "info": "Optional. Square photo, at least 1600 px." },
+    { "type": "image_picker", "id": "ornament_image", "label": "Ornament photo", "info": "Optional. Square photo, at least 1600 px." },
+    { "type": "image_picker", "id": "mug_image", "label": "Mug photo", "info": "Optional. Square photo, at least 1600 px." },
     {
       "type": "collection",
       "id": "blanket_collection",
