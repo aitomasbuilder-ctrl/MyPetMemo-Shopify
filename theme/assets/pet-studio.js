@@ -316,6 +316,14 @@
   }
   /** Removes a flat studio background (chroma) by flood fill from the borders, then trims. */
   function removeFlatBackground(image) {
+    // A thin line or vignette at the very edge of the AI image hides the flat background from the edge flood,
+    // so if little was removed, try again from a ring a few percent inside the edge.
+    const first = keyOutBackground(image, 0);
+    if (first.removedRatio >= 0.2) return first;
+    const second = keyOutBackground(image, Math.round(Math.min(image.width, image.height) * 0.03));
+    return second.removedRatio > first.removedRatio && second.removedRatio <= 0.97 ? second : first;
+  }
+  function keyOutBackground(image, inset) {
     const w = image.width, h = image.height;
     const canvas = createCanvas(w, h);
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -325,8 +333,9 @@
     const samples = [[], [], []];
     const step = Math.max(1, Math.floor((w + h) / 200));
     const push = (x, y) => { const i = (y * w + x) * 4; samples[0].push(px[i]); samples[1].push(px[i + 1]); samples[2].push(px[i + 2]); };
-    for (let x = 0; x < w; x += step) { push(x, 0); push(x, h - 1); }
-    for (let y = 0; y < h; y += step) { push(0, y); push(w - 1, y); }
+    const x0 = inset, y0 = inset, x1 = w - 1 - inset, y1 = h - 1 - inset;
+    for (let x = x0; x <= x1; x += step) { push(x, y0); push(x, y1); }
+    for (let y = y0; y <= y1; y += step) { push(x0, y); push(x1, y); }
     const median = arr => arr.sort((a, b) => a - b)[Math.floor(arr.length / 2)];
     const key = [median(samples[0]), median(samples[1]), median(samples[2])];
     const keyIsGreen = key[1] > 140 && key[1] > key[0] + 60 && key[1] > key[2] + 60;
@@ -336,8 +345,10 @@
     const queue = new Int32Array(w * h);
     let head = 0, tail = 0;
     const tryPush = p => { if (!removed[p] && distTo(p * 4) < hard) { removed[p] = 1; queue[tail++] = p; } };
-    for (let x = 0; x < w; x++) { tryPush(x); tryPush((h - 1) * w + x); }
-    for (let y = 0; y < h; y++) { tryPush(y * w); tryPush(y * w + w - 1); }
+    // Everything outside the ring is edge noise: drop it and start the flood from the ring.
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (x < x0 || x > x1 || y < y0 || y > y1) removed[y * w + x] = 1;
+    for (let x = x0; x <= x1; x++) { tryPush(y0 * w + x); tryPush(y1 * w + x); }
+    for (let y = y0; y <= y1; y++) { tryPush(y * w + x0); tryPush(y * w + x1); }
     while (head < tail) {
       const p = queue[head++], x = p % w, y = (p - x) / w;
       if (x > 0) tryPush(p - 1);
