@@ -355,7 +355,7 @@
         </div>
       {%- endif -%}
 
-      {%- if section.settings.family == 'mug' -%}
+      {%- if section.settings.family == 'mug' and section.settings.show_mug_styles -%}
         <div class="mps__group">
           <h2 class="mps__label">Choose a style</h2>
           <div class="mps__options mps__styles" role="radiogroup" aria-label="Style">
@@ -619,6 +619,7 @@
     { "type": "text", "id": "line_label", "label": "Text line label", "default": "Add your own text (optional)" },
     { "type": "text", "id": "line_placeholder", "label": "Text line placeholder", "default": "Write your own or pick one above" },
     { "type": "text", "id": "line_suggestions", "label": "Text ideas (comma-separated)", "default": "Best Dog Mom Ever,Best Cat Dad Ever,Dog Mom,Cat Mom,Fur Mama,My Best Friend" },
+    { "type": "checkbox", "id": "show_mug_styles", "label": "Show mug style choices (name below / on top / big portrait)", "default": true },
     { "type": "text", "id": "mug_note", "label": "Mug note under the options", "default": "Your design is printed on both sides of the mug, so it shows in either hand." },
     { "type": "range", "id": "max_upload_mb", "label": "Max photo size (MB)", "min": 5, "max": 30, "step": 1, "default": 20 },
     { "type": "range", "id": "min_photo_side", "label": "Min photo size (shortest side, px)", "min": 300, "max": 1200, "step": 50, "default": 500 },
