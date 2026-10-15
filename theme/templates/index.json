@@ -10,7 +10,12 @@
     },
     "featured": {
       "type": "featured-products",
-      "settings": {}
+      "settings": {
+        "blanket_image": "shopify://shop_images/home-blanket-max.png",
+        "portrait_image": "shopify://shop_images/home-portrait-max.png",
+        "ornament_image": "shopify://shop_images/home-ornament-max.png",
+        "mug_image": "shopify://shop_images/home-mug-max.png"
+      }
     },
     "how": {
       "type": "how-it-works",
