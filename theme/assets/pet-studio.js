@@ -770,7 +770,7 @@
         style: 'below',            // mug layout (see placeMug)
         artStyle: 'modern',        // portrait artwork style (pet-portrait.js STYLES)
         baseArt: null,             // portraits: { img, art } the unstyled AI portrait; styles are derived from it
-        scene: 'close',            // portraits: close | room | compare
+        scene: 'design',           // portraits: design | close | room | compare
         roomIndex: 0,
         compareX: 0.5,
         approvedKey: null,         // portraits: the design the shopper approved (any change clears it)
@@ -1231,7 +1231,6 @@
       const s = this.state;
       if (s.phase === 'generating' || this.adding) return;
       if (!s.artwork) { this.el.fileInput.click(); return; }
-      if (this.isPortrait() && !this.isApproved()) { this.approveDesign(); return; }
       this.approveAndAdd();
     }
     async handleFile(file) {
@@ -2055,7 +2054,7 @@
       this.root.querySelectorAll('[data-zoom-level]').forEach(b => b.addEventListener('click', () => this.setZoom(Number(b.dataset.zoomLevel))));
       const wanted = new URLSearchParams(window.location.search).get('style');
       this.setArtStyle(this.P.STYLES[wanted] ? wanted : (this.config.defaultStyle || 'modern'), { silent: true });
-      this.setScene(this.config.defaultScene || 'close', { silent: true });
+      this.setScene(this.config.defaultScene || 'design', { silent: true });
     }
     /** Artwork style. Re-styles the cached AI portrait (or asks the AI for that style when it paints styles itself). */
     async setArtStyle(style, opts = {}) {
@@ -2243,6 +2242,15 @@
       const { P } = this, s = this.state, kind = this.frameKind(), inches = this.faceInches();
       const bg = s.background.color || '#ffffff', edge = P.shade(bg, -0.12);
       const art = (c, x, y, w, h) => this.drawFace(c, x, y, w, h, dpr);
+      if (mode === 'design') {
+        // The artwork itself, unframed and as large as possible, on its own background color.
+        ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+        const top = exporting ? 0.04 : 0.1, pad = 0.04, room = H * (1 - top - pad);
+        const k = Math.min((W * (1 - 2 * pad)) / inches.w, room / inches.h);
+        const fw = inches.w * k, fh = inches.h * k;
+        art(ctx, (W - fw) / 2, H * top + (room - fh) / 2, fw, fh);
+        return;
+      }
       if (mode === 'room') {
         const room = P.ROOMS[s.roomIndex % P.ROOMS.length], ppi = H / P.ROOM_H;
         ctx.save();
@@ -2329,12 +2337,12 @@
       return JSON.stringify([this.layoutKey(), s.artStyle, s.background.id, s.background.color, s.variant && s.variant.id, s.name.text, s.name.font, s.name.fill, this.captionLines(), s.art && s.art.sha256, p.width, p.height]);
     }
     isApproved() { return !!this.state.approvedKey && this.state.approvedKey === this.designKey(); }
-    /** "Approve my design": the shopper confirms this exact version; the next click adds it to the cart. */
+    /** Approval of this exact version; "Add to cart" approves and adds in one click. */
     approveDesign() {
       if (!this.state.artwork) return;
       if (!this.validateName()) { this.el.nameInput.focus(); return; }
       this.state.approvedKey = this.designKey();
-      this.el.cartStatus.textContent = 'Design approved. Add it to your cart when you’re ready.';
+      this.el.cartStatus.textContent = '';
       this.root.dispatchEvent(new CustomEvent('pet-studio:approved', { bubbles: true }));
       this.updateUI();
       this.persistSoon();
@@ -2464,13 +2472,13 @@
     changed({ design = false, placement = false, price = false, commit = false } = {}) {
       if (this.isPortrait() && this.state.approvedKey && !this.isApproved()) {
         this.state.approvedKey = null;
-        this.el.cartStatus.textContent = 'You changed the design. Approve it again before adding it to your cart.';
+        this.el.cartStatus.textContent = '';
       }
       if (design || placement) {
         this.clampAll();
         if (this.state.addedId) {
           this.state.addedId = null;
-          this.el.cartStatus.textContent = 'You changed the design. Approve it again to add this new version.';
+          this.el.cartStatus.textContent = 'You changed the design. Add this new version to your cart when you’re ready.';
         }
         this.validateName();
       }
@@ -2552,7 +2560,7 @@
       else if (s.phase === 'generating') label = 'Creating your design…';
       else if (!has) label = s.photo ? 'Upload a different photo' : 'Upload your pet’s photo';
       else if (!available) label = 'Sold out';
-      else if (this.isPortrait()) label = this.isApproved() ? 'Add to cart' : 'Approve my design';
+      else if (this.isPortrait()) label = 'Add to cart';
       else label = 'Approve & add to cart';
       el.primaries.forEach(b => {
         b.querySelector('[data-primary-label]').textContent = label;
@@ -2740,7 +2748,8 @@
       if (this.adding) return;
       if (!s.artwork || !s.art) { this.el.fileInput.click(); return; }
       if (!s.variant || !s.variant.available) { this.el.cartStatus.textContent = 'This option is sold out. Please choose another one.'; return; }
-      if (this.isPortrait() && !this.isApproved()) { this.approveDesign(); return; }
+      // Portraits: adding to the cart approves this exact version (one click, like the other products).
+      if (this.isPortrait() && !this.isApproved()) { this.approveDesign(); if (!this.isApproved()) return; }
       if (!this.validateName()) { this.el.nameInput.focus(); return; }
       this.adding = true;
       this.updateUI();
