@@ -1,4 +1,4 @@
-/* MyPetMemo pet studio (personalized blankets and ornaments)
+/* MyPetMemo pet studio (personalized blankets, ornaments and mugs)
  * Upload → AI portrait (transparent) → background, name, placement → approve & add to cart.
  * The approved design is signed by the MyPetMemo backend and travels with the cart line; the print
  * file is rendered server side after payment from the same design data (see backend/lib/render.js).
@@ -24,6 +24,15 @@
     pacifico: { family: 'Pacifico', weight: 400 },
     montserrat: { family: 'Montserrat', weight: 800 },
     playfair: { family: 'Playfair Display', weight: 700 }
+  };
+  // Mug drawing: handle width and rim depth as fractions of the body width.
+  const MUG_HANDLE = 0.26;
+  const MUG_RIM = 0.07;
+  // Accent mug colours (handle and inside) by the variant's colour name.
+  const MUG_COLORS = {
+    black: '#1f1f22', white: '#f4f4f4', blue: '#2563c9', 'light blue': '#8fc3ea', navy: '#1c2a4f', red: '#c4142b',
+    pink: '#f3a0bd', green: '#2f8f4e', 'light green': '#8fd19e', 'dark green': '#1f5135', orange: '#f07b22',
+    yellow: '#f5cf2b', purple: '#6b3fa0', grey: '#9aa0a6', gray: '#9aa0a6', brown: '#6b4226', maroon: '#6d1a2a'
   };
   const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
@@ -208,6 +217,12 @@
     const m = c => Math.round(c + (255 - c) * amount);
     return `rgb(${m(r)}, ${m(g)}, ${m(b)})`;
   }
+  /** Colour for a variant value such as "Light Blue" or "11oz / Navy"; null when it names no known colour. */
+  function colorHex(value) {
+    const v = String(value || '').toLowerCase();
+    const key = Object.keys(MUG_COLORS).sort((a, b) => b.length - a.length).find(k => new RegExp(`\\b${k}\\b`).test(v));
+    return key ? MUG_COLORS[key] : null;
+  }
   /** "50" × 60"" → { w: 50, h: 60 } (inches) */
   function parseInches(text) {
     const m = /(\d+(?:\.\d+)?)\D{1,6}?(\d+(?:\.\d+)?)/.exec(String(text || ''));
@@ -383,14 +398,7 @@
       this.render();
     }
     /** The print area inside this view: real print proportions, centred. */
-    box() {
-      const { width, height } = this.studio.printSize();
-      const inset = Math.min(this.w, this.h) * 0.07;
-      const availW = this.w - inset * 2, availH = this.h - inset * 2;
-      const scale = Math.min(availW / width, availH / height);
-      const w = width * scale, h = height * scale;
-      return { x: (this.w - w) / 2, y: (this.h - h) / 2, w, h };
-    }
+    box() { return this.studio.fitBox(this.w, this.h); }
     render() {
       if (!this.w) return;
       const ctx = this.ctx;
@@ -399,6 +407,11 @@
       const box = this.box();
       const s = this.studio;
       const shape = s.shape();
+      if (s.isMug()) {
+        s.drawMug(ctx, box, { dpr: this.dpr, editing: this.isEditing(), placeholder: !s.state.artwork });
+        this.drawEditing(ctx, box);
+        return;
+      }
       // blanket or ornament on the stage
       ctx.save();
       ctx.shadowColor = 'rgba(27, 42, 78, 0.22)';
@@ -422,6 +435,10 @@
       } else {
         s.drawDesign(ctx, box.x, box.y, box.w, box.h, { dpr: this.dpr, placeholder: !s.state.artwork });
       }
+      this.drawEditing(ctx, box);
+    }
+    drawEditing(ctx, box) {
+      const s = this.studio;
       if (this.isEditing()) {
         s.drawSafeArea(ctx, box);
         for (const which of ['pet', 'name']) {
@@ -705,7 +722,7 @@
         font: q('[data-font]'), fill: q('[data-fill]'), stroke: q('[data-stroke]'), nameSize: q('[data-name-size]'),
         gallery: q('[data-gallery]'), galleryMain: q('[data-gallery-main]'), galleryThumbs: q('[data-gallery-thumbs]'),
         thumbs: q('[data-thumbs]'), thumbDesign: q('[data-thumb-design]'), email: q('[data-email-input]'), consent: q('[data-marketing-consent]'),
-        extras: qa('[data-extra]'), suggestions: qa('[data-suggest]')
+        extras: qa('[data-extra]'), suggestions: qa('[data-suggest]'), styles: qa('[data-style]')
       };
       this.state = {
         phase: 'empty',            // empty | generating | ready | error
@@ -717,6 +734,7 @@
         pet: { cx: 0.5, cy: 0.6, w: 0.86, rot: 0 },
         name: { text: '', cx: 0.5, cy: 0.12, size: 0.13, rot: 0, font: 'fredoka', fill: '#ffffff', stroke: '#2a2230' },
         extra: { year: '', dates: '', message: '' },   // optional lines under the name (see captionLines)
+        style: 'below',            // mug layout (see placeMug)
         selected: null,
         adjustOpen: false,
         editorOpen: false,
@@ -733,6 +751,7 @@
       this.initBackgrounds();
       this.initVariants();
       this.bindUI();
+      this.setStyle(this.state.style, { silent: true });
       this.initGallery();
       this.initReviews();
       this.initSticky();
@@ -787,6 +806,10 @@
         onExtra('message', this.state.extra.message === b.dataset.suggest ? '' : b.dataset.suggest);
       }));
       if (el.editorName) el.editorName.addEventListener('input', () => onName(el.editorName));
+      el.styles.forEach(b => {
+        b.addEventListener('click', () => this.setStyle(b.dataset.style));
+        b.addEventListener('keydown', e => this.radioKeys(e, b.parentElement, '[data-style]'));
+      });
       el.adjustBtn.addEventListener('click', () => (this.state.adjustOpen ? this.closeAdjust() : this.openAdjust('pet')));
       this.root.querySelector('[data-adjust-save]').addEventListener('click', () => this.closeAdjust());
       this.root.querySelectorAll('[data-reset]').forEach(b => b.addEventListener('click', () => { this.placeDefault(); this.changed({ placement: true, commit: true }); }));
@@ -822,6 +845,15 @@
           if (file) this.handleFile(file);
         });
       });
+    }
+
+    /** Mug style: re-places the pet and name (an adjusted layout is replaced, like Reset). */
+    setStyle(style, opts = {}) {
+      this.state.style = style;
+      this.el.styles.forEach(b => { const on = b.dataset.style === style; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+      if (opts.silent) return;
+      this.placeDefault();
+      this.changed({ design: true });
     }
 
     /* ----- backgrounds ----- */
@@ -934,9 +966,22 @@
         const index = Number(group.dataset.optionGroup) - 1;
         group.querySelectorAll('[data-option-value]').forEach(button => {
           const inches = parseInches(button.dataset.optionValue);
-          if (inches) {
+          const oz = /^(\d+(?:\.\d+)?)\s*oz$/i.exec(button.dataset.optionValue.trim());
+          if (oz) {
+            button.querySelector('[data-size-main]').textContent = `${oz[1]} oz`;
+            button.querySelector('[data-size-sub]').textContent = `${Math.round(Number(oz[1]) * 29.574 / 5) * 5} ml`;
+          } else if (inches) {
             button.querySelector('[data-size-main]').textContent = `${inches.w} × ${inches.h} in`;
             button.querySelector('[data-size-sub]').textContent = `${Math.round(inches.w * 2.54)} × ${Math.round(inches.h * 2.54)} cm`;
+          }
+          const hex = /colou?r/i.test((config.optionNames || [])[index] || '') && colorHex(button.dataset.optionValue);
+          if (hex) {
+            const dot = document.createElement('span');
+            dot.className = 'mps__color-dot';
+            dot.style.backgroundColor = hex;
+            dot.setAttribute('aria-hidden', 'true');
+            button.prepend(dot);
+            button.classList.add('mps__option--color');
           }
           button.addEventListener('click', () => { this.selectedOptions[index] = button.dataset.optionValue; this.resolveVariant(index); });
           button.addEventListener('keydown', e => this.radioKeys(e, group, '[data-option-value]'));
@@ -979,10 +1024,16 @@
       this.fetchTemplate(variant);
       this.changed({ design: !opts.silent, price: true });
     }
+    /** The design area. Mugs: one side, half of the Printify wrap (the same side is printed on both halves). */
     printSize(variant = this.state.variant) {
+      const full = this.wrapSize(variant);
+      return this.isMug() ? { width: Math.round(full.width / 2), height: full.height, source: full.source } : full;
+    }
+    /** The whole Printify print area. */
+    wrapSize(variant = this.state.variant) {
       const fromPrintify = variant && this.templates.get(variant.id);
       if (fromPrintify) return fromPrintify;
-      const inches = variant && parseInches(variant.options[0] || variant.title);
+      const inches = !this.isMug() && variant && parseInches(variant.options[0] || variant.title);
       const dpi = this.config.printDpi || 150;
       if (inches) return { width: Math.round(inches.w * dpi), height: Math.round(inches.h * dpi), source: 'size' };
       const f = this.config.fallbackPrint;
@@ -1166,7 +1217,7 @@
         const hadArtwork = !!this.state.artwork;
         this.state.artwork = img;
         this.state.art = { blob: art.blob, sha256: art.sha256, w: art.w, h: art.h };
-        if (!hadArtwork || SHAPE_FIT[this.shape()]) this.placeDefault(); else { this.placePet(); this.clampAll(); }
+        if (!hadArtwork || SHAPE_FIT[this.shape()] || this.isMug()) this.placeDefault(); else { this.placePet(); this.clampAll(); }
         this.stopProgress();
         this.setPhase('ready');
         this.setPhotoStatus(fromCache ? 'Portrait ready (saved from before)' : 'Portrait ready');
@@ -1320,6 +1371,28 @@
     }
     safe() { return clamp(this.config.safeInset || 0.05, 0, 0.2); }
     shape() { return this.config.family === 'ornament' ? shapeFromOptions(this.state.variant && this.state.variant.options) || 'circle' : null; }
+    isMug() { return this.config.family === 'mug'; }
+    familyKey() { return ['ornament', 'mug'].includes(this.config.family) ? this.config.family : 'blanket'; }
+    /** Accent colour of the selected mug (handle and inside), from its colour option; white when it has none. */
+    mugColor() {
+      const v = this.state.variant;
+      if (!v) return MUG_COLORS.white;
+      const names = this.config.optionNames || [];
+      const i = names.findIndex(n => /colou?r/i.test(n));
+      return (i >= 0 && colorHex(v.options[i])) || v.options.map(colorHex).find(Boolean) || MUG_COLORS.white;
+    }
+    /** Where the design area sits inside a W x H view: real proportions, centred (mugs leave room for the handle and rim). */
+    fitBox(W, H) {
+      const { width, height } = this.printSize();
+      const mug = this.isMug();
+      const inset = Math.min(W, H) * (mug ? 0.09 : 0.07);
+      const availW = W - inset * 2, availH = H - inset * 2;
+      const scale = mug
+        ? Math.min(availW / (width * (1 + MUG_HANDLE)), availH / (height + 3.2 * MUG_RIM * width))
+        : Math.min(availW / width, availH / height);
+      const w = width * scale, h = height * scale;
+      return { x: (W - w * (mug ? 1 + MUG_HANDLE : 1)) / 2, y: (H - h) / 2 + (mug ? MUG_RIM * w * 0.5 : 0), w, h };
+    }
     /** Default placement. Blankets: name on top, pet on the bottom edge. Ornaments: pet on the bottom edge
      *  (the outline hides where the portrait ends) with the name across its chest, inside the shape. */
     layout() {
@@ -1349,7 +1422,7 @@
     }
     /** Whether a text edit re-flows the layout: star and heart layouts re-fit on every edit until the shopper moves something. */
     reflow(wasDefault, linesChanged) {
-      if (SHAPE_FIT[this.shape()]) return wasDefault || !this.state.artwork;
+      if (SHAPE_FIT[this.shape()] || this.isMug()) return wasDefault || !this.state.artwork;
       return wasDefault && linesChanged;
     }
     layoutKey() {
@@ -1375,6 +1448,7 @@
       const e = this.state.extra, clean = t => String(t || '').replace(/\s+/g, ' ').trim();
       if (this.config.extraFields === 'year') return [clean(e.year)].filter(Boolean);
       if (this.config.extraFields === 'memorial') return [clean(e.dates), clean(e.message)].filter(Boolean);
+      if (this.config.extraFields === 'line') return [clean(e.message)].filter(Boolean);
       return [];
     }
     /** The name or its caption lines exist (both are moved together as one "name" element). */
@@ -1490,6 +1564,12 @@
     }
     placeDefault() {
       const s = this.state;
+      if (this.isMug()) {
+        this.placeMug();
+        this.clampAll();
+        this.defaultLayout = s.artwork ? this.layoutKey() : null;
+        return;
+      }
       if (SHAPE_FIT[this.shape()]) {
         this.solveShapeLayout();
         this.clampAll();
@@ -1506,6 +1586,34 @@
       this.placePet();
       this.clampAll();
       this.defaultLayout = s.artwork ? this.layoutKey() : null;
+    }
+    /** Mug styles (one side of the mug): "below" = pet with the name and text under it, "above" = name on top and the
+     *  pet below, "big" = a large pet on the bottom edge with the name across its chest. */
+    placeMug() {
+      const s = this.state, p = this.printSize();
+      const sx = this.safe(), sy = sx * p.width / p.height, gap = 0.03;
+      const style = ['below', 'above', 'big'].includes(s.style) ? s.style : 'below';
+      delete s.name.cap; delete s.name.breaks;
+      Object.assign(s.name, { cx: 0.5, cy: style === 'above' ? 0.16 : 0.84, size: style === 'big' ? 0.15 : 0.13, rot: 0 });
+      // Label block (name + text) edges in print fractions, and a move that puts its top or bottom edge at y.
+      const block = () => { const g = this.geometry('name', { x: 0, y: 0, w: p.width, h: p.height }); return g ? { top: (g.y - g.h / 2) / p.height, bottom: (g.y + g.h / 2) / p.height } : null; };
+      let b = block();
+      if (b && style === 'above') { s.name.cy += sy + 0.01 - b.top; b = block(); }
+      if (b && style === 'below') { s.name.cy += 1 - sy - 0.01 - b.bottom; b = block(); }
+      if (!s.artwork) return;
+      const aspect = s.artwork.height / s.artwork.width;
+      const fit = (top, bottom, maxW) => {
+        const w = Math.min(((bottom - top) * p.height) / (p.width * aspect), maxW);
+        return { cx: 0.5, cy: round4(bottom - this.petHeightFrac(w) / 2), w: round4(w), rot: 0 };
+      };
+      if (style === 'big' || !b) {
+        s.pet = fit(sy + 0.02, 1, 0.98);
+        if (b) { s.name.cy += 0.93 - sy - b.bottom; }
+      } else if (style === 'above') {
+        s.pet = fit(b.bottom + gap, 1, 0.9);
+      } else {
+        s.pet = fit(sy + 0.01, b.top - gap, 0.9);
+      }
     }
     /** Head outline of the portrait (cached per artwork): rows from the top of the ears down to the chin, each with
      *  the left and right edge of the opaque pixels, as fractions of the artwork width and height. */
@@ -1710,6 +1818,59 @@
       ctx.beginPath(); ctx.arc(x + F.hole[0] * W, y + F.hole[1] * H, F.hole[2] * W, 0, TAU);
       ctx.fillStyle = '#ffffff'; ctx.fill();
       ctx.lineWidth = Math.max(1, W * 0.006); ctx.strokeStyle = 'rgba(27, 42, 78, 0.35)'; ctx.stroke();
+      ctx.restore();
+    }
+    /** A white mug with a coloured handle and inside; the design is one side of it, drawn in `b` (the design area). */
+    drawMug(ctx, b, { dpr = 1, editing = false, placeholder = false } = {}) {
+      const accent = this.mugColor();
+      // The rim sits just above the design area, so the whole design shows on the mug's face.
+      const ry = b.w * MUG_RIM, cx = b.x + b.w / 2, right = b.x + b.w, hw = b.w * MUG_HANDLE, top = b.y - ry * 0.95;
+      const outline = 'rgba(27, 42, 78, 0.22)';
+      ctx.save();
+      // soft shadow
+      const sh = ctx.createRadialGradient(cx + b.w * 0.08, b.y + b.h + ry, 0, cx + b.w * 0.08, b.y + b.h + ry, b.w * 0.7);
+      sh.addColorStop(0, 'rgba(27, 42, 78, 0.22)'); sh.addColorStop(1, 'rgba(27, 42, 78, 0)');
+      ctx.fillStyle = sh;
+      ctx.beginPath(); ctx.ellipse(cx + b.w * 0.08, b.y + b.h + ry, b.w * 0.62, ry * 1.1, 0, 0, TAU); ctx.fill();
+      // handle (behind the body)
+      const handle = () => {
+        ctx.beginPath();
+        ctx.moveTo(right - b.w * 0.03, b.y + b.h * 0.18);
+        ctx.bezierCurveTo(right + hw * 1.1, b.y + b.h * 0.08, right + hw * 1.1, b.y + b.h * 0.8, right - b.w * 0.03, b.y + b.h * 0.72);
+      };
+      ctx.lineCap = 'round';
+      handle(); ctx.lineWidth = b.w * 0.085; ctx.strokeStyle = outline; ctx.stroke();
+      handle(); ctx.lineWidth = b.w * 0.075; ctx.strokeStyle = accent; ctx.stroke();
+      // body
+      const body = () => {
+        ctx.beginPath();
+        ctx.moveTo(b.x, top);
+        ctx.lineTo(b.x, b.y + b.h);
+        ctx.ellipse(cx, b.y + b.h, b.w / 2, ry, 0, Math.PI, 0, true);
+        ctx.lineTo(right, top);
+        ctx.closePath();
+      };
+      body(); ctx.fillStyle = '#ffffff'; ctx.fill();
+      ctx.save();
+      body(); ctx.clip();
+      this.drawDesign(ctx, b.x, b.y, b.w, b.h, { dpr, placeholder });
+      if (!editing) {
+        // curved surface: darker edges, a soft highlight on the left
+        const g = ctx.createLinearGradient(b.x, 0, right, 0);
+        g.addColorStop(0, 'rgba(0, 0, 0, 0.22)'); g.addColorStop(0.1, 'rgba(0, 0, 0, 0.06)');
+        g.addColorStop(0.2, 'rgba(255, 255, 255, 0.22)'); g.addColorStop(0.3, 'rgba(255, 255, 255, 0)');
+        g.addColorStop(0.75, 'rgba(0, 0, 0, 0)'); g.addColorStop(1, 'rgba(0, 0, 0, 0.26)');
+        ctx.fillStyle = g; ctx.fillRect(b.x, top - ry, b.w, b.h + ry * 3);
+      }
+      ctx.restore();
+      body(); ctx.lineWidth = Math.max(1, b.w * 0.005); ctx.strokeStyle = outline; ctx.stroke();
+      // rim and coloured inside
+      ctx.beginPath(); ctx.ellipse(cx, top, b.w / 2, ry, 0, 0, TAU);
+      ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(cx, top + ry * 0.08, b.w / 2 * 0.93, ry * 0.78, 0, 0, TAU);
+      ctx.fillStyle = accent; ctx.fill();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+      ctx.beginPath(); ctx.ellipse(cx, top + ry * 0.2, b.w / 2 * 0.9, ry * 0.62, 0, Math.PI, TAU); ctx.fill();
       ctx.restore();
     }
     applyScale(target, start, scale) {
@@ -1969,7 +2130,7 @@
     persist() {
       const s = this.state;
       kv.set(`state:${this.config.productId}`, {
-        at: Date.now(), photoHash: s.photo && s.photo.hash, pet: s.pet, name: s.name, extra: s.extra, addedId: s.addedId, isDefault: this.isDefaultLayout(),
+        at: Date.now(), photoHash: s.photo && s.photo.hash, pet: s.pet, name: s.name, extra: s.extra, style: s.style, addedId: s.addedId, isDefault: this.isDefaultLayout(),
         background: { id: s.background.id, color: s.background.color, name: s.background.name },
         variantId: s.variant && s.variant.id
       });
@@ -1989,6 +2150,7 @@
       }
       Object.assign(this.state.name, saved.name || {});
       Object.assign(this.state.extra, saved.extra || {});
+      if (saved.style) this.setStyle(saved.style, { silent: true });
       this.el.nameInput.value = this.state.name.text || '';
       this.el.extras.forEach(i => { i.value = this.state.extra[i.dataset.extra] || ''; });
       this.el.suggestions.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.suggest === this.state.extra.message)));
@@ -2018,15 +2180,15 @@
 
     /* ----- approval & cart ----- */
     designData() {
-      const s = this.state, p = this.printSize();
+      const s = this.state, p = this.printSize(), full = this.wrapSize();
       const bg = s.background;
       return {
-        family: this.config.family === 'ornament' ? 'ornament' : 'blanket',
+        family: this.familyKey(),
         shape: this.shape() || undefined,
         product_id: String(this.config.productId),
         variant_id: String(s.variant.id),
         sku: s.variant.sku || '',
-        print: { w: p.width, h: p.height },
+        print: { w: full.width, h: full.height },
         background: bg.kind === 'image'
           ? { id: bg.id, kind: 'image', name: bg.name, color: bg.color, image_url: bg.image }
           : { id: bg.id, kind: bg.kind, name: bg.name, color: bg.color },
@@ -2061,18 +2223,24 @@
     }
     async exportPreview() {
       const p = this.printSize();
-      const W = PREVIEW_EXPORT, H = Math.round(PREVIEW_EXPORT * p.height / p.width);
+      const W = PREVIEW_EXPORT, H = this.isMug() ? Math.round(PREVIEW_EXPORT * 0.8) : Math.round(PREVIEW_EXPORT * p.height / p.width);
       const canvas = createCanvas(W, H);
       const ctx = canvas.getContext('2d');
+      // Mugs: the cart image is the mug itself; the design area is the mug's front.
+      const box = this.isMug() ? this.fitBox(W, H) : { x: 0, y: 0, w: W, h: H };
       if (this.state.background.kind !== 'solid' && this.state.background.kind !== 'image') {
-        // make sure the pattern exists at export size before drawing
+        // make sure the pattern exists at the size drawDesign() asks for before drawing
+        const pw = Math.round(box.w / 50) * 50 || 50, ph = Math.round(pw * box.h / box.w);
         await new Promise(resolve => {
-          const tryDraw = n => { if (this.patternImage(W, H) || n > 40) resolve(); else setTimeout(() => tryDraw(n + 1), 50); };
+          const tryDraw = n => { if (this.patternImage(pw, ph) || n > 40) resolve(); else setTimeout(() => tryDraw(n + 1), 50); };
           tryDraw(0);
         });
       }
       const shape = this.shape();
-      if (shape) {
+      if (this.isMug()) {
+        ctx.fillStyle = '#f6f3ee'; ctx.fillRect(0, 0, W, H);
+        this.drawMug(ctx, box, { dpr: 1 });
+      } else if (shape) {
         ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
         ctx.save(); shapePath(ctx, shape, 0, 0, W, H); ctx.clip();
         this.drawDesign(ctx, 0, 0, W, H, { dpr: 1 });
@@ -2120,6 +2288,8 @@
         if (this.config.extraFields === 'year' && clean(extra.year)) form.append('properties[Year]', clean(extra.year));
         if (this.config.extraFields === 'memorial' && clean(extra.dates)) form.append('properties[Dates]', clean(extra.dates));
         if (this.config.extraFields === 'memorial' && clean(extra.message)) form.append('properties[Message]', clean(extra.message));
+        if (this.config.extraFields === 'line' && clean(extra.message)) form.append('properties[Text]', clean(extra.message));
+        if (this.isMug()) form.append('properties[Printed on]', 'Both sides');
         form.append('properties[Background]', design.background.name);
         form.append('properties[Design ID]', approval.id);
         form.append('properties[Design preview]', preview, `${approval.id}-preview.jpg`);
@@ -2127,7 +2297,7 @@
         else form.append('properties[_design_unsigned]', approval.unsigned);
         form.append('properties[_artwork]', s.art.blob, `${approval.id}-artwork.png`);
         form.append('properties[_Original photo]', s.photo.blob, `${approval.id}-original.jpg`);
-        form.append('properties[_MyPetMemo family]', this.config.family === 'ornament' ? 'ornament' : 'blanket');
+        form.append('properties[_MyPetMemo family]', this.familyKey());
         const res = await fetch(this.config.cartAddUrl, { method: 'POST', body: form, headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new StudioError('cart', json.description || json.message || 'We couldn’t add this to your cart. Please try again.');

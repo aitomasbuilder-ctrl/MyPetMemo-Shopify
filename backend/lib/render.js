@@ -7,6 +7,9 @@
 //         outline width 0.16 * font size drawn under the fill
 //   caption (optional lines under the name): same rules per line, line i centred at
 //         cy*H + (i - (n-1)/2) * 1.25 * font size, all lines rotated caption.rot around (cx*W, cy*H)
+//   mugs (design.sides = 2): W above is one side, round(print width / 2); pet and text are drawn on the left
+//         side and again on the right side (offset print width - side width), each cropped to its side.
+//         Patterns run across the whole wrap at the scale of one side; gradients and images fill each side.
 const crypto = require('node:crypto');
 const sharp = require('sharp');
 const backgrounds = require('../shared/pet-backgrounds');
@@ -21,12 +24,21 @@ sharp.cache(false);
 const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
 const esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 
-async function backgroundLayer(bg, W, H, backgroundImage) {
+async function backgroundLayer(bg, W, H, backgroundImage, viewWidth) {
   if (bg.kind === 'image') {
     if (!backgroundImage) throw new Error('background_image_missing');
     return sharp(backgroundImage).resize(W, H, { fit: 'cover', position: 'centre' }).flatten({ background: bg.color || '#ffffff' }).png().toBuffer();
   }
-  return sharp(Buffer.from(backgrounds.svg(bg, W, H)), { limitInputPixels: false }).png().toBuffer();
+  return sharp(Buffer.from(backgrounds.svg(bg, W, H, viewWidth)), { limitInputPixels: false }).png().toBuffer();
+}
+
+/** Mug background: a pattern continues around the wrap; anything else fills each side like the preview. */
+async function mugBackground(bg, W, H, PW, backgroundImage) {
+  if (bg.kind === 'pattern') return backgroundLayer(bg, W, H, null, 1000 * W / PW);
+  const side = await backgroundLayer(bg, PW, H, backgroundImage);
+  const right = W - PW === PW ? side : await backgroundLayer(bg, W - PW, H, backgroundImage);
+  return sharp({ create: { width: W, height: H, channels: 4, background: '#ffffff' } })
+    .composite([{ input: side, left: 0, top: 0 }, { input: right, left: PW, top: 0 }]).png().toBuffer();
 }
 
 /** Pet layer cropped to the canvas, so the composite never extends past the print area. */
@@ -83,17 +95,25 @@ function captionLayer(design, W, H) {
  * Renders the print file. Returns { buffer, width, height, format, sha256 }.
  * `format` is 'jpeg' (default, full-bleed blankets have no transparency) or 'png'.
  */
+/** Pet, name and caption for a design area W x H whose left edge is at `left` in the print file. */
+async function designLayers(design, artwork, W, H, left = 0) {
+  const layers = [await petLayer(design, artwork, W, H), nameLayer(design, W, H), captionLayer(design, W, H)].filter(Boolean);
+  return layers.map(l => ({ ...l, left: l.left + left }));
+}
+
 async function renderDesign({ design, artwork, backgroundImage, width, height, format = 'jpeg', dpi = 150 }) {
   const W = Math.round(width), H = Math.round(height);
   if (!(W > 0 && H > 0)) throw new Error('print_size_missing');
-  const base = await backgroundLayer(design.background, W, H, backgroundImage);
-  const layers = [];
-  const pet = await petLayer(design, artwork, W, H);
-  if (pet) layers.push(pet);
-  const name = nameLayer(design, W, H);
-  if (name) layers.push(name);
-  const caption = captionLayer(design, W, H);
-  if (caption) layers.push(caption);
+  let base, layers;
+  if (design.sides === 2) {
+    const PW = Math.round(W / 2);
+    base = await mugBackground(design.background, W, H, PW, backgroundImage);
+    // The right side is PW wide too (cropped at the print edge when W is odd), so both sides match the preview.
+    layers = (await designLayers(design, artwork, PW, H, 0)).concat(await designLayers(design, artwork, PW, H, W - PW));
+  } else {
+    base = await backgroundLayer(design.background, W, H, backgroundImage);
+    layers = await designLayers(design, artwork, W, H);
+  }
   let out = sharp(base, { limitInputPixels: false }).composite(layers).withMetadata({ density: dpi });
   out = format === 'png' ? out.png({ compressionLevel: 6 }) : out.flatten({ background: '#ffffff' }).jpeg({ quality: 92, chromaSubsampling: '4:4:4', mozjpeg: false });
   const buffer = await out.toBuffer();

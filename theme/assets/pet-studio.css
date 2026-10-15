@@ -324,3 +324,13 @@
 .mps__chip:hover { border-color: #8b92a3; }
 .mps__chip[aria-pressed="true"] { border-color: var(--mps-navy); background: var(--mps-navy); color: #fff; }
 .mps__chip:focus-visible { outline: 2px solid #3b8beb; outline-offset: 2px; }
+
+/* mugs: colour swatches on the colour option, style picker */
+.mps__option--color { flex-direction: row; gap: 8px; }
+.mps__color-dot { width: 18px; height: 18px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2); }
+.mps__styles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mps__style { padding: 10px 6px; }
+.mps__style svg { width: 44px; height: 35px; color: var(--mps-navy); }
+.mps__style .mps__option-main { font-size: 14px; text-align: center; }
+.mps__mug-note { margin-top: -4px; }
+@media (max-width: 899px) { .mps__styles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

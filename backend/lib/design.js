@@ -1,5 +1,5 @@
 'use strict';
-// Approved blanket and ornament designs. A design is a small JSON document (all positions normalised to the
+// Approved blanket, ornament and mug designs. A design is a small JSON document (all positions normalised to the
 // print area) that the storefront sends for approval. The backend validates it, gives it an id
 // derived from its content and signs it; the signed token travels with the cart line into the
 // order, so the paid order carries exactly the version the customer approved.
@@ -15,6 +15,7 @@ const ID = /^\d{1,20}$/;
 const NAME_MAX = 24;
 const CAPTION_MAX = 32;   // per line (year, dates or a short message under the name)
 const CAPTION_LINES = 4;   // dates and message, each may wrap once on star and heart ornaments
+const FAMILIES = new Set(['blanket', 'ornament', 'mug']);
 const SHAPES = new Set(['circle', 'heart', 'star', 'snowflake']); // ornament outlines (preview only; Printify cuts the blank)
 
 class DesignError extends Error {
@@ -105,13 +106,15 @@ function normaliseCaption(c) {
 function normalise(input, { hosts = defaultHosts() } = {}) {
   if (!input || typeof input !== 'object') throw new DesignError('design_missing');
   const a = input.artwork || {};
-  const family = input.family === 'ornament' ? 'ornament' : 'blanket';
+  const family = FAMILIES.has(input.family) ? input.family : 'blanket';
   const shape = family === 'ornament' ? (SHAPES.has(input.shape) ? input.shape : 'circle') : undefined;
   const caption = normaliseCaption(input.caption);
   return {
     v: VERSION,
     family,
     ...(shape ? { shape } : {}),
+    // Mugs: positions are fractions of one side (half the wrap); the same side is printed on both halves.
+    ...(family === 'mug' ? { sides: 2 } : {}),
     product_id: str(input.product_id, ID, 'product_id'),
     variant_id: str(input.variant_id, ID, 'variant_id'),
     sku: String(input.sku || '').slice(0, 64),
