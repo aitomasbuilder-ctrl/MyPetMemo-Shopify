@@ -212,11 +212,6 @@
     const n = m ? parseInt(m[1], 16) : 0xf6eef1;
     return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
   }
-  function tint(hex, amount) {
-    const { r, g, b } = hexToRgb(hex);
-    const m = c => Math.round(c + (255 - c) * amount);
-    return `rgb(${m(r)}, ${m(g)}, ${m(b)})`;
-  }
   /** Colour for a variant value such as "Light Blue" or "11oz / Navy"; null when it names no known colour. */
   function colorHex(value) {
     const v = String(value || '').toLowerCase();
@@ -977,8 +972,9 @@
       });
       this.el.bgNames.forEach(n => { n.textContent = bg.name; });
       if (this.isPortrait()) this.applyStyleText();
-      this.el.stage.style.setProperty('--mps-stage', tint(bg.color, 0.6));
-      if (this.el.dialog) this.el.dialog.style.setProperty('--mps-stage', tint(bg.color, 0.6));
+      // The preview area takes the chosen background color itself, so the design and the page match.
+      this.el.stage.style.setProperty('--mps-stage', bg.color);
+      if (this.el.dialog) this.el.dialog.style.setProperty('--mps-stage', bg.color);
       if (bg.kind === 'image') {
         loadImage(bg.preview || bg.image).then(img => {
           if (this.state.background.id === bg.id) { this.state.bgImage = img; this.renderAll(); }
