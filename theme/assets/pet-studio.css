@@ -355,3 +355,40 @@
   .mps[data-gallery-style="large"] .mps__thumb-btn { flex-basis: 64px; width: 64px; height: 64px; }
   .mps[data-gallery-style="large"] .mps__gallery-nav { width: 36px; height: 36px; font-size: 22px; }
 }
+
+/* Soft look (section setting "Page look"): same warm cream, pink and sage as the pet portrait page. */
+.mps--soft {
+  --mps-navy: #2f2a28;
+  --mps-navy-2: #4a423f;
+  --mps-text: #2f2a28;
+  --mps-muted: #74685f;
+  --mps-line: #e3d9cf;
+  --mps-cream: #fbf6ee;
+  --mps-soft-pink: #f4d9de;
+  --mps-soft-pink-2: #e9b9c3;
+  --mps-sage: #8fa58a;
+  background: var(--mps-cream);
+}
+.mps--soft .mps__title { font-family: "Playfair Display", Georgia, serif; font-weight: 700; text-transform: none; letter-spacing: 0; }
+.mps__eyebrow {
+  margin: 0 0 6px; color: #9a5b68; font: 700 12px/1.2 Montserrat, sans-serif;
+  letter-spacing: .12em; text-transform: uppercase;
+}
+.mps__price-line { margin: 10px 0 4px; font-size: 22px; color: var(--mps-navy); }
+.mps__price-line s { color: var(--mps-muted); font-size: 16px; }
+.mps__promises { list-style: none; margin: 10px 0 16px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.mps__promises li { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #3f5a3b; }
+.mps__promises svg { width: 18px; height: 18px; flex: none; color: var(--mps-sage); }
+.mps--soft .mps__dropzone { background: #fff; border-color: var(--mps-soft-pink-2); }
+.mps--soft .mps__dropzone.is-dragover { background: #fdf0f2; }
+.mps--soft .mps__option, .mps--soft .mps__input { background: #fff; }
+.mps--soft .mps__swatches:not(.mps__swatches--small) { gap: 12px; }
+.mps--soft .mps__swatches:not(.mps__swatches--small) .mps__swatch { width: 58px; height: 58px; }
+.mps--soft .mps__thumb-btn--design { background: var(--mps-soft-pink); }
+@media (max-width: 749px) {
+  .mps--soft .mps__swatches:not(.mps__swatches--small) { gap: 10px; }
+  .mps--soft .mps__swatches:not(.mps__swatches--small) .mps__swatch { width: 48px; height: 48px; }
+}
+@media (max-width: 899px) {
+  .mps--soft[data-adjusting="true"] .mps__stage-col { background: var(--mps-cream); }
+}
