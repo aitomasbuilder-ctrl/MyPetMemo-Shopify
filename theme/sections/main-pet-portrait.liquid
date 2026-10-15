@@ -162,10 +162,11 @@
     <div class="mps__stage-col">
       <div class="mps__stage mpp__stage" data-stage data-dropzone>
         <canvas class="mps__canvas" data-canvas tabindex="0" role="img"
-          aria-label="Portrait preview. Choose Close-up, In a room or Before / after above the preview. Use Adjust to move or resize your pet and the text."></canvas>
+          aria-label="Portrait preview. Choose Your design, Framed, In a room or Before / after above the preview. Use Adjust to move or resize your pet and the text."></canvas>
 
         <div class="mpp__scene-bar" role="group" aria-label="Preview view">
-          <button type="button" class="mpp__scene-btn" data-scene="close" aria-pressed="true">Close-up</button>
+          <button type="button" class="mpp__scene-btn" data-scene="design" aria-pressed="true">Your design</button>
+          <button type="button" class="mpp__scene-btn" data-scene="close" aria-pressed="false">Framed</button>
           <button type="button" class="mpp__scene-btn" data-scene="room" aria-pressed="false">In a room</button>
           <button type="button" class="mpp__scene-btn" data-scene="compare" aria-pressed="false" disabled>Before / after</button>
           <button type="button" class="mpp__scene-btn mpp__scene-btn--icon" data-zoom aria-label="Zoom in on your artwork" hidden>
@@ -333,24 +334,6 @@
         <input class="mps__input" type="text" id="PetName-{{ section.id }}" maxlength="{{ section.settings.name_max }}" autocomplete="off" spellcheck="false" data-name-input placeholder="{{ section.settings.name_placeholder | escape }}">
         <p class="mps__field-error" data-name-error hidden></p>
       </div>
-      <div class="mps__group" data-memorial-only hidden>
-        <label class="mps__label" for="PetDates-{{ section.id }}">Dates (optional)</label>
-        <input class="mps__input" type="text" id="PetDates-{{ section.id }}" maxlength="24" autocomplete="off" spellcheck="false" data-extra="dates" placeholder="e.g. 2012 – 2026">
-      </div>
-      <div class="mps__group">
-        <label class="mps__label" for="PetText-{{ section.id }}">Custom text (optional)</label>
-        {%- assign suggestions = section.settings.text_suggestions | split: ',' -%}
-        {%- if suggestions.size > 0 -%}
-          <div class="mps__suggestions" role="group" aria-label="Text ideas">
-            {%- for suggestion in suggestions -%}
-              {%- assign text = suggestion | strip -%}
-              {%- if text != blank -%}<button type="button" class="mps__chip" data-suggest="{{ text | escape }}" aria-pressed="false">{{ text | escape }}</button>{%- endif -%}
-            {%- endfor -%}
-          </div>
-        {%- endif -%}
-        <input class="mps__input" type="text" id="PetText-{{ section.id }}" maxlength="28" autocomplete="off" data-extra="message" placeholder="Write your own or pick one above">
-      </div>
-
       <div class="mps__edit" data-edit-row hidden>
         <div class="mps__edit-buttons">
           <button type="button" class="mps__btn mps__btn--outline" data-adjust aria-expanded="false">
@@ -386,6 +369,24 @@
         <p class="mps__more">Want more control? <button type="button" class="mps__link" data-open-editor>Open the full editor</button></p>
       </div>
 
+      <div class="mps__group" data-memorial-only hidden>
+        <label class="mps__label" for="PetDates-{{ section.id }}">Dates (optional)</label>
+        <input class="mps__input" type="text" id="PetDates-{{ section.id }}" maxlength="24" autocomplete="off" spellcheck="false" data-extra="dates" placeholder="e.g. 2012 – 2026">
+      </div>
+      <div class="mps__group">
+        <label class="mps__label" for="PetText-{{ section.id }}">Custom text (optional)</label>
+        {%- assign suggestions = section.settings.text_suggestions | split: ',' -%}
+        {%- if suggestions.size > 0 -%}
+          <div class="mps__suggestions" role="group" aria-label="Text ideas">
+            {%- for suggestion in suggestions -%}
+              {%- assign text = suggestion | strip -%}
+              {%- if text != blank -%}<button type="button" class="mps__chip" data-suggest="{{ text | escape }}" aria-pressed="false">{{ text | escape }}</button>{%- endif -%}
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+        <input class="mps__input" type="text" id="PetText-{{ section.id }}" maxlength="28" autocomplete="off" data-extra="message" placeholder="Write your own or pick one above">
+      </div>
+
       {%- unless product.has_only_default_variant -%}
         {%- for option in product.options_with_values -%}
           <div class="mps__group"{% if option.values.size < 2 %} hidden{% endif %}>
@@ -412,7 +413,7 @@
       <button type="button" class="mps__btn mps__btn--primary mps__btn--block mps__btn--cart" data-primary>
         <span data-primary-label>Upload your pet's photo</span><span class="mps__btn-price" data-primary-price hidden> — <s data-compare-price></s> <span data-price></span></span>
       </button>
-      <p class="mps__hint mps__approve-note" data-approve-note hidden>Check the name, colors and your pet’s look. Approving locks in this version; if you change anything, you approve the new version again. You pay only at checkout.</p>
+      <p class="mps__hint mps__approve-note" data-approve-note hidden>Check the name, colors and your pet’s look. Adding to cart approves this exact version, and we print it as you see it. You pay only at checkout.</p>
       <p class="mps__status" data-cart-status aria-live="polite"></p>
 
       <ul class="mps__benefits">
@@ -534,6 +535,7 @@
       "digitalPrint": {"width": {{ section.settings.digital_width }}, "height": {{ section.settings.digital_height }}},
       "aiStyles": {{ section.settings.ai_styles }},
       "defaultStyle": {{ section.settings.default_style | json }},
+      "defaultScene": "design",
       "moneyFormat": {{ shop.money_format | json }},
       "cartUrl": {{ routes.cart_url | json }},
       "cartAddUrl": {{ routes.cart_add_url | append: '.js' | json }},

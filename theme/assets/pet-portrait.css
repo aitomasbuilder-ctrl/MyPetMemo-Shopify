@@ -125,3 +125,12 @@
 @media (max-width: 380px) {
   .mpp__styles { grid-template-columns: 1fr; }
 }
+
+/* Big round background swatches, like the artwork preview itself. */
+.mps--portrait .mpp__swatches { gap: 12px; }
+.mps--portrait .mpp__swatches .mps__swatch { width: 58px; height: 58px; }
+@media (max-width: 749px) {
+  .mps--portrait .mpp__swatches { gap: 10px; }
+  .mps--portrait .mpp__swatches .mps__swatch { width: 48px; height: 48px; }
+  .mpp__scene-btn { padding: 8px 9px; font-size: 12px; }
+}
