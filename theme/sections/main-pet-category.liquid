@@ -26,14 +26,14 @@
   {%- endif -%}
 </section>
 {%- if section.settings.show_chips -%}
-  <nav class="wrap collection-chips" aria-label="Categories">
+  <nav class="wrap collection-chips" aria-label="{{ 'mpm.category.categories' | t | escape }}">
     {%- for link in section.settings.chips_menu.links -%}
       <a href="{{ link.url }}"{% if link.url == collection.url %} class="active" aria-current="page"{% endif %}>{{ link.title | escape }}</a>
     {%- else -%}
       {%- assign blankets = collections['pet-blankets'] -%}
       {%- assign ornaments = collections['pet-ornaments'] -%}
-      {%- if blankets.products_count > 0 -%}<a href="{{ blankets.url }}"{% if blankets.handle == collection.handle %} class="active" aria-current="page"{% endif %}>Blankets</a>{%- endif -%}
-      {%- if ornaments.products_count > 0 -%}<a href="{{ ornaments.url }}"{% if ornaments.handle == collection.handle %} class="active" aria-current="page"{% endif %}>Ornaments</a>{%- endif -%}
+      {%- if blankets.products_count > 0 -%}<a href="{{ blankets.url }}"{% if blankets.handle == collection.handle %} class="active" aria-current="page"{% endif %}>{{ 'mpm.category.blankets' | t }}</a>{%- endif -%}
+      {%- if ornaments.products_count > 0 -%}<a href="{{ ornaments.url }}"{% if ornaments.handle == collection.handle %} class="active" aria-current="page"{% endif %}>{{ 'mpm.category.ornaments' | t }}</a>{%- endif -%}
     {%- endfor -%}
   </nav>
 {%- endif -%}
@@ -66,17 +66,17 @@
         endif
         if item_family == 'ornament'
           if is_memorial
-            assign features = 'Soft clouds or watercolor backgrounds|Your pet’s photo, turned into a portrait|Name|Optional dates and a message'
+            assign features = 'mpm.category.features_memorial_ornament' | t
           else
-            assign features = 'Festive backgrounds|Your pet’s photo, turned into a portrait|Name|Optional year'
+            assign features = 'mpm.category.features_christmas_ornament' | t
           endif
         else
           if is_christmas
-            assign features = 'Christmas and 20+ other backgrounds|Your pet’s photo, turned into a portrait|Name'
+            assign features = 'mpm.category.features_christmas_blanket' | t
           elsif is_memorial
-            assign features = 'Soft clouds and 20+ other backgrounds|Your pet’s photo, turned into a portrait|Name'
+            assign features = 'mpm.category.features_memorial_blanket' | t
           else
-            assign features = '20+ backgrounds and colors|Your pet’s photo, turned into a portrait|Name'
+            assign features = 'mpm.category.features_blanket' | t
           endif
         endif
         if card.settings.features != blank
@@ -124,14 +124,14 @@
         {%- endif -%}
 
         <div class="mpc-options">
-          <p class="mpc-label">You personalize</p>
+          <p class="mpc-label">{{ 'mpm.category.you_personalize' | t }}</p>
           <ul class="mpc-features">
             {%- for feature in feature_list -%}{%- assign f = feature | strip -%}{%- if f != blank -%}<li>{% render 'icon', name: 'check', size: 15 %}<span>{{ f | escape }}</span></li>{%- endif -%}{%- endfor -%}
           </ul>
         </div>
 
         {%- if item.available -%}
-          <a class="button mpc-button" href="{{ item.url }}">{{ section.settings.button_label | default: 'Personalize' | escape }}{% if section.settings.button_label == blank %} this {{ noun | escape }}{% endif %}{% render 'icon', name: 'arrow', size: 16 %}</a>
+          <a class="button mpc-button" href="{{ item.url }}">{% if section.settings.button_label != blank %}{{ section.settings.button_label | escape }}{% else %}{{ 'mpm.category.personalize' | t: noun: noun }}{% endif %}{% render 'icon', name: 'arrow', size: 16 %}</a>
         {%- else -%}
           <span class="button outline mpc-button is-disabled" aria-disabled="true">{{ 'catalog.coming_soon' | t }}</span>
         {%- endif -%}

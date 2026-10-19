@@ -130,19 +130,13 @@
     assign rv_label = rating_count | append: ' ' | append: section.settings.review_noun | default: 'reviews'
   elsif rv_product_count > 0
     assign rv_avg = rv_product_sum | times: 1.0 | divided_by: rv_product_count | round: 1
-    assign rv_label = rv_product_count | append: ' review'
-    if rv_product_count > 1
-      assign rv_label = rv_label | append: 's'
-    endif
+    assign rv_label = 'mpm.reviews.count' | t: count: rv_product_count
   elsif rv_all_count > 0
     assign rv_avg = rv_all_sum | times: 1.0 | divided_by: rv_all_count | round: 1
-    assign rv_label = rv_all_count | append: ' MyPetMemo review'
-    if rv_all_count > 1
-      assign rv_label = rv_label | append: 's'
-    endif
+    assign rv_label = 'mpm.reviews.store_count' | t: count: rv_all_count
   elsif rv_sample
     assign rv_avg = 4.9
-    assign rv_label = 'Sample rating · theme editor only'
+    assign rv_label = 'mpm.reviews.sample' | t
   endif
 -%}
 {%- assign default_bg = section.settings.default_background -%}
@@ -156,7 +150,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Montserrat:wght@500;600;700;800&family=Pacifico&family=Playfair+Display:wght@700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Nunito:wght@600&family=Montserrat:wght@500;600;700;800&family=Pacifico&family=Playfair+Display:wght@700&display=swap">
 {{ 'pet-studio.css' | asset_url | stylesheet_tag }}
 
 <section class="mps{% if section.settings.look == 'soft' %} mps--soft{% endif %}" data-pet-studio data-section-id="{{ section.id }}">
@@ -168,20 +162,20 @@
 
         <div class="mps__gallery" data-gallery hidden>
           <div class="mps__gallery-main" data-gallery-main></div>
-          <button type="button" class="mps__gallery-nav mps__gallery-nav--prev" data-gallery-prev aria-label="Previous photo">&#8249;</button>
-          <button type="button" class="mps__gallery-nav mps__gallery-nav--next" data-gallery-next aria-label="Next photo">&#8250;</button>
+          <button type="button" class="mps__gallery-nav mps__gallery-nav--prev" data-gallery-prev aria-label="{{ 'mpm.studio.previous_photo' | t | escape }}">&#8249;</button>
+          <button type="button" class="mps__gallery-nav mps__gallery-nav--next" data-gallery-next aria-label="{{ 'mpm.studio.next_photo' | t | escape }}">&#8250;</button>
         </div>
 
-        <div class="mps__drop-hint" data-drop-hint hidden><span>Drop your photo here</span></div>
+        <div class="mps__drop-hint" data-drop-hint hidden><span>{{ 'mpm.studio.drop_your_photo_here' | t }}</span></div>
       </div>
       {%- assign photo_files = section.settings.photo_files | newline_to_br | split: '<br />' -%}
       {%- assign has_photo_files = false -%}
       {%- for f in photo_files -%}{%- if f != blank -%}{%- assign has_photo_files = true -%}{%- endif -%}{%- endfor -%}
       {%- if product.media.size > 0 or has_photo_files -%}
-        <div class="mps__thumbs" role="group" aria-label="Your design and product photos" data-thumbs>
-          <button type="button" class="mps__thumb-btn mps__thumb-btn--design" data-thumb-design aria-current="true" aria-label="Your design">
+        <div class="mps__thumbs" role="group" aria-label="{{ 'mpm.studio.your_design_and_product_photos' | t | escape }}" data-thumbs>
+          <button type="button" class="mps__thumb-btn mps__thumb-btn--design" data-thumb-design aria-current="true" aria-label="{{ 'mpm.studio.your_design' | t | escape }}">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.4 5 6.9 5c2 0 3.5 1.1 5.1 3 1.6-1.9 3.1-3 5.1-3 3.5 0 5.7 3.6 4.4 6.8C19.5 16.4 12 21 12 21z"/></svg>
-            <span>Your design</span>
+            <span>{{ 'mpm.studio.your_design' | t }}</span>
           </button>
         </div>
       {%- endif -%}
@@ -192,9 +186,9 @@
         {%- assign eyebrow = section.settings.eyebrow -%}
         {%- if eyebrow == blank -%}
           {%- case section.settings.family -%}
-            {%- when 'mug' -%}{%- assign eyebrow = 'Personalized Pet Mug' -%}
-            {%- when 'ornament' -%}{%- assign eyebrow = 'Personalized Pet Ornament' -%}
-            {%- else -%}{%- assign eyebrow = 'Personalized Pet Blanket' -%}
+            {%- when 'mug' -%}{%- assign eyebrow = 'mpm.studio.eyebrow_mug' | t -%}
+            {%- when 'ornament' -%}{%- assign eyebrow = 'mpm.studio.eyebrow_ornament' | t -%}
+            {%- else -%}{%- assign eyebrow = 'mpm.studio.eyebrow_blanket' | t -%}
           {%- endcase -%}
         {%- endif -%}
         <p class="mps__eyebrow">{{ eyebrow | escape }}</p>
@@ -224,7 +218,7 @@
       {%- endif -%}
 
       <button type="button" class="mps__btn mps__btn--primary mps__btn--block" data-primary>
-        <span data-primary-label>Upload your pet's photo</span><span class="mps__btn-price" data-primary-price hidden> — <s data-compare-price></s> <span data-price></span></span>
+        <span data-primary-label>{{ 'mpm.studio.upload_your_pet_s_photo' | t }}</span><span class="mps__btn-price" data-primary-price hidden> — <s data-compare-price></s> <span data-price></span></span>
       </button>
 
       {%- if section.settings.upload_note != blank -%}<p class="mps__upload-note" data-upload-note>{{ section.settings.upload_note | escape }}</p>{%- endif -%}
@@ -233,22 +227,22 @@
         <input class="mps__file" type="file" id="PetPhoto-{{ section.id }}" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" data-file-input>
         <label class="mps__dropzone" for="PetPhoto-{{ section.id }}" data-dropzone>
           <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3l5 5h-3v6h-4V8H7l5-5zm-8 14h16v4H4v-4z"/></svg>
-          <span><strong>Choose a photo</strong> or drag it here</span>
+          <span><strong>{{ 'mpm.studio.choose_a_photo' | t }}</strong> {{ 'mpm.studio.or_drag_it_here' | t }}</span>
           <small>JPG, PNG, WebP or HEIC · up to {{ section.settings.max_upload_mb }} MB</small>
         </label>
         <ul class="mps__tips">
-          <li>One pet per photo</li>
-          <li>Face clearly visible, eyes open</li>
-          <li>Good, even lighting</li>
-          <li>Nothing covering your pet</li>
+          <li>{{ 'mpm.studio.one_pet_per_photo' | t }}</li>
+          <li>{{ 'mpm.studio.face_clearly_visible_eyes_open' | t }}</li>
+          <li>{{ 'mpm.studio.good_even_lighting' | t }}</li>
+          <li>{{ 'mpm.studio.nothing_covering_your_pet' | t }}</li>
         </ul>
       </div>
 
       <div class="mps__photo-row" data-photo-row hidden>
-        <img class="mps__thumb" data-thumb alt="Your original photo" width="56" height="56">
+        <img class="mps__thumb" data-thumb alt="{{ 'mpm.studio.your_original_photo' | t | escape }}" width="56" height="56">
         <div class="mps__photo-status">
-          <p data-photo-status>Your photo</p>
-          <button type="button" class="mps__link" data-replace>Replace photo</button>
+          <p data-photo-status>{{ 'mpm.studio.your_photo' | t }}</p>
+          <button type="button" class="mps__link" data-replace>{{ 'mpm.studio.replace_photo' | t }}</button>
         </div>
       </div>
 
@@ -256,48 +250,48 @@
         <div class="mps__gen-head">
           <span class="mps__gen-spinner" aria-hidden="true"></span>
           <div>
-            <h2 class="mps__gen-title" data-gen-title tabindex="-1">Creating your pet’s portrait</h2>
-            <p class="mps__gen-status" data-gen-status aria-live="polite">Uploading your photo…</p>
+            <h2 class="mps__gen-title" data-gen-title tabindex="-1">{{ 'mpm.studio.creating_your_pet_s_portrait' | t }}</h2>
+            <p class="mps__gen-status" data-gen-status aria-live="polite">{{ 'mpm.studio.uploading_your_photo' | t }}</p>
           </div>
         </div>
-        <div class="mps__gen-bar" role="progressbar" aria-label="Estimated progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-gen-bar><span data-gen-fill></span></div>
+        <div class="mps__gen-bar" role="progressbar" aria-label="{{ 'mpm.studio.estimated_progress' | t | escape }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-gen-bar><span data-gen-fill></span></div>
         <p class="mps__gen-time" data-gen-time></p>
 
         <div class="mps__gen-reviews" data-gen-reviews{% if rv_json == '' and rv_sample == false %} hidden{% endif %}>
-          <p class="mps__gen-kicker">Reviews from MyPetMemo customers</p>
-          <div class="mps__gen-carousel" role="region" aria-roledescription="carousel" aria-label="Customer reviews" data-carousel>
+          <p class="mps__gen-kicker">{{ 'mpm.studio.reviews_from_mypetmemo_customers' | t }}</p>
+          <div class="mps__gen-carousel" role="region" aria-roledescription="carousel" aria-label="{{ 'mpm.studio.customer_reviews' | t | escape }}" data-carousel>
             <div class="mps__gen-slides" data-carousel-slides aria-live="off"></div>
             <div class="mps__gen-controls">
-              <button type="button" class="mps__gen-arrow" data-carousel-prev aria-label="Previous review">&#8249;</button>
+              <button type="button" class="mps__gen-arrow" data-carousel-prev aria-label="{{ 'mpm.studio.previous_review' | t | escape }}">&#8249;</button>
               <div class="mps__gen-dots" data-carousel-dots></div>
-              <button type="button" class="mps__gen-arrow" data-carousel-next aria-label="Next review">&#8250;</button>
+              <button type="button" class="mps__gen-arrow" data-carousel-next aria-label="{{ 'mpm.studio.next_review' | t | escape }}">&#8250;</button>
             </div>
           </div>
         </div>
         <div class="mps__gen-info" data-gen-info{% if rv_json != '' or rv_sample %} hidden{% endif %}>
-          <p class="mps__gen-kicker">How your photo becomes a portrait</p>
+          <p class="mps__gen-kicker">{{ 'mpm.studio.how_your_photo_becomes_a_portrai' | t }}</p>
           <ol>
-            <li>We find your pet in the photo and remove the background.</li>
-            <li>The artwork keeps their markings, colors and expression.</li>
-            <li>You choose the background and name, then preview before you buy.</li>
+            <li>{{ 'mpm.studio.we_find_your_pet_in_the_photo_an' | t }}</li>
+            <li>{{ 'mpm.studio.the_artwork_keeps_their_markings' | t }}</li>
+            <li>{{ 'mpm.studio.you_choose_the_background_and_na' | t }}</li>
           </ol>
         </div>
-        <p class="mps__gen-foot">Your preview will appear here when it’s ready. <button type="button" class="mps__link mps__link--small" data-gen-cancel>Cancel</button></p>
+        <p class="mps__gen-foot">{{ 'mpm.studio.your_preview_will_appear_here_wh' | t }} <button type="button" class="mps__link mps__link--small" data-gen-cancel>{{ 'mpm.studio.cancel' | t }}</button></p>
         <script type="application/json" data-gen-reviews-json>[{{ rv_json }}{% if rv_sample %}{"name":"Sample customer","rating":5,"text":"Sample review text. Real reviews from your MyPetMemo review entries will appear here.","image":"","verified":false,"about":"","sample":true},{"name":"Another sample","rating":5,"text":"Sample text to preview the layout. This card is shown only in the theme editor.","image":"","verified":false,"about":"","sample":true}{% endif %}]</script>
       </div>
 
       <div class="mps__error" data-error hidden role="alert">
         <p data-error-text></p>
         <div class="mps__error-actions">
-          <button type="button" class="mps__btn mps__btn--small" data-retry>Try again</button>
-          <button type="button" class="mps__link" data-error-new-photo>Use a different photo</button>
+          <button type="button" class="mps__btn mps__btn--small" data-retry>{{ 'mpm.studio.try_again' | t }}</button>
+          <button type="button" class="mps__link" data-error-new-photo>{{ 'mpm.studio.use_a_different_photo' | t }}</button>
         </div>
       </div>
 
       <div class="mps__group">
-        <h2 class="mps__label">Select background <span class="mps__label-value" data-bg-name></span></h2>
-        <div class="mps__swatches" role="radiogroup" aria-label="Background" data-swatches data-visible="{{ section.settings.swatches_visible }}"></div>
-        <button type="button" class="mps__link mps__see-all" data-see-all aria-expanded="false">See all backgrounds</button>
+        <h2 class="mps__label">{{ 'mpm.studio.select_background' | t }} <span class="mps__label-value" data-bg-name></span></h2>
+        <div class="mps__swatches" role="radiogroup" aria-label="{{ 'mpm.studio.background' | t | escape }}" data-swatches data-visible="{{ section.settings.swatches_visible }}"></div>
+        <button type="button" class="mps__link mps__see-all" data-see-all aria-expanded="false">{{ 'mpm.studio.see_all_backgrounds' | t }}</button>
         <template data-image-backgrounds>
           {%- for block in section.blocks -%}
             {%- if block.type == 'background' and block.settings.image != blank -%}
@@ -311,7 +305,7 @@
       </div>
 
       <div class="mps__group">
-        <label class="mps__label" for="PetName-{{ section.id }}">Add your pet's name (optional)</label>
+        <label class="mps__label" for="PetName-{{ section.id }}">{{ 'mpm.studio.add_your_pet_s_name_optional' | t }}</label>
         <input class="mps__input" type="text" id="PetName-{{ section.id }}" maxlength="{{ section.settings.name_max }}" autocomplete="off" spellcheck="false" data-name-input placeholder="{{ section.settings.name_placeholder | escape }}">
         <p class="mps__field-error" data-name-error hidden></p>
       </div>
@@ -330,7 +324,7 @@
           <label class="mps__label" for="PetMessage-{{ section.id }}">{{ section.settings.message_label | escape }}</label>
           {%- assign suggestions = section.settings.message_suggestions | split: ',' -%}
           {%- if suggestions.size > 0 -%}
-            <div class="mps__suggestions" role="group" aria-label="Message ideas">
+            <div class="mps__suggestions" role="group" aria-label="{{ 'mpm.studio.message_ideas' | t | escape }}">
               {%- for suggestion in suggestions -%}
                 {%- assign text = suggestion | strip -%}
                 {%- if text != blank -%}<button type="button" class="mps__chip" data-suggest="{{ text | escape }}" aria-pressed="false">{{ text | escape }}</button>{%- endif -%}
@@ -344,7 +338,7 @@
           <label class="mps__label" for="PetLine-{{ section.id }}">{{ section.settings.line_label | escape }}</label>
           {%- assign suggestions = section.settings.line_suggestions | split: ',' -%}
           {%- if suggestions.size > 0 -%}
-            <div class="mps__suggestions" role="group" aria-label="Text ideas">
+            <div class="mps__suggestions" role="group" aria-label="{{ 'mpm.studio.text_ideas' | t | escape }}">
               {%- for suggestion in suggestions -%}
                 {%- assign text = suggestion | strip -%}
                 {%- if text != blank -%}<button type="button" class="mps__chip" data-suggest="{{ text | escape }}" aria-pressed="false">{{ text | escape }}</button>{%- endif -%}
@@ -357,19 +351,19 @@
 
       {%- if section.settings.family == 'mug' and section.settings.show_mug_styles -%}
         <div class="mps__group">
-          <h2 class="mps__label">Choose a style</h2>
-          <div class="mps__options mps__styles" role="radiogroup" aria-label="Style">
+          <h2 class="mps__label">{{ 'mpm.studio.choose_a_style' | t }}</h2>
+          <div class="mps__options mps__styles" role="radiogroup" aria-label="{{ 'mpm.studio.style' | t | escape }}">
             <button type="button" class="mps__option mps__style" role="radio" aria-checked="true" data-style="below">
               <svg viewBox="0 0 40 32" aria-hidden="true"><rect x="1" y="1" width="38" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".35"/><circle cx="20" cy="12" r="7" fill="currentColor"/><rect x="10" y="23" width="20" height="4" rx="2" fill="currentColor" opacity=".6"/></svg>
-              <span class="mps__option-main">Name below</span>
+              <span class="mps__option-main">{{ 'mpm.studio.name_below' | t }}</span>
             </button>
             <button type="button" class="mps__option mps__style" role="radio" aria-checked="false" data-style="above">
               <svg viewBox="0 0 40 32" aria-hidden="true"><rect x="1" y="1" width="38" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".35"/><rect x="10" y="5" width="20" height="4" rx="2" fill="currentColor" opacity=".6"/><circle cx="20" cy="21" r="7" fill="currentColor"/></svg>
-              <span class="mps__option-main">Name on top</span>
+              <span class="mps__option-main">{{ 'mpm.studio.name_on_top' | t }}</span>
             </button>
             <button type="button" class="mps__option mps__style" role="radio" aria-checked="false" data-style="big">
               <svg viewBox="0 0 40 32" aria-hidden="true"><rect x="1" y="1" width="38" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".35"/><path d="M8 31c0-9 5-16 12-16s12 7 12 16z" fill="currentColor"/><circle cx="20" cy="11" r="7" fill="currentColor"/><rect x="11" y="22" width="18" height="4" rx="2" fill="#fff"/></svg>
-              <span class="mps__option-main">Big portrait</span>
+              <span class="mps__option-main">{{ 'mpm.studio.big_portrait' | t }}</span>
             </button>
           </div>
         </div>
@@ -379,35 +373,35 @@
         <div class="mps__edit-buttons">
           <button type="button" class="mps__btn mps__btn--outline" data-adjust aria-expanded="false">
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 17v4h4l11-11-4-4L3 17zm17.7-10.3a1 1 0 000-1.4l-2-2a1 1 0 00-1.4 0L15.8 4.8l4 4 .9-2.1z"/></svg>
-            Adjust
+            {{ 'mpm.studio.adjust' | t }}
           </button>
-          <button type="button" class="mps__link" data-new-photo>Try a different photo</button>
+          <button type="button" class="mps__link" data-new-photo>{{ 'mpm.studio.try_a_different_photo' | t }}</button>
         </div>
         <div class="mps__adjust" data-adjust-panel hidden>
-          <div class="mps__seg" role="radiogroup" aria-label="What to adjust">
-            <button type="button" role="radio" aria-checked="true" data-target="pet">Pet</button>
-            <button type="button" role="radio" aria-checked="false" data-target="name">Name</button>
+          <div class="mps__seg" role="radiogroup" aria-label="{{ 'mpm.studio.what_to_adjust' | t | escape }}">
+            <button type="button" role="radio" aria-checked="true" data-target="pet">{{ 'mpm.studio.pet' | t }}</button>
+            <button type="button" role="radio" aria-checked="false" data-target="name">{{ 'mpm.studio.name' | t }}</button>
           </div>
           <div class="mps__adjust-grid">
-            <span class="mps__adjust-label">Move</span>
+            <span class="mps__adjust-label">{{ 'mpm.studio.move' | t }}</span>
             <div class="mps__pad">
-              <button type="button" data-nudge="up" aria-label="Move up">↑</button>
-              <button type="button" data-nudge="left" aria-label="Move left">←</button>
-              <button type="button" data-nudge="right" aria-label="Move right">→</button>
-              <button type="button" data-nudge="down" aria-label="Move down">↓</button>
+              <button type="button" data-nudge="up" aria-label="{{ 'mpm.studio.move_up' | t | escape }}">↑</button>
+              <button type="button" data-nudge="left" aria-label="{{ 'mpm.studio.move_left' | t | escape }}">←</button>
+              <button type="button" data-nudge="right" aria-label="{{ 'mpm.studio.move_right' | t | escape }}">→</button>
+              <button type="button" data-nudge="down" aria-label="{{ 'mpm.studio.move_down' | t | escape }}">↓</button>
             </div>
-            <span class="mps__adjust-label">Size</span>
-            <div class="mps__row"><button type="button" data-nudge="smaller" aria-label="Smaller">−</button><button type="button" data-nudge="bigger" aria-label="Bigger">+</button></div>
-            <span class="mps__adjust-label">Rotate</span>
-            <div class="mps__row"><button type="button" data-nudge="ccw" aria-label="Rotate left">⟲</button><button type="button" data-nudge="cw" aria-label="Rotate right">⟳</button></div>
+            <span class="mps__adjust-label">{{ 'mpm.studio.size' | t }}</span>
+            <div class="mps__row"><button type="button" data-nudge="smaller" aria-label="{{ 'mpm.studio.smaller' | t | escape }}">−</button><button type="button" data-nudge="bigger" aria-label="{{ 'mpm.studio.bigger' | t | escape }}">+</button></div>
+            <span class="mps__adjust-label">{{ 'mpm.studio.rotate' | t }}</span>
+            <div class="mps__row"><button type="button" data-nudge="ccw" aria-label="{{ 'mpm.studio.rotate_left' | t | escape }}">⟲</button><button type="button" data-nudge="cw" aria-label="{{ 'mpm.studio.rotate_right' | t | escape }}">⟳</button></div>
           </div>
-          <p class="mps__hint">You can also drag on the preview, use the corners to resize and the round handle to rotate.</p>
+          <p class="mps__hint">{{ 'mpm.studio.you_can_also_drag_on_the_preview' | t }}</p>
           <div class="mps__adjust-actions">
-            <button type="button" class="mps__link" data-reset>Reset</button>
-            <button type="button" class="mps__btn mps__btn--primary mps__btn--small" data-adjust-save>Save</button>
+            <button type="button" class="mps__link" data-reset>{{ 'mpm.studio.reset' | t }}</button>
+            <button type="button" class="mps__btn mps__btn--primary mps__btn--small" data-adjust-save>{{ 'mpm.studio.save' | t }}</button>
           </div>
         </div>
-        <p class="mps__more">Want more control? <button type="button" class="mps__link" data-open-editor>Open the full editor</button></p>
+        <p class="mps__more">{{ 'mpm.studio.want_more_control' | t }} <button type="button" class="mps__link" data-open-editor>{{ 'mpm.studio.open_the_full_editor' | t }}</button></p>
       </div>
 
       {%- unless product.has_only_default_variant -%}
@@ -431,9 +425,9 @@
       {%- endif -%}
 
       <button type="button" class="mps__btn mps__btn--primary mps__btn--block mps__btn--cart" data-primary>
-        <span data-primary-label>Upload your pet's photo</span><span class="mps__btn-price" data-primary-price hidden> — <s data-compare-price></s> <span data-price></span></span>
+        <span data-primary-label>{{ 'mpm.studio.upload_your_pet_s_photo' | t }}</span><span class="mps__btn-price" data-primary-price hidden> — <s data-compare-price></s> <span data-price></span></span>
       </button>
-      <p class="mps__hint mps__approve-note" data-approve-note hidden>Adding to cart approves this design for printing. You can still change it here and add the new version.</p>
+      <p class="mps__hint mps__approve-note" data-approve-note hidden>{{ 'mpm.studio.adding_to_cart_approves_this_des' | t }}</p>
       <p class="mps__status" data-cart-status aria-live="polite"></p>
 
       {%- if section.settings.email_capture -%}
@@ -458,7 +452,7 @@
 
 
       {%- if product.description != blank -%}
-        <details class="mps__details"><summary>Product details</summary><div class="rte">{{ product.description }}</div></details>
+        <details class="mps__details"><summary>{{ 'mpm.studio.product_details' | t }}</summary><div class="rte">{{ product.description }}</div></details>
       {%- endif -%}
     </div>
   </div>
@@ -485,59 +479,59 @@
 
   <div class="mps__sticky" data-sticky hidden>
     <div class="mps__sticky-price"><s data-compare-price></s> <strong data-price></strong></div>
-    <button type="button" class="mps__btn mps__btn--primary" data-primary data-sticky-button><span data-primary-label>Upload your pet's photo</span></button>
+    <button type="button" class="mps__btn mps__btn--primary" data-primary data-sticky-button><span data-primary-label>{{ 'mpm.studio.upload_your_pet_s_photo' | t }}</span></button>
   </div>
 
   <dialog class="mps__dialog" data-editor-dialog aria-labelledby="PetEditorTitle-{{ section.id }}">
     <div class="mps__dialog-inner">
       <header class="mps__dialog-head">
-        <h2 id="PetEditorTitle-{{ section.id }}">Full editor</h2>
-        <button type="button" class="mps__dialog-close" data-editor-done aria-label="Close editor">×</button>
+        <h2 id="PetEditorTitle-{{ section.id }}">{{ 'mpm.studio.full_editor' | t }}</h2>
+        <button type="button" class="mps__dialog-close" data-editor-done aria-label="{{ 'mpm.studio.close_editor' | t | escape }}">×</button>
       </header>
       <div class="mps__dialog-body">
-        <div class="mps__dialog-stage" data-editor-stage><canvas class="mps__canvas" data-editor-canvas tabindex="0" role="img" aria-label="Design editor. Drag to move, corners resize, round handle rotates. Arrow keys move the selected item."></canvas></div>
+        <div class="mps__dialog-stage" data-editor-stage><canvas class="mps__canvas" data-editor-canvas tabindex="0" role="img" aria-label="{{ 'mpm.studio.design_editor_drag_to_move_corne' | t | escape }}"></canvas></div>
         <div class="mps__dialog-tools">
-          <div class="mps__seg" role="radiogroup" aria-label="What to edit">
-            <button type="button" role="radio" aria-checked="true" data-target="pet">Pet</button>
-            <button type="button" role="radio" aria-checked="false" data-target="name">Name</button>
+          <div class="mps__seg" role="radiogroup" aria-label="{{ 'mpm.studio.what_to_edit' | t | escape }}">
+            <button type="button" role="radio" aria-checked="true" data-target="pet">{{ 'mpm.studio.pet' | t }}</button>
+            <button type="button" role="radio" aria-checked="false" data-target="name">{{ 'mpm.studio.name' | t }}</button>
           </div>
           <div class="mps__adjust-grid">
-            <span class="mps__adjust-label">Move</span>
+            <span class="mps__adjust-label">{{ 'mpm.studio.move' | t }}</span>
             <div class="mps__pad">
-              <button type="button" data-nudge="up" aria-label="Move up">↑</button>
-              <button type="button" data-nudge="left" aria-label="Move left">←</button>
-              <button type="button" data-nudge="right" aria-label="Move right">→</button>
-              <button type="button" data-nudge="down" aria-label="Move down">↓</button>
+              <button type="button" data-nudge="up" aria-label="{{ 'mpm.studio.move_up' | t | escape }}">↑</button>
+              <button type="button" data-nudge="left" aria-label="{{ 'mpm.studio.move_left' | t | escape }}">←</button>
+              <button type="button" data-nudge="right" aria-label="{{ 'mpm.studio.move_right' | t | escape }}">→</button>
+              <button type="button" data-nudge="down" aria-label="{{ 'mpm.studio.move_down' | t | escape }}">↓</button>
             </div>
-            <span class="mps__adjust-label">Size</span>
-            <div class="mps__row"><button type="button" data-nudge="smaller" aria-label="Smaller">−</button><button type="button" data-nudge="bigger" aria-label="Bigger">+</button></div>
-            <span class="mps__adjust-label">Rotate</span>
-            <div class="mps__row"><button type="button" data-nudge="ccw" aria-label="Rotate left">⟲</button><button type="button" data-nudge="cw" aria-label="Rotate right">⟳</button></div>
+            <span class="mps__adjust-label">{{ 'mpm.studio.size' | t }}</span>
+            <div class="mps__row"><button type="button" data-nudge="smaller" aria-label="{{ 'mpm.studio.smaller' | t | escape }}">−</button><button type="button" data-nudge="bigger" aria-label="{{ 'mpm.studio.bigger' | t | escape }}">+</button></div>
+            <span class="mps__adjust-label">{{ 'mpm.studio.rotate' | t }}</span>
+            <div class="mps__row"><button type="button" data-nudge="ccw" aria-label="{{ 'mpm.studio.rotate_left' | t | escape }}">⟲</button><button type="button" data-nudge="cw" aria-label="{{ 'mpm.studio.rotate_right' | t | escape }}">⟳</button></div>
           </div>
 
-          <h3 class="mps__label mps__label--small">Background <span class="mps__label-value" data-bg-name></span></h3>
-          <div class="mps__swatches mps__swatches--small" role="radiogroup" aria-label="Background" data-editor-swatches></div>
+          <h3 class="mps__label mps__label--small">{{ 'mpm.studio.background' | t }} <span class="mps__label-value" data-bg-name></span></h3>
+          <div class="mps__swatches mps__swatches--small" role="radiogroup" aria-label="{{ 'mpm.studio.background' | t | escape }}" data-editor-swatches></div>
 
-          <h3 class="mps__label mps__label--small">Name</h3>
-          <input class="mps__input mps__input--small" type="text" maxlength="{{ section.settings.name_max }}" autocomplete="off" spellcheck="false" data-editor-name aria-label="Pet's name" placeholder="{{ section.settings.name_placeholder | escape }}">
+          <h3 class="mps__label mps__label--small">{{ 'mpm.studio.name' | t }}</h3>
+          <input class="mps__input mps__input--small" type="text" maxlength="{{ section.settings.name_max }}" autocomplete="off" spellcheck="false" data-editor-name aria-label="{{ 'mpm.studio.pet_s_name' | t | escape }}" placeholder="{{ section.settings.name_placeholder | escape }}">
           <p class="mps__field-error" data-name-error hidden></p>
           <div class="mps__field-row">
-            <label>Font
+            <label>{{ 'mpm.studio.font' | t }}
               <select data-font>
-                <option value="fredoka">Rounded</option>
-                <option value="pacifico">Script</option>
-                <option value="montserrat">Bold</option>
-                <option value="playfair">Classic</option>
+                <option value="fredoka">{{ 'mpm.studio.rounded' | t }}</option>
+                <option value="pacifico">{{ 'mpm.studio.script' | t }}</option>
+                <option value="montserrat">{{ 'mpm.studio.bold' | t }}</option>
+                <option value="playfair">{{ 'mpm.studio.classic' | t }}</option>
               </select>
             </label>
-            <label>Fill <input type="color" data-fill value="#ffffff"></label>
-            <label>Outline <input type="color" data-stroke value="#2a2230"></label>
+            <label>{{ 'mpm.studio.fill' | t }} <input type="color" data-fill value="#ffffff"></label>
+            <label>{{ 'mpm.studio.outline' | t }} <input type="color" data-stroke value="#2a2230"></label>
           </div>
-          <label class="mps__range">Name size <input type="range" min="0.05" max="0.26" step="0.005" data-name-size></label>
+          <label class="mps__range">{{ 'mpm.studio.name_size' | t }} <input type="range" min="0.05" max="0.26" step="0.005" data-name-size></label>
           <div class="mps__dialog-actions">
-            <button type="button" class="mps__link" data-editor-revert>Undo changes</button>
-            <button type="button" class="mps__link" data-reset>Reset placement</button>
-            <button type="button" class="mps__btn mps__btn--primary" data-editor-done>Done</button>
+            <button type="button" class="mps__link" data-editor-revert>{{ 'mpm.studio.undo_changes' | t }}</button>
+            <button type="button" class="mps__link" data-reset>{{ 'mpm.studio.reset_placement' | t }}</button>
+            <button type="button" class="mps__btn mps__btn--primary" data-editor-done>{{ 'mpm.studio.done' | t }}</button>
           </div>
         </div>
       </div>

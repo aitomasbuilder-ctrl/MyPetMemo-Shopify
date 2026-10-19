@@ -6,6 +6,12 @@
 (() => {
   'use strict';
 
+  /* Translations: window.MPM_I18N (assets/pet-i18n-<locale>.js) maps the English text to the shop language. */
+  const T = (text, vars) => {
+    const s = (window.MPM_I18N && window.MPM_I18N[text]) || text;
+    return vars ? s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m)) : s;
+  };
+
   const root = document.querySelector('[data-pet-upsell]');
   const form = document.getElementById('CartForm');
   if (!root || !form) return;
@@ -87,12 +93,12 @@
     const was = line ? line.original_line_price : p.was, now = line ? line.final_line_price : p.now;
     n.querySelector('[data-offer-was]').textContent = now < was ? money(was) : '';
     n.querySelector('[data-offer-now]').textContent = money(now);
-    n.querySelector('[data-offer-badge]').textContent = now < was ? `Save ${money(was - now)}` : (line ? '' : `${p.pct}% off with your ${main.familyLabel}`);
+    n.querySelector('[data-offer-badge]').textContent = now < was ? T('Save {amount}', { amount: money(was - now) }) : (line ? '' : T(main.familyLabel === 'portrait' ? '{pct}% off with your portrait' : '{pct}% off with your blanket', { pct: p.pct }));
     const add = n.querySelector('[data-offer-add]');
     add.disabled = card.busy || (!card.designer && !line);
     add.setAttribute('aria-pressed', String(!!line));
     add.classList.toggle('is-added', !!line);
-    add.textContent = card.busy ? (line ? 'Removing…' : 'Adding…') : line ? '✓ Added · Remove' : (card.slot === 'mug' ? config.text.addMug : config.text.addOrnament);
+    add.textContent = card.busy ? (line ? T('Removing…') : T('Adding…')) : line ? T('✓ Added · Remove') : T(card.slot === 'mug' ? config.text.addMug : config.text.addOrnament);
   }
   function renderAll() {
     cards.forEach(renderCard);
@@ -101,7 +107,7 @@
     if (cart) {
       el.total.textContent = money(cart.total_price);
       const bundle = cards.reduce((s, c) => s + (c.line ? c.line.original_line_price - c.line.final_line_price : 0), 0);
-      el.saving.textContent = bundle > 0 ? `Bundle savings: −${money(bundle)}` : '';
+      el.saving.textContent = bundle > 0 ? T('Bundle savings: −{amount}', { amount: money(bundle) }) : '';
       el.saving.hidden = !(bundle > 0);
     }
   }
@@ -110,7 +116,7 @@
   async function prepare(card, src) {
     const S = window.MyPetMemoStudio;
     const n = card.node;
-    n.querySelector('[data-offer-loading-text]').textContent = `Putting ${src.name && src.name.text ? src.name.text : 'your pet'} on the ${card.slot === 'mug' ? 'mug' : 'ornament'}…`;
+    n.querySelector('[data-offer-loading-text]').textContent = src.name && src.name.text ? T(card.slot === 'mug' ? 'Putting {name} on the mug…' : 'Putting {name} on the ornament…', { name: src.name.text }) : T(card.slot === 'mug' ? 'Putting your pet on the mug…' : 'Putting your pet on the ornament…');
     try {
       const extra = card.extraFields === 'year' ? { year: String(new Date().getFullYear()) }
         : card.extraFields === 'memorial' ? { dates: (src.extra && src.extra.dates) || '' }
@@ -119,11 +125,11 @@
       const blob = await card.designer.addonPreview();
       const img = n.querySelector('[data-offer-img]');
       img.src = URL.createObjectURL(blob);
-      img.alt = `${card.title} with your pet`;
+      img.alt = T('{product} with your pet', { product: card.title });
       img.hidden = false;
       n.querySelector('[data-offer-loading]').hidden = true;
     } catch (e) {
-      n.querySelector('[data-offer-loading-text]').textContent = 'Preview unavailable';
+      n.querySelector('[data-offer-loading-text]').textContent = T('Preview unavailable');
       card.designer = null;
     }
     renderCard(card);
@@ -142,7 +148,7 @@
       }
       await refresh();
     } catch (e) {
-      showError(card.line ? 'We couldn’t remove it. Please try again.' : 'We couldn’t add it. Please try again, or continue to checkout.');
+      showError(card.line ? T('We couldn’t remove it. Please try again.') : T('We couldn’t add it. Please try again, or continue to checkout.'));
     } finally {
       card.busy = false;
       renderAll();
