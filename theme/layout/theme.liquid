@@ -17,7 +17,7 @@
   {{ 'theme.css' | asset_url | stylesheet_tag }}
   {{ 'shopify.css' | asset_url | stylesheet_tag }}
   {% style %}:root{--background:{{ settings.background }};--foreground:{{ settings.foreground }};--brand-accent:{{ settings.accent }}}{% endstyle %}
-  {%- if request.locale.iso_code == 'lt' -%}<script src="{{ 'pet-i18n-lt.js' | asset_url }}"></script>{%- endif -%}
+  {%- if request.locale.iso_code == 'lt' -%}<script src="{{ 'pet-i18n-lt.js' | asset_url }}" defer="defer"></script>{%- endif -%}
   <script src="{{ 'theme.js' | asset_url }}" defer="defer"></script>
   {{ content_for_header }}
 </head>
