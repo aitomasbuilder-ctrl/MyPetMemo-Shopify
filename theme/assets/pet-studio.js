@@ -2944,6 +2944,18 @@
   else init();
   document.addEventListener('shopify:section:load', e => init(e.target));
 
+  // Customer events for analytics: a custom pixel can subscribe to mpm_preview_ready and mpm_design_added.
+  const track = (name, root, data) => {
+    const studio = root && root.__petStudio;
+    const a = window.Shopify && window.Shopify.analytics;
+    if (!studio || !a || typeof a.publish !== 'function') return;
+    try {
+      a.publish(name, Object.assign({ family: studio.familyKey(), locale: document.documentElement.lang || '' }, data));
+    } catch (_) { /* analytics must never break the studio */ }
+  };
+  document.addEventListener('pet-studio:generated', e => track('mpm_preview_ready', e.target, { ms: e.detail.ms }));
+  document.addEventListener('pet-studio:added', e => track('mpm_design_added', e.target, { design_id: e.detail.id }));
+
   window.MyPetMemoStudio = {
     formatMoney, parseInches, removeFlatBackground, NAME_BASELINE, NAME_STROKE, CAPTION_LINE,
     makeAddon, handoff: id => kv.get(`handoff:${id}`), loadImage, sha256Hex
