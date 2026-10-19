@@ -1,0 +1,20 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-cart",
+      "settings": {
+        "upsell_eyebrow": "Make Your Gift Even More Special ❤️",
+        "upsell_heading": "Complete Your Pet Memory Collection 🐾",
+        "upsell_subheading": "Your pet's portrait is ready. Add a matching keepsake at a special bundle price.",
+        "upsell_ornament_text": "Ceramic ornament with the same portrait. Ready to hang.",
+        "upsell_mug_text": "15 oz ceramic mug, printed on both sides.",
+        "upsell_skip_label": "No Thanks, Continue to Checkout",
+        "upsell_continue_label": "Continue to Checkout",
+        "upsell_secure_text": "Your blanket or portrait stays in your bag either way. Secure checkout."
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}
