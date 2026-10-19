@@ -37,6 +37,7 @@ async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetc
     } else {
       mapping = await catalog.variantForSku(item.sku);
       if (!mapping.is_enabled) throw new Error(`printify_variant_disabled:${item.sku}`);
+      if (catalog.regionalVariant) mapping = await catalog.regionalVariant(mapping, order.shipping_address && order.shipping_address.country_code);
       area = await catalog.printArea(mapping);
     }
     const artwork = await download(item.artwork_url, { fetchImpl, hosts, label: 'artwork' });
