@@ -1,0 +1,49 @@
+{% if section.settings.announcement != blank %}<div class="announcement">{{ section.settings.announcement | escape }}</div>{% endif %}
+<header class="header">
+  <div class="header-inner">
+    <details class="mobile-nav"><summary class="icon-button" aria-label="{{ 'common.menu' | t }}">{% render 'icon', name: 'menu' %}</summary><nav aria-label="{{ 'common.mobile_navigation' | t }}">{% render 'navigation', menu: section.settings.menu %}</nav></details>
+    <a class="wordmark" href="{{ routes.root_url }}" aria-label="{{ shop.name | escape }}">
+      {% if settings.logo %}{{ settings.logo | image_url: width: 440 | image_tag: widths: '220,440', class: 'logo-image', loading: 'eager' }}{% else %}{{ settings.brand_name | escape }}{% render 'icon', name: 'heart', size: 16 %}{% endif %}
+    </a>
+    <nav class="desktop-nav" aria-label="{{ 'common.main_navigation' | t }}">{% render 'navigation', menu: section.settings.menu %}</nav>
+    <div class="header-actions">
+      {%- if localization.available_languages.size > 1 -%}
+        {%- form 'localization', class: 'lang-switch' -%}
+          <span class="visually-hidden">{{ 'common.language' | t }}</span>
+          {%- for language in localization.available_languages -%}
+            <button type="submit" name="locale_code" value="{{ language.iso_code }}" lang="{{ language.iso_code }}" aria-label="{{ language.endonym_name | escape }}"{% if language.iso_code == localization.language.iso_code %} aria-current="true"{% endif %}>{{ language.iso_code | upcase }}</button>
+          {%- endfor -%}
+        {%- endform -%}
+      {%- endif -%}
+      <a class="icon-button" href="{{ routes.search_url }}" aria-label="{{ 'common.search' | t }}">{% render 'icon', name: 'search' %}</a>
+      {% if shop.customer_accounts_enabled %}<a class="icon-button account-icon" href="{{ routes.account_url }}" aria-label="{{ 'common.account' | t }}">{% render 'icon', name: 'user' %}</a>{% endif %}
+      <a class="icon-button bag-icon" href="{{ routes.cart_url }}" aria-label="{{ 'cart.title' | t }}">{% render 'icon', name: 'bag' %}<span>{{ cart.item_count }}</span></a>
+    </div>
+  </div>
+</header>
+
+{% style %}
+  .lang-switch{display:flex;align-items:center;gap:2px;margin:0 4px;padding:2px;border:1px solid rgba(74,52,40,.18);border-radius:999px}
+  .lang-switch button{font:inherit;font-size:12px;font-weight:700;letter-spacing:.04em;min-width:34px;min-height:30px;padding:0 8px;border:0;border-radius:999px;background:transparent;color:inherit;cursor:pointer}
+  .lang-switch button[aria-current]{background:var(--foreground,#4a3428);color:var(--background,#fbf6ef)}
+  .lang-switch .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    {
+      "type": "text",
+      "id": "announcement",
+      "label": "Announcement",
+      "default": "PERSONALIZED KEEPSAKES FOR THE PETS YOU LOVE"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Main menu"
+    }
+  ]
+}
+{% endschema %}

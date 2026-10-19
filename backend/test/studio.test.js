@@ -48,6 +48,9 @@ test('design: rejects bad input with readable codes', async () => {
   bad({ artwork: { sha256: 'nothex', w: 10, h: 10 } }, 'invalid_field');
   assert.equal(design.normalise(input(art, { name: { text: '   ' } }), { hosts }).name, null, 'empty name leaves the area empty');
   assert.ok(design.normalise(input(art, { name: { text: 'Łucja Ñoño', cx: 0.5, cy: 0.1, size: 0.1 } }), { hosts }).name, 'accented characters are supported');
+  for (const font of ['fredoka', 'pacifico', 'montserrat', 'playfair']) {
+    assert.ok(design.normalise(input(art, { name: { text: 'Šarūnė Ąžuolėlis Įvė Ūla', cx: 0.5, cy: 0.1, size: 0.1, font } }), { hosts }).name, `Lithuanian letters print in ${font}`);
+  }
   assert.equal(design.normalise(input(art, { background: { id: 'custom', color: '#12AB34' } }), { hosts }).background.color, '#12ab34');
 });
 

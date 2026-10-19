@@ -20,7 +20,7 @@
     {%- if p != blank and p.available -%}
       {%- assign pick = p.selected_or_first_available_variant -%}
       {%- if family == 'ornament' -%}
-        {%- for v in p.variants -%}{%- if v.available and v.title contains 'ircle' -%}{%- assign pick = v -%}{%- break -%}{%- endif -%}{%- endfor -%}
+        {%- for v in p.variants -%}{%- if v.available -%}{%- if v.title contains 'ircle' or v.title contains 'pskrit' -%}{%- assign pick = v -%}{%- break -%}{%- endif -%}{%- endif -%}{%- endfor -%}
       {%- endif -%}
       {%- assign fw = fallback | split: 'x' | first | plus: 0 -%}{%- assign fh = fallback | split: 'x' | last | plus: 0 -%}
       "{{ key }}": {
@@ -38,12 +38,12 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Montserrat:wght@500;600;700;800&family=Pacifico&family=Playfair+Display:wght@700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Nunito:wght@600&family=Montserrat:wght@500;600;700;800&family=Pacifico&family=Playfair+Display:wght@700&display=swap">
 {{ 'pet-upsell.css' | asset_url | stylesheet_tag }}
 
 <dialog class="mpu" data-pet-upsell aria-labelledby="UpsellTitle">
   <div class="mpu__inner">
-    <button type="button" class="mpu__close" data-upsell-close aria-label="Back to your bag">×</button>
+    <button type="button" class="mpu__close" data-upsell-close aria-label="{{ 'mpm.upsell.back_to_your_bag' | t | escape }}">×</button>
     <header class="mpu__head">
       <img class="mpu__main-img" data-upsell-main-img alt="" width="88" height="88" hidden>
       <div>

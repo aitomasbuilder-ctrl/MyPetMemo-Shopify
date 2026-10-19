@@ -143,11 +143,11 @@
   /** Frame kind from a variant option value such as "Black frame" or "Digital download". */
   function frameKind(value) {
     const v = String(value || '').toLowerCase();
-    if (/digital|download|file/.test(v)) return 'digital';
-    if (/black/.test(v)) return 'black';
-    if (/white/.test(v)) return 'white';
-    if (/wood|oak|natural|walnut/.test(v)) return 'wood';
-    if (/canvas|unframed|no frame|wrap/.test(v)) return 'canvas';
+    if (/digital|download|file|skaitmen/.test(v)) return 'digital';
+    if (/black|juod/.test(v)) return 'black';
+    if (/white|balt/.test(v)) return 'white';
+    if (/wood|oak|natural|walnut|medž/.test(v)) return 'wood';
+    if (/canvas|unframed|no frame|wrap|drob/.test(v)) return 'canvas';
     return null;
   }
   /** Outer size of a framed piece in inches around a w x h face. */

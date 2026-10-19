@@ -7,6 +7,13 @@
 (() => {
   'use strict';
 
+  /* Translations: window.MPM_I18N (assets/pet-i18n-<locale>.js) maps the English text to the shop language. */
+  const T = (text, vars) => {
+    const s = (window.MPM_I18N && window.MPM_I18N[text]) || text;
+    return vars ? s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m)) : s;
+  };
+  const METRIC = !!(window.MPM_I18N && window.MPM_I18N.__metric);   // centimetres first
+
   const DEG = Math.PI / 180;
   const TAU = Math.PI * 2;
   const NAME_BASELINE = 0.35;          // baseline offset from the name centre, in font sizes
@@ -20,7 +27,7 @@
   const STORE_TTL_MS = 14 * 24 * 3600 * 1000;
   const HEIC_LIB = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
   const FONTS = {
-    fredoka: { family: 'Fredoka', weight: 600 },
+    fredoka: { family: 'Fredoka', weight: 600, fallback: 'Nunito' },   // Fredoka lacks ą č ę ė į ų ū: Nunito draws those
     pacifico: { family: 'Pacifico', weight: 400 },
     montserrat: { family: 'Montserrat', weight: 800 },
     playfair: { family: 'Playfair Display', weight: 700 }
@@ -41,10 +48,10 @@
   function shapeFromOptions(options) {
     for (const o of options || []) {
       const v = String(o).toLowerCase();
-      if (/snow/.test(v)) return 'snowflake';
-      if (/star/.test(v)) return 'star';
-      if (/heart/.test(v)) return 'heart';
-      if (/circle|round/.test(v)) return 'circle';
+      if (/snow|snaig/.test(v)) return 'snowflake';
+      if (/star|žvaigžd/.test(v)) return 'star';
+      if (/heart|šird/.test(v)) return 'heart';
+      if (/circle|round|apskrit|apval/.test(v)) return 'circle';
     }
     return null;
   }
@@ -218,9 +225,10 @@
     const key = Object.keys(MUG_COLORS).sort((a, b) => b.length - a.length).find(k => new RegExp(`\\b${k}\\b`).test(v));
     return key ? MUG_COLORS[key] : null;
   }
-  /** "50" × 60"" → { w: 50, h: 60 } (inches) */
+  /** "50" × 60"" → { w: 50, h: 60 } (inches). Translated values such as "127 × 152 cm (50 × 60 in)" use the inch part. */
   function parseInches(text) {
-    const m = /(\d+(?:\.\d+)?)\D{1,6}?(\d+(?:\.\d+)?)/.exec(String(text || ''));
+    const m = /(\d+(?:\.\d+)?)\s*(?:"|″|in)?\s*[×x]\s*(\d+(?:\.\d+)?)\s*(?:"|″|in\b)/.exec(String(text || ''))
+      || /(\d+(?:\.\d+)?)\D{1,6}?(\d+(?:\.\d+)?)/.exec(String(text || ''));
     return m ? { w: Number(m[1]), h: Number(m[2]) } : null;
   }
   function loadImage(src) {
@@ -674,7 +682,7 @@
         const d = document.createElement('button');
         d.type = 'button';
         d.className = 'mps__gen-dot';
-        d.setAttribute('aria-label', `Show review ${i + 1} of ${reviews.length}`);
+        d.setAttribute('aria-label', T('Show review {n} of {total}', { n: i + 1, total: reviews.length }));
         d.addEventListener('click', () => { this.hold(); this.show(i); });
         this.dots.appendChild(d);
       });
@@ -693,7 +701,7 @@
       fig.className = 'mps__gen-card' + (r.sample ? ' is-sample' : '');
       fig.setAttribute('role', 'group');
       fig.setAttribute('aria-roledescription', 'slide');
-      fig.setAttribute('aria-label', `${i + 1} of ${this.reviews.length}`);
+      fig.setAttribute('aria-label', T('{n} of {total}', { n: i + 1, total: this.reviews.length }));
       const media = document.createElement('div');
       media.className = 'mps__gen-card-media';
       if (r.image) { const img = document.createElement('img'); img.src = r.image; img.alt = ''; img.loading = 'lazy'; media.appendChild(img); }
@@ -702,20 +710,20 @@
       const head = document.createElement('p');
       head.className = 'mps__gen-card-name';
       head.textContent = r.name;
-      if (r.verified) { const v = document.createElement('span'); v.className = 'mps-review__verified'; v.textContent = 'Verified purchase'; head.appendChild(v); }
-      if (r.sample) { const v = document.createElement('span'); v.className = 'mps-review__sample'; v.textContent = 'Sample · preview only'; head.appendChild(v); }
+      if (r.verified) { const v = document.createElement('span'); v.className = 'mps-review__verified'; v.textContent = T('Verified purchase'); head.appendChild(v); }
+      if (r.sample) { const v = document.createElement('span'); v.className = 'mps-review__sample'; v.textContent = T('Sample · preview only'); head.appendChild(v); }
       const stars = document.createElement('div');
       stars.className = 'mps-stars mps-stars--small';
       const rating = Math.max(1, Math.min(5, Number(r.rating) || 5));
       stars.style.setProperty('--rating', `${rating * 20}%`);
       stars.setAttribute('role', 'img');
-      stars.setAttribute('aria-label', `${rating} out of 5 stars`);
+      stars.setAttribute('aria-label', T('{rating} out of 5 stars', { rating }));
       const text = document.createElement('blockquote');
       text.className = 'mps__gen-card-text';
       const t = String(r.text);
       text.textContent = t.length > 170 ? `${t.slice(0, 167).replace(/\s+\S*$/, '')}…` : t;
       body.append(head, stars, text);
-      if (r.about) { const a = document.createElement('p'); a.className = 'mps-review__about'; a.textContent = `Review of ${r.about}`; body.appendChild(a); }
+      if (r.about) { const a = document.createElement('p'); a.className = 'mps-review__about'; a.textContent = T('Review of {product}', { product: r.about }); body.appendChild(a); }
       fig.append(media, body);
       return fig;
     }
@@ -813,13 +821,13 @@
     /* ----- setup ----- */
     loadFonts() {
       if (!document.fonts || !document.fonts.load) return;
-      const loads = Object.values(FONTS).map(f => document.fonts.load(`${f.weight} 48px "${f.family}"`, 'AaÀé'));
+      const loads = Object.values(FONTS).map(f => document.fonts.load(`${f.weight} 48px "${f.family}"${f.fallback ? `, "${f.fallback}"` : ''}`, 'AaÀéąčęėįšųūž'));
       Promise.all(loads).then(() => this.changed({ fonts: true })).catch(() => {});
     }
     fontsReady() {
       if (!document.fonts || !document.fonts.load) return Promise.resolve();
       const f = FONTS[this.state.name.font] || FONTS.fredoka;
-      return document.fonts.load(`${f.weight} 48px "${f.family}"`, this.state.name.text || 'A').catch(() => {});
+      return document.fonts.load(`${f.weight} 48px "${f.family}"${f.fallback ? `, "${f.fallback}"` : ''}`, this.state.name.text || 'A').catch(() => {});
     }
 
     bindUI() {
@@ -880,7 +888,7 @@
       el.seeAll.addEventListener('click', () => {
         const collapsed = el.swatches.dataset.collapsed === 'true';
         el.swatches.dataset.collapsed = String(!collapsed);
-        el.seeAll.textContent = collapsed ? 'Show fewer backgrounds' : 'See all backgrounds';
+        el.seeAll.textContent = collapsed ? T('Show fewer backgrounds') : T('See all backgrounds');
         el.seeAll.setAttribute('aria-expanded', String(collapsed));
       });
       // drag & drop on the stage and on the upload box
@@ -925,8 +933,8 @@
           b.className = 'mps__swatch' + (!small && i >= visible ? ' is-extra' : '');
           b.setAttribute('role', 'radio');
           b.setAttribute('aria-checked', 'false');
-          b.setAttribute('aria-label', bg.name);
-          b.title = bg.name;
+          b.setAttribute('aria-label', T(bg.name));
+          b.title = T(bg.name);
           b.dataset.bg = bg.id;
           b.style.backgroundColor = bg.color;
           if (bg.swatch) b.style.backgroundImage = `url("${bg.swatch}")`;
@@ -936,8 +944,8 @@
         });
         const picker = document.createElement('label');
         picker.className = 'mps__swatch mps__swatch--picker';
-        picker.title = 'Pick any color';
-        picker.innerHTML = '<input type="color" value="#f9c9d8" aria-label="Pick any background color">';
+        picker.title = T('Pick any color');
+        picker.innerHTML = `<input type="color" value="#f9c9d8" aria-label="${T('Pick any background color')}">`;
         picker.dataset.bg = 'custom';
         const input = picker.querySelector('input');
         const pick = () => this.selectBackground({ id: 'custom', kind: 'solid', name: input.value.toUpperCase(), color: input.value });
@@ -970,7 +978,7 @@
         if (b.tagName === 'BUTTON') b.tabIndex = on ? 0 : -1;
         if (on && b.classList.contains('is-extra')) this.el.swatches.dataset.collapsed = 'false';
       });
-      this.el.bgNames.forEach(n => { n.textContent = bg.name; });
+      this.el.bgNames.forEach(n => { n.textContent = T(bg.name); });
       if (this.isPortrait()) this.applyStyleText();
       // The preview area takes the chosen background color itself, so the design and the page match.
       this.el.stage.style.setProperty('--mps-stage', bg.color);
@@ -1020,6 +1028,8 @@
       this.selectedOptions = initial ? initial.options.slice() : [];
       this.el.optionGroups.forEach(group => {
         const index = Number(group.dataset.optionGroup) - 1;
+        const heading = group.closest('.mps__group') && group.closest('.mps__group').querySelector('.mps__label');
+        if (heading) heading.textContent = T(heading.textContent.trim());
         group.querySelectorAll('[data-option-value]').forEach(button => {
           const inches = parseInches(button.dataset.optionValue);
           const oz = /^(\d+(?:\.\d+)?)\s*oz$/i.exec(button.dataset.optionValue.trim());
@@ -1027,8 +1037,13 @@
             button.querySelector('[data-size-main]').textContent = `${oz[1]} oz`;
             button.querySelector('[data-size-sub]').textContent = `${Math.round(Number(oz[1]) * 29.574 / 5) * 5} ml`;
           } else if (inches) {
-            button.querySelector('[data-size-main]').textContent = `${inches.w} × ${inches.h} in`;
-            button.querySelector('[data-size-sub]').textContent = `${Math.round(inches.w * 2.54)} × ${Math.round(inches.h * 2.54)} cm`;
+            const inText = `${inches.w} × ${inches.h} in`, cmText = `${Math.round(inches.w * 2.54)} × ${Math.round(inches.h * 2.54)} cm`;
+            button.querySelector('[data-size-main]').textContent = METRIC ? cmText : inText;
+            button.querySelector('[data-size-sub]').textContent = METRIC ? inText : cmText;
+          } else {
+            // Option values stay in English (the studio logic reads them); only the label is translated.
+            const main = button.querySelector('[data-size-main]');
+            main.textContent = button.dataset.optionValue.split(' / ').map(x => T(x.trim())).join(' / ');
           }
           const hex = /colou?r/i.test((config.optionNames || [])[index] || '') && colorHex(button.dataset.optionValue);
           if (hex) {
@@ -1147,7 +1162,7 @@
       this.root.querySelectorAll('[data-compare-price]').forEach(n => { n.textContent = v.compareAtPrice > v.price ? money(v.compareAtPrice) : ''; });
       if (this.el.priceInline) this.el.priceInline.textContent = money(v.price);
       if (this.el.printInfo) {
-        this.el.printInfo.textContent = v.available ? '' : 'Sold out';
+        this.el.printInfo.textContent = v.available ? '' : T('Sold out');
         this.el.printInfo.hidden = v.available;
       }
     }
@@ -1160,7 +1175,7 @@
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'mps__thumb-btn';
-        b.setAttribute('aria-label', `Product photo ${i + 1}`);
+        b.setAttribute('aria-label', T('Product photo {n}', { n: i + 1 }));
         b.setAttribute('aria-current', 'false');
         const img = document.createElement('img');
         img.src = m.thumb; img.alt = ''; img.loading = 'lazy'; img.width = 64; img.height = 64;
@@ -1246,12 +1261,12 @@
       const maxMb = this.config.maxUploadMb || 20;
       const type = (file.type || '').toLowerCase();
       if (!(ACCEPTED.includes(type) || isHeic(file) || /\.(jpe?g|png|webp)$/i.test(file.name || ''))) {
-        return this.showError(new StudioError('type', 'Please choose a photo in JPG, PNG, WebP or HEIC format.', false));
+        return this.showError(new StudioError('type', T('Please choose a photo in JPG, PNG, WebP or HEIC format.'), false));
       }
       if (file.size > maxMb * 1024 * 1024) {
-        return this.showError(new StudioError('size', `That photo is larger than ${maxMb} MB. Please choose a smaller one.`, false));
+        return this.showError(new StudioError('size', T('That photo is larger than {mb} MB. Please choose a smaller one.', { mb: maxMb }), false));
       }
-      this.setPhotoStatus('Checking your photo…');
+      this.setPhotoStatus(T('Checking your photo…'));
       let hash;
       try { hash = await sha256Hex(file); } catch (e) { hash = `${file.name}|${file.size}|${file.lastModified}`; }
       let bitmap;
@@ -1262,17 +1277,17 @@
           try { bitmap = await decodeFile(await heicToJpeg(file)); } catch (err) { /* handled below */ }
         }
         if (!bitmap) return this.showError(new StudioError('decode', isHeic(file)
-          ? 'We couldn’t convert this HEIC photo. Please choose a JPG or PNG version (on iPhone: Share › Save as JPEG, or take a screenshot).'
-          : 'We couldn’t read that file. Please try a different photo.', false));
+          ? T('We couldn’t convert this HEIC photo. Please choose a JPG or PNG version (on iPhone: Share › Save as JPEG, or take a screenshot).')
+          : T('We couldn’t read that file. Please try a different photo.'), false));
       }
       const minSide = this.config.minPhotoSide || 500;
       if (Math.min(bitmap.width, bitmap.height) < minSide) {
         if (bitmap.close) bitmap.close();
-        return this.showError(new StudioError('small', `This photo is too small to print well (${bitmap.width} × ${bitmap.height} px). Please use one at least ${minSide} px on its shortest side.`, false));
+        return this.showError(new StudioError('small', T('This photo is too small to print well ({w} × {h} px). Please use one at least {min} px on its shortest side.', { w: bitmap.width, h: bitmap.height, min: minSide }), false));
       }
       let blob;
       try { blob = await normalizePhoto(bitmap); }
-      catch (e) { return this.showError(new StudioError('decode', 'We couldn’t prepare that photo. Please try a different one.', false)); }
+      catch (e) { return this.showError(new StudioError('decode', T('We couldn’t prepare that photo. Please try a different one.'), false)); }
       finally { if (bitmap.close) bitmap.close(); }
       if (this.state.photo && this.state.photo.url) URL.revokeObjectURL(this.state.photo.url);
       this.state.photo = { blob, hash, url: URL.createObjectURL(blob) };
@@ -1313,9 +1328,9 @@
         if (!fromCache) {
           const used = this.generationsToday();
           if (used.length >= (this.config.generationLimit || 8)) {
-            throw new StudioError('limit', 'You’ve reached today’s limit for new portraits. Your earlier photos still work, or come back tomorrow.', false);
+            throw new StudioError('limit', T('You’ve reached today’s limit for new portraits. Your earlier photos still work, or come back tomorrow.'), false);
           }
-          if (!this.config.aiEndpoint) throw new StudioError('not_configured', 'Our portrait service isn’t connected yet. Please try again later.', false);
+          if (!this.config.aiEndpoint) throw new StudioError('not_configured', T('Our portrait service isn’t connected yet. Please try again later.'), false);
           const canvas = await this.requestPortrait(controller.signal);
           try { localStorage.setItem('mps-generations', JSON.stringify(used.concat(Date.now()))); } catch (e) { /* private mode */ }
           const blob = await canvasToBlob(canvas, 'image/png');
@@ -1335,7 +1350,7 @@
         if (!hadArtwork || SHAPE_FIT[this.shape()] || this.isMug() || this.isPortrait()) this.placeDefault(); else { this.placePet(); this.clampAll(); }
         this.stopProgress();
         this.setPhase('ready');
-        this.setPhotoStatus(fromCache ? 'Portrait ready (saved from before)' : 'Portrait ready');
+        this.setPhotoStatus(fromCache ? T('Portrait ready (saved from before)') : T('Portrait ready'));
         const ms = Math.round(performance.now() - started);
         if (!fromCache) this.root.dispatchEvent(new CustomEvent('pet-studio:generated', { bubbles: true, detail: { ms } }));
         this.changed({ design: true, commit: true });
@@ -1346,11 +1361,11 @@
         // fetch rejects with the abort reason itself ('timeout' / 'cancel') in current browsers, so check the signal.
         if (controller.signal.aborted || (err && err.name === 'AbortError')) {
           const reason = controller.signal.reason;
-          if (reason === 'timeout') error = new StudioError('timeout', 'This is taking longer than usual. Please try again. Your photo and choices are saved.');
-          else if (reason === 'cancel') error = new StudioError('cancelled', 'Stopped. Your photo and choices are saved. Try again whenever you’re ready.');
+          if (reason === 'timeout') error = new StudioError('timeout', T('This is taking longer than usual. Please try again. Your photo and choices are saved.'));
+          else if (reason === 'cancel') error = new StudioError('cancelled', T('Stopped. Your photo and choices are saved. Try again whenever you’re ready.'));
           else error = null;
         } else if (!(err instanceof StudioError)) {
-          error = new StudioError('network', 'We couldn’t reach our portrait service. Check your connection and try again. Your photo and choices are saved.');
+          error = new StudioError('network', T('We couldn’t reach our portrait service. Check your connection and try again. Your photo and choices are saved.'));
         }
         this.setPhase(this.state.artwork ? 'ready' : 'error');
         if (error) this.showError(error);
@@ -1364,25 +1379,25 @@
       form.append('product', String(this.config.productId));
       form.append('shape', 'blanket');
       if (this.isPortrait() && this.config.aiStyles) form.append('style', this.state.artStyle);
-      this.setProgress(0.06, 'Uploading your photo…');
+      this.setProgress(0.06, T('Uploading your photo and creating your portrait…'));
       const res = await fetch(this.config.aiEndpoint, { method: 'POST', body: form, signal, headers: { Accept: 'application/json, image/png' } });
       if (!res.ok) {
         let info = {};
         try { info = await res.json(); } catch (e) { /* ignore */ }
         const messages = {
-          400: 'That photo couldn’t be processed. Please try a different one.',
-          413: 'That photo is too large. Please choose a smaller one.',
-          422: 'We couldn’t find a pet in that photo. Please use a clear photo with one pet and its face visible.',
-          429: 'Lots of people are designing right now. Please wait a minute and try again.'
+          400: T('That photo couldn’t be processed. Please try a different one.'),
+          413: T('That photo is too large. Please choose a smaller one.'),
+          422: T('We couldn’t find a pet in that photo. Please use a clear photo with one pet and its face visible.'),
+          429: T('Lots of people are designing right now. Please wait a minute and try again.')
         };
-        throw new StudioError(info.code || `http_${res.status}`, info.message || messages[res.status] || 'Our portrait service had a hiccup. Please try again.', res.status !== 422 && res.status !== 413);
+        throw new StudioError(info.code || `http_${res.status}`, info.message || messages[res.status] || T('Our portrait service had a hiccup. Please try again.'), res.status !== 422 && res.status !== 413);
       }
-      this.setProgress(0.8, 'Cutting out your pet…');
+      this.setProgress(0.8, T('Cutting out your pet…'));
       let image, background = 'chroma';
       const type = res.headers.get('content-type') || '';
       if (type.includes('application/json')) {
         const json = await res.json();
-        if (!json.image) throw new StudioError('bad_response', 'Our portrait service returned an empty result. Please try again.');
+        if (!json.image) throw new StudioError('bad_response', T('Our portrait service returned an empty result. Please try again.'));
         background = json.background || 'chroma';
         image = await loadImage(json.image);
       } else {
@@ -1395,7 +1410,7 @@
         return trimTransparent(c);
       }
       const { canvas, removedRatio } = removeFlatBackground(image);
-      if (removedRatio > 0.97 || removedRatio === 0) throw new StudioError('no_subject', 'We couldn’t separate your pet from the background. Please try again or use a different photo.');
+      if (removedRatio > 0.97 || removedRatio === 0) throw new StudioError('no_subject', T('We couldn’t separate your pet from the background. Please try again or use a different photo.'));
       return canvas;
     }
     /* ----- generation progress (inline in the personalization column) -----
@@ -1405,7 +1420,7 @@
       const { el } = this;
       const start = performance.now();
       const expected = this.config.progressSeconds || 60;
-      const steps = [[0, 'Uploading your photo…'], [0.1, 'Illustrating your pet…'], [0.45, 'Keeping every marking and color…'], [0.72, 'Adding the finishing touches…']];
+      const steps = [[0, T('Uploading your photo and creating your portrait…')]];
       this.progressFloor = 0;
       this.progressLocked = false;
       el.gen.hidden = false;
@@ -1426,11 +1441,11 @@
         this.progressTimer = requestAnimationFrame(tick);
       };
       const clock = () => {
-        const left = Math.ceil(expected - (performance.now() - start) / 1000);
-        el.genTime.textContent = left > 0
-          ? `About ${left} second${left === 1 ? '' : 's'} left (estimated)`
-          : 'Your portrait is taking a little longer. We’re still working on it.';
-        el.genTime.classList.toggle('is-late', left <= 0);
+        const elapsed = Math.floor((performance.now() - start) / 1000);
+        el.genTime.textContent = elapsed < expected
+          ? T('Working for {s} s. This usually takes up to {max} s.', { s: elapsed, max: expected })
+          : T('Your portrait is taking a little longer. We’re still working on it.');
+        el.genTime.classList.toggle('is-late', elapsed >= expected);
       };
       tick(); clock();
       this.progressClock = setInterval(clock, 1000);
@@ -1474,7 +1489,7 @@
       this.el.retry.hidden = !(err.retryable && this.state.photo);
       this.el.error.hidden = false;
       if (!this.state.artwork && this.state.phase !== 'generating') this.setPhase(this.state.photo ? 'error' : 'empty');
-      this.setPhotoStatus(this.state.photo ? 'Your photo' : '');
+      this.setPhotoStatus(this.state.photo ? T('Your photo') : '');
     }
     clearError() { this.el.error.hidden = true; }
     setPhotoStatus(text) { if (this.el.photoStatus) this.el.photoStatus.textContent = text; }
@@ -1548,7 +1563,7 @@
     }
     font(px, key = this.state.name.font) {
       const f = FONTS[key] || FONTS.fredoka;
-      return `${f.weight} ${px}px "${f.family}", "Arial Rounded MT Bold", Arial, sans-serif`;
+      return `${f.weight} ${px}px "${f.family}",${f.fallback ? ` "${f.fallback}",` : ''} "Arial Rounded MT Bold", Arial, sans-serif`;
     }
     /** The part of the print area that is seen from the front (portraits on canvas: the wrapped edges are not). */
     faceRect() {
@@ -2197,13 +2212,13 @@
           const match = all.find(x => x.available && (fi < 0 || x.options[fi] === v.options[fi]));
           btn.disabled = !match && val !== v.options[si];
           const sub = btn.querySelector('[data-size-sub]');
-          if (sub) sub.textContent = match ? money(match.price) : 'Other frames';
+          if (sub) sub.textContent = match ? money(match.price) : T('Other frames');
         });
       });
       if (el.frameHint) {
         const sizes = config.variants.filter(x => x.available && fi >= 0 && x.options[fi] === v.options[fi] && !this.isDigital(x)).map(x => this.sizeInches(x)).filter(Boolean);
         const all = new Set(config.variants.filter(x => !this.isDigital(x)).map(x => x.options[si]));
-        el.frameHint.textContent = !digital && sizes.length && sizes.length < all.size ? `${this.P.FRAMES[this.frameKind()].label} comes in ${sizes.map(i => `${i.w} × ${i.h} in`).join(' and ')}.` : '';
+        el.frameHint.textContent = !digital && sizes.length && sizes.length < all.size ? T('{frame} comes in {sizes}.', { frame: T(this.P.FRAMES[this.frameKind()].label), sizes: sizes.map(i => METRIC ? `${Math.round(i.w * 2.54)} × ${Math.round(i.h * 2.54)} cm` : `${i.w} × ${i.h} in`).join(T(' and ')) }) : '';
         el.frameHint.hidden = !el.frameHint.textContent;
       }
       if (el.digitalNote) el.digitalNote.hidden = !digital;
@@ -2227,7 +2242,7 @@
         b.disabled = (b.dataset.scene === 'room' && this.isDigital()) || (b.dataset.scene === 'compare' && !(this.state.photo && this.state.artwork));
       });
       if (el.roomNav) el.roomNav.hidden = mode !== 'room';
-      if (el.roomName) el.roomName.textContent = this.P.ROOMS[this.state.roomIndex % this.P.ROOMS.length].label;
+      if (el.roomName) el.roomName.textContent = T(this.P.ROOMS[this.state.roomIndex % this.P.ROOMS.length].label);
     }
     /** The visible face of the print (wrapped edges cropped) drawn into x/y/w/h. */
     drawFace(ctx, x, y, w, h, dpr = 1) {
@@ -2278,7 +2293,7 @@
       P.drawFramed(ctx, x, y, fw, fh, kind, ppi, art, { edgeColor: edge });
       if (mode === 'compare') this.drawCompare(ctx, x, y, fw, fh);
       else if (kind === 'digital' && s.artwork) {
-        const p = this.printSize(), label = `Digital file · ${p.width} × ${p.height} px`;
+        const p = this.printSize(), label = T('Digital file · {w} × {h} px', { w: p.width, h: p.height });
         ctx.save();
         ctx.font = `600 ${Math.max(11, Math.round(W * 0.026))}px Montserrat, Arial, sans-serif`;
         ctx.fillStyle = 'rgba(27, 42, 78, 0.75)'; ctx.textAlign = 'center';
@@ -2307,8 +2322,8 @@
         ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'; ctx.fillRect(bx, y + 10, tw, 24);
         ctx.fillStyle = '#1b2a4e'; ctx.textAlign = 'center'; ctx.fillText(text, bx + tw / 2, y + 22);
       };
-      if (cx - x > 70) tag('Your photo', x + 10, 'left');
-      if (x + w - cx > 80) tag('Your portrait', x + w - 10, 'right');
+      if (cx - x > 70) tag(T('Your photo'), x + 10, 'left');
+      if (x + w - cx > 80) tag(T('Your portrait'), x + w - 10, 'right');
       ctx.restore();
     }
     /** Edges of a canvas print that wrap around the frame, dimmed in the Adjust view. */
@@ -2438,7 +2453,7 @@
       [[-0.75, -0.55], [-0.27, -0.95], [0.27, -0.95], [0.75, -0.55]].forEach(([dx, dy]) => {
         ctx.beginPath(); ctx.ellipse(cx + dx * r, cy + dy * r, r * 0.26, r * 0.34, dx * 0.4, 0, TAU); ctx.fill();
       });
-      const label = this.state.phase === 'generating' ? 'Creating your portrait…' : 'Your pet here';
+      const label = this.state.phase === 'generating' ? T('Creating your portrait…') : T('Your pet here');
       const fontPx = Math.round(W * 0.05);
       ctx.font = `700 ${fontPx}px Montserrat, Arial, sans-serif`;
       const tw = ctx.measureText(label).width;
@@ -2485,7 +2500,7 @@
         this.clampAll();
         if (this.state.addedId) {
           this.state.addedId = null;
-          this.el.cartStatus.textContent = 'You changed the design. Add this new version to your cart when you’re ready.';
+          this.el.cartStatus.textContent = T('You changed the design. Add this new version to your cart when you’re ready.');
         }
         this.validateName();
       }
@@ -2497,7 +2512,7 @@
     validateName() {
       const text = [this.state.name.text].concat(this.captionLines()).join(' ');
       let msg = '';
-      if (text && /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(text)) msg = 'Emoji can’t be printed. Please use letters and numbers.';
+      if (text && /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(text)) msg = T('Emoji can’t be printed. Please use letters and numbers.');
       this.el.nameErrors.forEach(n => { n.textContent = msg; n.hidden = !msg; });
       return !msg;
     }
@@ -2563,12 +2578,12 @@
       const v = s.variant;
       const available = !!(v && v.available);
       let label;
-      if (this.adding) label = 'Adding to cart…';
-      else if (s.phase === 'generating') label = 'Creating your design…';
-      else if (!has) label = s.photo ? 'Upload a different photo' : 'Upload your pet’s photo';
-      else if (!available) label = 'Sold out';
-      else if (this.isPortrait()) label = 'Add to cart';
-      else label = 'Approve & add to cart';
+      if (this.adding) label = T('Adding to cart…');
+      else if (s.phase === 'generating') label = T('Creating your design…');
+      else if (!has) label = s.photo ? T('Upload a different photo') : T('Upload your pet’s photo');
+      else if (!available) label = T('Sold out');
+      else if (this.isPortrait()) label = T('Add to cart');
+      else label = T('Approve & add to cart');
       el.primaries.forEach(b => {
         b.querySelector('[data-primary-label]').textContent = label;
         const price = b.querySelector('[data-primary-price]');
@@ -2636,7 +2651,7 @@
       const art = saved.photoHash ? await kv.get(this.isPortrait() && this.config.aiStyles ? `art:${saved.photoHash}:${this.state.artStyle}` : `art:${saved.photoHash}`) : null;
       if (photo && photo.blob) {
         this.state.photo = { blob: photo.blob, hash: photo.hash, url: URL.createObjectURL(photo.blob) };
-        this.setPhotoStatus('Your photo');
+        this.setPhotoStatus(T('Your photo'));
       }
       if (art && art.blob && photo && photo.hash === saved.photoHash) {
         try {
@@ -2652,8 +2667,8 @@
           if (this.isPortrait() && saved.approvedKey) this.state.approvedKey = saved.approvedKey;
           this.state.addedId = saved.addedId || null;
           this.state.phase = 'ready';
-          this.setPhotoStatus('Your design was restored');
-          if (this.state.addedId) this.el.cartStatus.textContent = `This design (${this.state.addedId}) is in your cart.`;
+          this.setPhotoStatus(T('Your design was restored'));
+          if (this.state.addedId) this.el.cartStatus.textContent = T('This design ({id}) is in your cart.', { id: this.state.addedId });
         } catch (e) { /* start over */ }
       }
       this.clampAll();
@@ -2699,7 +2714,7 @@
         if (res && res.ok) { const json = await res.json(); return { id: json.id, token: json.token }; }
         if (res && res.status >= 400 && res.status < 500 && res.status !== 404 && res.status !== 429) {
           const json = await res.json().catch(() => ({}));
-          throw new StudioError(json.error || 'invalid', json.message ? `We couldn’t approve this design: ${json.message}` : 'We couldn’t approve this design. Please check the name and try again.', false);
+          throw new StudioError(json.error || 'invalid', json.message ? T('We couldn’t approve this design: {reason}', { reason: json.message }) : T('We couldn’t approve this design. Please check the name and try again.'), false);
         }
       }
       // Approval service unreachable: keep selling. The order is held for a manual check (design_unsigned).
@@ -2754,13 +2769,13 @@
       const s = this.state;
       if (this.adding) return;
       if (!s.artwork || !s.art) { this.el.fileInput.click(); return; }
-      if (!s.variant || !s.variant.available) { this.el.cartStatus.textContent = 'This option is sold out. Please choose another one.'; return; }
+      if (!s.variant || !s.variant.available) { this.el.cartStatus.textContent = T('This option is sold out. Please choose another one.'); return; }
       // Portraits: adding to the cart approves this exact version (one click, like the other products).
       if (this.isPortrait() && !this.isApproved()) { this.approveDesign(); if (!this.isApproved()) return; }
       if (!this.validateName()) { this.el.nameInput.focus(); return; }
       this.adding = true;
       this.updateUI();
-      this.el.cartStatus.textContent = 'Saving your approved design…';
+      this.el.cartStatus.textContent = T('Saving your approved design…');
       try {
         await this.fontsReady();
         this.clampAll();
@@ -2769,7 +2784,7 @@
         if (await this.inCart(approval.id)) {
           s.addedId = approval.id;
           this.persist();
-          this.el.cartStatus.textContent = 'This exact design is already in your cart.';
+          this.el.cartStatus.textContent = T('This exact design is already in your cart.');
           if (this.config.redirectToCart) window.location.href = this.config.cartUrl;
           return;
         }
@@ -2777,16 +2792,16 @@
         const form = this.cartForm(design, approval, preview);
         const res = await fetch(this.config.cartAddUrl, { method: 'POST', body: form, headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
         const json = await res.json().catch(() => ({}));
-        if (!res.ok) throw new StudioError('cart', json.description || json.message || 'We couldn’t add this to your cart. Please try again.');
+        if (!res.ok) throw new StudioError('cart', json.description || json.message || T('We couldn’t add this to your cart. Please try again.'));
         s.addedId = approval.id;
         this.persist();
         this.saveHandoff(design, approval.id);
         await this.captureEmail();
-        this.el.cartStatus.textContent = `Added to your cart (design ${approval.id}).`;
+        this.el.cartStatus.textContent = T('Added to your cart (design {id}).', { id: approval.id });
         this.root.dispatchEvent(new CustomEvent('pet-studio:added', { bubbles: true, detail: { item: json, design, id: approval.id, signed: !!approval.token } }));
         if (this.config.redirectToCart) window.location.href = this.config.cartUrl;
       } catch (err) {
-        this.el.cartStatus.textContent = err.message || 'We couldn’t add this to your cart. Please try again.';
+        this.el.cartStatus.textContent = err.message || T('We couldn’t add this to your cart. Please try again.');
       } finally {
         this.adding = false;
         this.updateUI();
@@ -2913,7 +2928,7 @@
       const preview = this.previewBlob || await this.exportPreview();
       const res = await fetch(this.config.cartAddUrl, { method: 'POST', body: this.cartForm(design, approval, preview, more), headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new StudioError('cart', json.description || json.message || 'We couldn’t add this to your cart.');
+      if (!res.ok) throw new StudioError('cart', json.description || json.message || T('We couldn’t add this to your cart.'));
       return { id: approval.id, item: json, signed: !!approval.token };
     }
   });

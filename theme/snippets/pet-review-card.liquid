@@ -15,8 +15,8 @@
   <div class="mps-review__body">
     <div class="mps-review__head">
       <strong class="mps-review__name">{{ name | escape }}</strong>
-      {%- if verified -%}<span class="mps-review__verified">Verified purchase</span>{%- endif -%}
-      {%- if sample -%}<span class="mps-review__sample">Sample · preview only</span>{%- endif -%}
+      {%- if verified -%}<span class="mps-review__verified">{{ 'mpm.reviewcard.verified_purchase' | t }}</span>{%- endif -%}
+      {%- if sample -%}<span class="mps-review__sample">{{ 'mpm.reviewcard.sample_preview_only' | t }}</span>{%- endif -%}
     </div>
     <div class="mps-stars mps-stars--small" style="--rating: {{ rating | times: 20 }}%" role="img" aria-label="{{ rating }} out of 5 stars"></div>
     <blockquote class="mps-review__text">{{ text | escape }}</blockquote>
