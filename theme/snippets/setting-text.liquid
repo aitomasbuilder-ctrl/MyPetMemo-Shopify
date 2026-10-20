@@ -1,0 +1,9 @@
+{% doc %}
+  Prints a text setting, escaped. A setting still on its English default (which theme
+  translations can't reach) is shown in the visitor's language from mpm.defaults.
+  @param {string} text - The setting value
+{% enddoc %}
+{%- assign slug = text | handleize -%}
+{%- assign key = 'mpm.defaults.' | append: slug -%}
+{%- assign translated = key | t -%}
+{%- if translated contains 'mpm.defaults.' -%}{{ text | escape }}{%- else -%}{{ translated | escape }}{%- endif -%}
