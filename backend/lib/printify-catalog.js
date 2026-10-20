@@ -60,7 +60,58 @@ function catalog({ token = process.env.PRINTIFY_TOKEN, shopId = process.env.PRIN
     return { position: p.position, width: Math.round(p.width), height: Math.round(p.height) };
   }
 
-  return { variantForSku, printArea };
+  const providerCountry = new Map();
+  async function countryOf(id) {
+    if (!providerCountry.has(id)) {
+      const p = await get(`/catalog/print_providers/${id}.json`);
+      providerCountry.set(id, { country: String((p.location && p.location.country) || '').toUpperCase(), title: p.title || '' });
+    }
+    return providerCountry.get(id);
+  }
+
+  // Orders shipping inside the EU go to an EU print provider on the same blueprint when one offers the
+  // same variant with the same print-area shape; otherwise the shop's own provider is kept. EU-made
+  // parcels avoid the EU import duty and VAT collection on delivery, and arrive sooner.
+  async function regionalVariant(mapping, countryCode) {
+    const dest = String(countryCode || '').toUpperCase();
+    if (!EU.has(dest) || process.env.PRINTIFY_EU_ROUTING === 'off') return mapping;
+    try {
+      const current = await countryOf(mapping.print_provider_id);
+      if (EU.has(current.country) || /choice/i.test(current.title)) return mapping; // already EU, or Printify routes it itself
+      const area = await printArea(mapping);
+      const providers = await get(`/catalog/blueprints/${mapping.blueprint_id}/print_providers.json`);
+      const candidates = [];
+      for (const p of providers || []) {
+        if (p.id === mapping.print_provider_id) continue;
+        const { country } = await countryOf(p.id);
+        if (EU.has(country)) candidates.push({ id: p.id, rank: rankFor(country, dest), country });
+      }
+      candidates.sort((a, b) => a.rank - b.rank);
+      const want = normTitle(mapping.title);
+      for (const c of candidates) {
+        const json = await get(`/catalog/blueprints/${mapping.blueprint_id}/print_providers/${c.id}/variants.json`);
+        const v = (json.variants || []).find(x => normTitle(x.title) === want);
+        if (!v) continue;
+        const p = (v.placeholders || []).find(x => x.position === area.position);
+        if (!p || !(p.width > 0 && p.height > 0)) continue;
+        if (Math.abs(p.width / p.height - area.width / area.height) > 0.02 * (area.width / area.height)) continue;
+        const routed = { ...mapping, print_provider_id: c.id, printify_variant_id: v.id, region: `eu:${c.country}` };
+        placeholders.set(`${mapping.blueprint_id}/${c.id}`, new Map((json.variants || []).map(x => [x.id, x.placeholders || []])));
+        return routed;
+      }
+    } catch (err) {
+      console.warn('eu_routing_skipped', mapping.blueprint_id, err.message);
+    }
+    return mapping;
+  }
+
+  return { variantForSku, printArea, regionalVariant };
 }
+
+const EU = new Set(['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE']);
+// Closest production first for Baltic and Nordic orders; elsewhere any EU provider is fine.
+const NEAR = ['LT', 'LV', 'EE', 'PL', 'FI', 'DE', 'CZ', 'DK', 'SE', 'NL'];
+const rankFor = (country, dest) => (country === dest ? -1 : NEAR.includes(country) ? NEAR.indexOf(country) : NEAR.length);
+const normTitle = t => String(t || '').toLowerCase().replace(/[″”"]/g, '"').replace(/\s+/g, ' ').trim();
 
 module.exports = { catalog };
