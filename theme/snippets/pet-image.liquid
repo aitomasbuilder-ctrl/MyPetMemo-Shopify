@@ -1,0 +1,62 @@
+{% doc %}
+  Renders one approved MyPetMemo illustration from the bundled image sheets.
+  When a sharp copy of the tile is in Shopify Files (mpm-<sheet>-<cell>.jpg), that photo is shown
+  at full resolution instead of the small sheet crop.
+  @param {string} [kind] - blanket, ornament, or portrait
+  @param {number} [tile] - Zero-based photo tile
+  @param {number} [style_index] - Zero-based portrait style
+  @param {string} [alt] - Accessible description
+  @param {string} [class] - Extra CSS classes
+  @param {string} [sizes] - Image sizes attribute for the sharp photo
+{% enddoc %}
+{%- liquid
+  assign cell = tile | default: 0
+  assign columns = 3
+  assign file = 'gallery.webp'
+  assign xs = '0,422,835,1254' | split: ','
+  assign ys = '0,377,820,1254' | split: ','
+  if kind == 'ornament'
+    assign file = 'ornament-french-bulldog.webp'
+    assign xs = '0,418,836,1254' | split: ','
+    assign ys = '0,418,823,1254' | split: ','
+  elsif kind == 'portrait'
+    assign file = 'portrait-dachshund.webp'
+    assign xs = '0,418,836,1254' | split: ','
+    assign ys = xs
+  endif
+  if style_index != nil
+    if kind == 'ornament' or kind == 'portrait'
+      assign cell = style_index | plus: 3
+    else
+      assign file = 'styles.webp'
+      assign cell = style_index
+      assign columns = 2
+      assign xs = '0,627,1254' | split: ','
+      assign ys = xs
+    endif
+  endif
+  assign sharp_name = 'mpm-' | append: file | remove: '.webp' | append: '-' | append: cell | append: '.jpg'
+  assign sharp = images[sharp_name]
+  assign image_sizes = sizes | default: '(max-width: 700px) 92vw, 50vw'
+-%}
+{%- if sharp != blank -%}
+<div class="asset {{ class }}" style="position:relative">{{ sharp | image_url: width: 1600 | image_tag: widths: '400,600,800,1000,1300,1600', sizes: image_sizes, alt: alt, loading: 'lazy', style: 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover' }}</div>
+{%- else -%}
+{%- liquid
+  assign col = cell | modulo: columns
+  assign row = cell | divided_by: columns
+  assign next_col = col | plus: 1
+  assign next_row = row | plus: 1
+  assign left = xs[col] | plus: 0
+  assign top = ys[row] | plus: 0
+  assign width = xs[next_col] | minus: left
+  assign height = ys[next_row] | minus: top
+  assign size_x = 1254.0 | divided_by: width | times: 100
+  assign size_y = 1254.0 | divided_by: height | times: 100
+  assign denom_x = 1254 | minus: width
+  assign denom_y = 1254 | minus: height
+  assign position_x = left | times: 100.0 | divided_by: denom_x
+  assign position_y = top | times: 100.0 | divided_by: denom_y
+-%}
+<div class="asset {{ class }}" role="img" aria-label="{{ alt | escape }}" style="background-image:url('{{ file | asset_url }}');background-size:{{ size_x }}% {{ size_y }}%;background-position:{{ position_x }}% {{ position_y }}%"></div>
+{%- endif -%}
