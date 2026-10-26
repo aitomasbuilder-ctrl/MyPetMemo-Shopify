@@ -1338,8 +1338,9 @@
       }
       const minSide = this.config.minPhotoSide || 500;
       if (Math.min(bitmap.width, bitmap.height) < minSide) {
+        const { width: w, height: h } = bitmap;
         if (bitmap.close) bitmap.close();
-        return this.showError(new StudioError('small', T('This photo is too small to print well ({w} × {h} px). Please use one at least {min} px on its shortest side.', { w: bitmap.width, h: bitmap.height, min: minSide }), false));
+        return this.showError(new StudioError('small', T('This photo is too small to print well ({w} × {h} px). Please use one at least {min} px on its shortest side.', { w, h, min: minSide }), false));
       }
       let blob;
       try { blob = await normalizePhoto(bitmap); }
