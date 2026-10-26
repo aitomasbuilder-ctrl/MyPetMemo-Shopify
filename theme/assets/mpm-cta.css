@@ -77,6 +77,7 @@ a:hover > .button.mpm-cta {
   .gift-links > .mpm-cta { min-height: 44px; padding: 10px 12px; font-size: .8125rem; }
   .email-field > .mpm-cta { min-height: 42px; padding: 9px 16px; }
   .style-card > .mpm-cta { min-height: 42px; padding: 9px 12px; font-size: .8125rem; }
+  .featured-addon-grid .product-card > .mpm-cta { min-height: 44px; padding: 10px 12px; font-size: .8125rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .button.mpm-cta, .button.mpm-cta:hover { transform: none; }
