@@ -1,0 +1,43 @@
+<section class="section wrap text-page"><p class="eyebrow">{{ section.settings.eyebrow | escape }}</p><h2>{{ section.settings.heading | escape }}</h2><div class="rte">{{ section.settings.text }}</div>{% if section.settings.link != blank %}<a class="button mpm-cta" href="{{ section.settings.link }}">{{ section.settings.button | escape }}</a>{% endif %}</section>
+
+{% schema %}
+{
+  "name": "Text and story",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "YOUR PET. YOUR MEMORY."
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "A little more about us."
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>For the pets who make a house a home.</p>"
+    },
+    {
+      "type": "text",
+      "id": "button",
+      "label": "Button label",
+      "default": "Explore our keepsakes"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "Button link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Text and story"
+    }
+  ]
+}
+{% endschema %}

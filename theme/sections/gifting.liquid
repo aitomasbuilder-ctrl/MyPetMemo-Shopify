@@ -1,0 +1,51 @@
+<section class="gifting-section wrap">{% if section.settings.image %}{{ section.settings.image | image_url: width: 1000 | image_tag: loading: 'lazy', class: 'gifting-photo' }}{% else %}{% assign alt = 'gifting.alt' | t %}{% render 'pet-image', kind: 'blanket', tile: 3, alt: alt %}{% endif %}<div><p class="eyebrow">{{ 'gifting.eyebrow' | t }}</p><h2>{{ section.settings.heading | escape }}</h2><p>{{ section.settings.text | escape }}</p><div class="gift-links">{% for block in section.blocks %}<a class="button mpm-cta" href="{{ block.settings.link | default: routes.all_products_collection_url }}" {{ block.shopify_attributes }}>{{ block.settings.title | escape }}</a>{% endfor %}</div></div></section>
+
+{% schema %}
+{
+  "name": "Gifts with meaning",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "A gift made from someone they love."
+    },
+    {
+      "type": "textarea",
+      "id": "text",
+      "label": "Text",
+      "default": "For the friend whose camera roll is all dog. For the family member who still keeps their collar. For anyone who knows a pet is family."
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "occasion",
+      "name": "Occasion",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Label",
+          "default": "Dog moms"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Gifts with meaning"
+    }
+  ],
+  "max_blocks": 6
+}
+{% endschema %}

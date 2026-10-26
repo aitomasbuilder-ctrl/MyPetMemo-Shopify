@@ -1,0 +1,26 @@
+<section class="guarantee wrap">{% render 'icon', name: 'shield', size: 40 %}<div><h2>{{ section.settings.heading | escape }}</h2><p>{{ section.settings.text | escape }}</p></div>{% if shop.refund_policy.body != blank %}<a class="button mpm-cta" href="{{ shop.refund_policy.url }}">{{ 'guarantee.read' | t }}</a>{% else %}<a class="button mpm-cta" href="mailto:{{ settings.support_email | escape }}">{{ 'footer.contact' | t }}</a>{% endif %}</section>
+
+{% schema %}
+{
+  "name": "Care promise",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "We want you to love your MyPetMemo."
+    },
+    {
+      "type": "textarea",
+      "id": "text",
+      "label": "Text",
+      "default": "If there is a production defect, printing issue, or incorrect item, contact us with your order number and a photo. We’ll help according to our refund and replacement policy."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Care promise"
+    }
+  ]
+}
+{% endschema %}

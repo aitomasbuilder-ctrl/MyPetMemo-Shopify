@@ -1,0 +1,65 @@
+<section class="how-section section" id="how-it-works"><div class="wrap"><div class="section-heading"><div><p class="eyebrow">{{ 'how.eyebrow' | t }}</p><h2>{{ section.settings.heading | escape }}</h2></div><a class="button mpm-cta" href="{% render 'product-link', kind: 'blanket' %}">{{ 'how.start' | t }}</a></div><div class="steps-grid">{% for block in section.blocks %}<div {{ block.shopify_attributes }}><div class="step-top">{% render 'icon', name: block.settings.icon, size: 28 %}<span>0{{ forloop.index }}</span></div><h3>{{ block.settings.heading | escape }}</h3><p>{{ block.settings.text | escape }}</p></div>{% endfor %}</div></div></section>
+
+{% schema %}
+{
+  "name": "How it works",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "A little personal goes a long way."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Step",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Upload your pet"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Text",
+          "default": "A clear photo from your phone is all you need."
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            {
+              "value": "upload",
+              "label": "Upload"
+            },
+            {
+              "value": "sparkles",
+              "label": "Sparkles"
+            },
+            {
+              "value": "heart",
+              "label": "Heart"
+            },
+            {
+              "value": "gift",
+              "label": "Gift"
+            }
+          ],
+          "default": "upload"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "How it works"
+    }
+  ],
+  "max_blocks": 4
+}
+{% endschema %}
