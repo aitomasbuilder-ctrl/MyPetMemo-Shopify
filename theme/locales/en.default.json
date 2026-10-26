@@ -66,7 +66,9 @@
     "personalization_note": "Please check names, options, and photo attachments before checking out.",
     "extra": "A LITTLE MORE TO LOVE",
     "add_extra": "Add matching keepsake",
-    "for_product": "Matches your {{ title }}. Copies the pet photos and personalization from this keepsake."
+    "for_product": "Matches your {{ title }}. Copies the pet photos and personalization from this keepsake.",
+    "discount_matching_addon": "Matching add-on 15% off",
+    "discount_matching_set": "Matching set: 20% off both add-ons"
   },
   "nav": {
     "best_sellers": "Best sellers",
