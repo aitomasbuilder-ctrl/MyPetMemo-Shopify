@@ -453,7 +453,8 @@
       "zoom_level": "Zoom level",
       "close_zoom": "Close zoom",
       "your_artwork_zoomed_in": "Your artwork, zoomed in",
-      "dates_example": "e.g. 2012 – 2026"
+      "dates_example": "e.g. 2012 – 2026",
+      "format": "Format"
     },
     "category": {
       "blankets": "Blankets",

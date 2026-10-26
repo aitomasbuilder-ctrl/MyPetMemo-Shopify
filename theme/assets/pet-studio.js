@@ -768,7 +768,8 @@
         extras: qa('[data-extra]'), suggestions: qa('[data-suggest]'), styles: qa('[data-style]'),
         artStyles: qa('[data-art-style]'), scenes: qa('[data-scene]'), roomNav: q('[data-room-nav]'), roomName: q('[data-room-name]'),
         zoomDialog: q('[data-zoom-dialog]'), zoomImg: q('[data-zoom-img]'), memorialOnly: qa('[data-memorial-only]'),
-        approvedBadge: q('[data-approved]'), frameHint: q('[data-frame-hint]'), digitalNote: q('[data-digital-note]')
+        approvedBadge: q('[data-approved]'), frameHint: q('[data-frame-hint]'), digitalNote: q('[data-digital-note]'),
+        formatGroup: q('[data-format-group]'), variantSummary: q('[data-price-inline-note]')
       };
       this.P = window.MyPetMemoPortrait || null;
       this.state = {
@@ -1066,7 +1067,60 @@
           button.addEventListener('keydown', e => this.radioKeys(e, group, '[data-option-value]'));
         });
       });
+      if (this.isPortrait() && this.el.formatGroup) this.initFormats();
       this.resolveVariant(-1, { silent: true });
+    }
+    /** Portrait: digital file, framed print or canvas. Chosen first; the size and frame groups then only show what that format offers. */
+    formatOf(variant = this.state.variant) {
+      const k = this.frameKind(variant);
+      return k === 'digital' || k === 'canvas' ? k : 'framed';
+    }
+    initFormats() {
+      const { config, el } = this;
+      const money = c => formatMoney(c, config.moneyFormat);
+      const labels = { digital: 'Digital file', framed: 'Framed print', canvas: 'Canvas' };
+      ['digital', 'framed', 'canvas'].forEach(f => {
+        const variants = config.variants.filter(v => v.available && this.formatOf(v) === f);
+        if (!variants.length) return;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'mps__option mpp__format';
+        b.setAttribute('role', 'radio');
+        b.dataset.format = f;
+        const main = document.createElement('span'), sub = document.createElement('span');
+        main.className = 'mps__option-main'; sub.className = 'mps__option-sub';
+        main.textContent = T(labels[f]);
+        sub.textContent = T('from {price}', { price: money(Math.min(...variants.map(v => v.price))) });
+        b.append(main, sub);
+        b.addEventListener('click', () => this.chooseFormat(f));
+        b.addEventListener('keydown', e => this.radioKeys(e, el.formatGroup, '[data-format]'));
+        el.formatGroup.append(b);
+      });
+      const wrap = el.formatGroup.closest('[data-format-wrap]');
+      if (wrap) wrap.hidden = el.formatGroup.children.length < 2;
+    }
+    chooseFormat(format) {
+      const { config } = this, names = config.optionNames || [];
+      const si = names.findIndex(n => /size/i.test(n)), fi = names.findIndex(n => /frame|finish|format/i.test(n));
+      const cur = this.state.variant;
+      if (cur && this.formatOf(cur) === format) return;
+      const variants = config.variants.filter(v => v.available && this.formatOf(v) === format);
+      if (!variants.length) return;
+      const sameSize = v => cur && si >= 0 && v.options[si] === cur.options[si];
+      const lastFrame = v => !this.lastFrame || fi < 0 || v.options[fi] === this.lastFrame;
+      const pick = variants.find(v => sameSize(v) && lastFrame(v)) || variants.find(sameSize)
+        || variants.filter(lastFrame).sort((a, b) => a.price - b.price)[0] || variants.slice().sort((a, b) => a.price - b.price)[0];
+      this.selectedOptions = pick.options.slice();
+      this.resolveVariant(-1);
+    }
+    /** "20 × 25 cm (8 × 10 in) · Black frame", or the digital delivery line. */
+    variantSummary(variant = this.state.variant) {
+      if (!variant) return '';
+      if (this.isDigital(variant)) return T('Digital file · delivered by email');
+      const i = this.sizeInches(variant);
+      const size = i ? (METRIC ? `${Math.round(i.w * 2.54)} × ${Math.round(i.h * 2.54)} cm (${i.w} × ${i.h} in)` : `${i.w} × ${i.h} in (${Math.round(i.w * 2.54)} × ${Math.round(i.h * 2.54)} cm)`) : '';
+      const frame = this.P && this.P.FRAMES[this.frameKind(variant)];
+      return [size, frame ? T(frame.label) : ''].filter(Boolean).join(' · ');
     }
     resolveVariant(changedIndex, opts = {}) {
       const { config } = this;
@@ -2200,15 +2254,32 @@
       const si = names.findIndex(n => /size/i.test(n)), fi = names.findIndex(n => /frame|finish|format/i.test(n));
       const v = this.state.variant, digital = this.isDigital();
       const money = c => formatMoney(c, config.moneyFormat);
+      const format = this.formatOf(v), formats = !!el.formatGroup && el.formatGroup.children.length > 1;
+      if (format === 'framed' && fi >= 0) this.lastFrame = v.options[fi];
+      if (el.formatGroup) el.formatGroup.querySelectorAll('[data-format]').forEach(b => {
+        const on = b.dataset.format === format;
+        b.setAttribute('aria-checked', String(on));
+        b.tabIndex = on ? 0 : -1;
+      });
+      if (el.variantSummary) el.variantSummary.textContent = this.variantSummary(v);
       el.optionGroups.forEach(group => {
         const index = Number(group.dataset.optionGroup) - 1;
+        if (formats && index === fi) {
+          // Frame colour only matters for framed prints; digital and canvas are chosen in Format.
+          const wrap = group.closest('.mps__group');
+          const colours = Array.from(group.querySelectorAll('[data-option-value]'));
+          colours.forEach(btn => { btn.hidden = !['black', 'white', 'wood'].includes(this.P.frameKind(btn.dataset.optionValue)); });
+          if (wrap) wrap.hidden = format !== 'framed' || colours.filter(b => !b.hidden).length < 2;
+          return;
+        }
         if (index !== si) return;
         const wrap = group.closest('.mps__group');
         if (wrap) wrap.hidden = digital;
         group.querySelectorAll('[data-option-value]').forEach(btn => {
           const val = btn.dataset.optionValue;
           const all = config.variants.filter(x => x.options[si] === val);
-          btn.hidden = all.length > 0 && all.every(x => this.isDigital(x));
+          btn.hidden = (all.length > 0 && all.every(x => this.isDigital(x)))
+            || (formats && !all.some(x => x.available && this.formatOf(x) === format));
           const match = all.find(x => x.available && (fi < 0 || x.options[fi] === v.options[fi]));
           btn.disabled = !match && val !== v.options[si];
           const sub = btn.querySelector('[data-size-sub]');

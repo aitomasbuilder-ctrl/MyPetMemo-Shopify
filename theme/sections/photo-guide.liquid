@@ -1,0 +1,21 @@
+{% capture family %}{% render 'product-kind', item: product %}{% endcapture %}{% assign family = family | strip %}{% assign tile = 2 %}{% if family == 'other' or family == 'blanket' %}{% assign family = 'blanket' %}{% assign tile = 6 %}{% endif %}
+<section class="section photo-guide wrap" id="photo-guide"><div><p class="eyebrow">{{ 'photo.eyebrow' | t }}</p><h2>{{ section.settings.heading | escape }}</h2><p>{{ 'photo.intro' | t }}</p><a class="button outline" href="{% if product %}#ProductForm{% else %}{% render 'product-link', kind: 'blanket' %}{% endif %}">{{ 'photo.upload' | t }}{% render 'icon', name: 'upload', size: 17 %}</a></div><div class="photo-example">{% assign alt = 'photo.good' | t %}{% render 'pet-image', kind: family, tile: tile, alt: alt %}<span class="photo-status">{% render 'icon', name: 'check', size: 15 %}{{ 'photo.good' | t }}</span><ul><li>{{ 'photo.good_1' | t }}</li><li>{{ 'photo.good_2' | t }}</li><li>{{ 'photo.good_3' | t }}</li></ul></div><div class="photo-example">{% assign alt = 'photo.avoid' | t %}{% render 'pet-image', kind: family, tile: tile, alt: alt, class: 'avoid-photo' %}<span class="photo-status">{% render 'icon', name: 'close', size: 15 %}{{ 'photo.avoid' | t }}</span><ul><li>{{ 'photo.avoid_1' | t }}</li><li>{{ 'photo.avoid_2' | t }}</li><li>{{ 'photo.avoid_3' | t }}</li></ul></div></section>
+
+{% schema %}
+{
+  "name": "Photo guide",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Their best side. No filters needed."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Photo guide"
+    }
+  ]
+}
+{% endschema %}

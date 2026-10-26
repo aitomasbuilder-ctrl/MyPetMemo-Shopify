@@ -382,6 +382,10 @@
       </div>
 
       {%- unless product.has_only_default_variant -%}
+        <div class="mps__group" data-format-wrap hidden>
+          <div class="mps__label-row"><h2 class="mps__label">{{ 'mpm.portrait.format' | t }}</h2></div>
+          <div class="mps__options mpp__formats" role="radiogroup" aria-label="{{ 'mpm.portrait.format' | t | escape }}" data-format-group></div>
+        </div>
         {%- for option in product.options_with_values -%}
           <div class="mps__group"{% if option.values.size < 2 %} hidden{% endif %}>
             <div class="mps__label-row"><h2 class="mps__label">{{ option.name | escape }}</h2>{%- if forloop.first -%}<span class="mps__label-price" data-price-inline></span>{%- endif -%}</div>

@@ -444,7 +444,8 @@
       "zoom_level": "Mastelis",
       "close_zoom": "Uždaryti padidinimą",
       "your_artwork_zoomed_in": "Jūsų kūrinys, padidintas",
-      "dates_example": "pvz., 2012–2026"
+      "dates_example": "pvz., 2012–2026",
+      "format": "Formatas"
     },
     "category": {
       "blankets": "Pledai",

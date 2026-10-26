@@ -87,6 +87,8 @@ window.MPM_I18N = {
   'Size': 'Dydis', 'Frame': 'Rėmelis', 'Shape': 'Forma', 'Color': 'Spalva', 'Style': 'Stilius',
   'Star': 'Žvaigždė', 'Circle': 'Apskritimas', 'Heart': 'Širdelė', 'Snowflake': 'Snaigė', 'One Size': 'Vienas dydis',
   'Black frame': 'Juodas rėmelis', 'White frame': 'Baltas rėmelis', 'Natural wood frame': 'Natūralaus medžio rėmelis',
+  'Framed print': 'Įrėmintas paveikslas', 'Canvas': 'Drobė', 'from {price}': 'nuo {price}',
+  'Digital file · delivered by email': 'Skaitmeninis failas · pristatomas el. paštu',
   'Canvas, no frame': 'Drobė be rėmelio', 'Digital download': 'Skaitmeninis failas', 'Digital file': 'Skaitmeninis failas',
   /* rooms (pet-portrait.js) */
   'Living room': 'Svetainė', 'Bedroom': 'Miegamasis', 'Entryway': 'Prieškambaris',
