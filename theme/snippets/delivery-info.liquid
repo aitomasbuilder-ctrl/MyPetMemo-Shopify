@@ -1,0 +1,26 @@
+{% doc %}
+  Delivery facts shown next to the buy button. Only states what the shipping policy and the print partners really do:
+  production 2–5 business days, delivery 3–10 business days, shipping cost calculated at checkout.
+  The arrival window counts 7–21 calendar days from today (5–15 business days plus weekends) and is labelled as an estimate.
+  @param {string} kind - blanket, portrait, ornament or mug
+{% enddoc %}
+{%- liquid
+  assign today = 'now' | date: '%s' | plus: 0
+  assign day = 86400
+  assign earliest = day | times: 7 | plus: today
+  assign latest = day | times: 21 | plus: today
+  assign date_format = 'delivery.date_format' | t
+  assign from_date = earliest | date: date_format
+  assign to_date = latest | date: date_format
+-%}
+<div class="mpm-delivery" data-delivery>
+  {%- unless kind == 'home' -%}<p class="mpm-delivery__title">{{ 'delivery.title' | t }}</p>{%- endunless -%}
+  <ul>
+    <li><strong>{{ 'delivery.production_label' | t }}</strong> {{ 'delivery.production' | t }}</li>
+    <li><strong>{{ 'delivery.shipping_label' | t }}</strong> {{ 'delivery.shipping' | t }}</li>
+    <li><strong>{{ 'delivery.arrival_label' | t }}</strong> {{ 'delivery.arrival' | t: from: from_date, to: to_date }}</li>
+    {%- if kind == 'blanket' or kind == 'home' -%}<li>{{ 'delivery.blanket_origin' | t }}</li>{%- endif -%}
+    {%- if kind == 'portrait' -%}<li data-digital-delivery>{{ 'delivery.digital' | t }}</li>{%- elsif kind == 'home' -%}<li>{{ 'delivery.digital' | t }}</li>{%- endif -%}
+  </ul>
+  {%- if shop.shipping_policy.body != blank -%}<a class="mpm-delivery__link" href="{{ shop.shipping_policy.url }}">{{ 'delivery.policy' | t }}</a>{%- endif -%}
+</div>

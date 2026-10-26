@@ -1,0 +1,19 @@
+{% doc %}
+  Small example images shown under the timer while the artwork is being created. Illustrations, labelled as such.
+  @param {string} kind - portrait, blanket or ornament
+{% enddoc %}
+<div class="mpm-gen-examples">
+  <p class="mps__gen-kicker">{% if kind == 'portrait' %}{{ 'mpm.example.styles' | t }}{% else %}{{ 'mpm.example.mockups' | t }}{% endif %}</p>
+  <div class="mpm-gen-examples__row">
+    {%- for i in (0..2) -%}
+      {%- if kind == 'portrait' -%}
+        {%- assign key = 'styles.modern' -%}{%- if i == 1 -%}{%- assign key = 'styles.watercolor' -%}{%- elsif i == 2 -%}{%- assign key = 'styles.classic' -%}{%- endif -%}
+        {%- assign alt = key | t -%}
+        <figure>{% render 'pet-image', kind: 'portrait', style_index: i, alt: alt, sizes: '96px' %}<figcaption>{{ alt }}</figcaption></figure>
+      {%- else -%}
+        {%- assign alt = 'mpm.example.alt_product' | t -%}
+        <figure>{% render 'pet-image', kind: kind, tile: i, alt: alt, sizes: '96px' %}</figure>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+</div>

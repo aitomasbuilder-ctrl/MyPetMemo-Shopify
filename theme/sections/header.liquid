@@ -17,7 +17,7 @@
       {%- endif -%}
       <a class="icon-button" href="{{ routes.search_url }}" aria-label="{{ 'common.search' | t }}">{% render 'icon', name: 'search' %}</a>
       {% if shop.customer_accounts_enabled %}<a class="icon-button account-icon" href="{{ routes.account_url }}" aria-label="{{ 'common.account' | t }}">{% render 'icon', name: 'user' %}</a>{% endif %}
-      <a class="icon-button bag-icon" href="{{ routes.cart_url }}" aria-label="{{ 'cart.title' | t }}">{% render 'icon', name: 'bag' %}<span>{{ cart.item_count }}</span></a>
+      <a class="icon-button bag-icon" href="{{ routes.cart_url }}" aria-label="{{ 'cart.title' | t }} {{ cart.item_count }}">{% render 'icon', name: 'bag' %}<span>{{ cart.item_count }}</span></a>
     </div>
   </div>
 </header>

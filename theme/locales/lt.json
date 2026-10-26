@@ -20,10 +20,11 @@
     "mug_short": "Jo snukutis prie jūsų rytinės kavos.",
     "mug_action": "Kurti mano puodelį",
     "addon_tag": "DERANTI DOVANA",
-    "portrait_tag": "Įrėmintas arba skaitmeninis",
+    "portrait_tag": "Skaitmeninis arba įrėmintas",
     "blanket_description": "Mėgstamiausią augintinio nuotrauką paverskite minkštu asmeniniu pledu. Pažįstamas snukutis jūsų mėgstamiausiame kampelyje.",
     "ornament_description": "Pažįstamas snukutis jūsų mėgstamai tradicijai. Paverskite augintinio nuotrauką asmeniniu žaisliuku, kurį kabinsite kasmet.",
-    "portrait_description": "Augintinio nuotrauka, paversta asmeniniu kūriniu. Pasirinkite stilių, spalvą, dydį ir rėmelį, o prieš pirkdami pamatysite peržiūrą."
+    "portrait_description": "Augintinio nuotrauka, paversta asmeniniu kūriniu. Pasirinkite stilių, spalvą, dydį ir rėmelį, o prieš pirkdami pamatysite peržiūrą.",
+    "portrait_prices": "Skaitmeninis nuo {{ digital }} · Įrėmintas nuo {{ framed }}"
   },
   "common": {
     "from": "nuo",
@@ -93,7 +94,10 @@
     "note_bold": "Mažas amžinybės gabalėlis.",
     "value_1": "Jūsų augintinis naujame, gražiame įvaizdyje",
     "value_2": "Asmeninės detalės, begalė prasmės",
-    "value_3": "Sukurta tiems, kuriuos mylite"
+    "value_3": "Sukurta tiems, kuriuos mylite",
+    "create_blanket": "Kurti mano pledą",
+    "prices": "Pledai nuo {{ blanket }} · Skaitmeninis portretas nuo {{ digital }} · Įrėmintas portretas nuo {{ framed }}",
+    "preview": "Nemokama peržiūra: galutinį dizainą pamatysite prieš mokėdami."
   },
   "transform": {
     "eyebrow": "NUOTRAUKA TAMPA JAUSMU",
@@ -110,16 +114,18 @@
   },
   "styles": {
     "eyebrow": "TAS PATS AUGINTINIS. JŪSŲ ŽVILGSNIS.",
-    "intro": "Keturi portreto stiliai. Vienas pažįstamas snukutis.",
+    "intro": "Trys portreto stiliai. Pasirinkite vieną, ir portreto redaktorius atsidarys jau su juo.",
     "watercolor": "Akvarelė",
     "minimal": "Minimalistinis",
-    "classic": "Klasikinis",
+    "classic": "Klasikinis portretas",
     "vintage": "Senovinis",
     "minimal_text": "Švaru, paprasta ir neabejotinai jis.",
-    "watercolor_text": "Švelnūs potėpiai. Visas jo charakteris.",
-    "classic_text": "Nesenstančios detalės. Pažįstamas snukutis.",
+    "watercolor_text": "Švelnios spalvos ir tapyti kraštai.",
+    "classic_text": "Ryškios detalės ovaliame rėmelyje.",
     "vintage_text": "Šilti tonai ir senos sielos jausmas.",
-    "choose": "Rinktis šį stilių"
+    "choose": "Rinktis šį stilių",
+    "modern": "Modernus minimalizmas",
+    "modern_text": "Švarus portretas vienspalviame fone."
   },
   "gifting": {
     "eyebrow": "ASMENIŠKIAUSIA DOVANA",
@@ -493,6 +499,52 @@
       "background": "Fonas",
       "style": "Stilius",
       "message": "Užrašas"
+    },
+    "example": {
+      "label": "Dizaino pavyzdys · iliustracija",
+      "label_mockup": "Dizaino pavyzdys · iliustracinis maketas, ne pristatytos prekės nuotrauka",
+      "alt_portrait": "Taksų veislės šuns portreto pavyzdys modernaus minimalizmo stiliumi",
+      "alt_product": "Iš augintinio nuotraukos sukurto dizaino pavyzdys (iliustracinis maketas)",
+      "styles": "Stilių pavyzdžiai (iliustracijos)",
+      "mockups": "Pavyzdžiai (iliustraciniai maketai)"
+    },
+    "upload": {
+      "formats": "JPG, PNG, WebP arba HEIC · iki {{ mb }} MB",
+      "formats_pets": "JPG, PNG, WebP arba HEIC · iki {{ mb }} MB · šunys ir katės"
     }
+  },
+  "proof": {
+    "eyebrow": "PRIEŠ MOKĖDAMI",
+    "heading": "Viską patikrinkite prieš užsakydami.",
+    "intro": "Esame nauja parduotuvė, todėl vietoje pasiskolintų atsiliepimų parodome, ką galite pamatyti ir patikrinti patys.",
+    "preview_title": "Nemokama dizaino peržiūra",
+    "preview_text": "Įkelkite nuotrauką ir ekrane pamatykite galutinį dizainą. Nieko nemokate iki apmokėjimo.",
+    "photo_title": "Sukurta iš jūsų nuotraukos",
+    "photo_text": "Kūrinys išlaiko augintinio snukutį ir žymes. Prieš patvirtindami galite bandyti dar kartą arba įkelti kitą nuotrauką.",
+    "checkout_title": "Saugus apmokėjimas",
+    "checkout_text": "Mokate per saugų „Shopify“ apmokėjimą. Pristatymo kainą matote prieš mokėdami.",
+    "care_title": "Prekė pažeista ar ne ta?",
+    "care_text": "Per 30 dienų atsiųskite užsakymo numerį ir nuotrauką, ir prekę pakeisime arba grąžinsime pinigus."
+  },
+  "delivery": {
+    "eyebrow": "PRISTATYMAS",
+    "heading": "Gaminama pagal užsakymą ir siunčiama jums.",
+    "intro": "Kiekviena prekė spausdinama tik jums patvirtinus dizainą. Skaitmeniniai portretai siunčiami el. paštu.",
+    "title": "Pristatymas",
+    "production_label": "Gamyba:",
+    "production": "2–5 darbo dienos, gaminama pagal užsakymą.",
+    "shipping_label": "Siuntimas:",
+    "shipping": "3–10 darbo dienų, su sekimo nuoroda. Kaina apskaičiuojama apmokėjimo metu, prieš mokant.",
+    "arrival_label": "Numatomas pristatymas:",
+    "arrival": "apie {{ from }}–{{ to }} (numatoma)",
+    "date_format": "%m-%d",
+    "blanket_origin": "Pledus spausdina mūsų spaudos partneris JAV ir siunčia iš ten.",
+    "digital": "Skaitmeninis failas: siunčiamas el. paštu po apmokėjimo. Niekas nesiunčiama paštu.",
+    "policy": "Pristatymo taisyklės"
+  },
+  "meta": {
+    "home_title": "Pledai ir portretai su jūsų augintinio nuotrauka | MyPetMemo",
+    "home_description": "Paverskite augintinio nuotrauką „sherpa“ pledu arba skaitmeniniu ar įrėmintu portretu. Nemokama dizaino peržiūra prieš mokant. Gaminama pagal užsakymą.",
+    "default_description": "Asmeniniai pledai ir portretai iš jūsų augintinio nuotraukos su nemokama dizaino peržiūra prieš mokant."
   }
 }

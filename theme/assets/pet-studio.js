@@ -769,7 +769,8 @@
         artStyles: qa('[data-art-style]'), scenes: qa('[data-scene]'), roomNav: q('[data-room-nav]'), roomName: q('[data-room-name]'),
         zoomDialog: q('[data-zoom-dialog]'), zoomImg: q('[data-zoom-img]'), memorialOnly: qa('[data-memorial-only]'),
         approvedBadge: q('[data-approved]'), frameHint: q('[data-frame-hint]'), digitalNote: q('[data-digital-note]'),
-        formatGroup: q('[data-format-group]'), variantSummary: q('[data-price-inline-note]')
+        formatGroup: q('[data-format-group]'), variantSummary: q('[data-price-inline-note]'),
+        example: q('[data-example]'), delivery: q('[data-delivery]')
       };
       this.P = window.MyPetMemoPortrait || null;
       this.state = {
@@ -1311,6 +1312,7 @@
     }
     async handleFile(file) {
       this.clearError();
+      this.emit('pet-studio:upload-started', { type: (file.type || '').toLowerCase() || 'unknown' });
       if (this.state.galleryOpen) this.toggleGallery(false);
       const maxMb = this.config.maxUploadMb || 20;
       const type = (file.type || '').toLowerCase();
@@ -1346,6 +1348,7 @@
       if (this.state.photo && this.state.photo.url) URL.revokeObjectURL(this.state.photo.url);
       this.state.photo = { blob, hash, url: URL.createObjectURL(blob) };
       kv.set(`photo:${this.config.productId}`, { blob, hash, at: Date.now() });
+      this.emit('pet-studio:upload-succeeded');
       this.generate();
     }
     retry() {
@@ -1474,7 +1477,7 @@
       const { el } = this;
       const start = performance.now();
       const expected = this.config.progressSeconds || 60;
-      const steps = [[0, T('Uploading your photo and creating your portrait…')]];
+      const steps = [[0, T('Uploading your photo and creating your portrait…')], [0.25, T('Finding your pet in the photo…')], [0.5, T('Painting the artwork…')], [0.75, T('Adding the final details…')]];
       this.progressFloor = 0;
       this.progressLocked = false;
       el.gen.hidden = false;
@@ -2293,6 +2296,7 @@
         el.frameHint.hidden = !el.frameHint.textContent;
       }
       if (el.digitalNote) el.digitalNote.hidden = !digital;
+      if (el.delivery) el.delivery.classList.toggle('is-digital', digital);
       this.updateSceneButtons();
     }
     sceneMode() {
@@ -2587,6 +2591,9 @@
       this.el.nameErrors.forEach(n => { n.textContent = msg; n.hidden = !msg; });
       return !msg;
     }
+    emit(name, detail = {}) {
+      if (!this.headless) this.root.dispatchEvent(new CustomEvent(name, { bubbles: true, detail }));
+    }
     setPhase(phase) {
       this.state.phase = phase;
       this.updateUI();
@@ -2646,6 +2653,8 @@
     updateUI() {
       const s = this.state, { el } = this;
       const has = !!s.artwork;
+      // The labelled example only fills the empty preview; it goes as soon as a photo is chosen.
+      if (el.example) el.example.hidden = !!s.photo || s.phase !== 'empty';
       const v = s.variant;
       const available = !!(v && v.available);
       let label;
@@ -2852,6 +2861,7 @@
         this.clampAll();
         const design = this.designData();
         const approval = await this.approve(design);
+        this.emit('pet-studio:approved', { id: approval.id });
         if (await this.inCart(approval.id)) {
           s.addedId = approval.id;
           this.persist();
@@ -3015,7 +3025,7 @@
   else init();
   document.addEventListener('shopify:section:load', e => init(e.target));
 
-  // Customer events for analytics: a custom pixel can subscribe to mpm_preview_ready and mpm_design_added.
+  // Customer events for analytics: a custom pixel can subscribe to the mpm_* events below.
   const track = (name, root, data) => {
     const studio = root && root.__petStudio;
     const a = window.Shopify && window.Shopify.analytics;
@@ -3024,7 +3034,12 @@
       a.publish(name, Object.assign({ family: studio.familyKey(), locale: document.documentElement.lang || '' }, data));
     } catch (_) { /* analytics must never break the studio */ }
   };
+  // Funnel: upload started → upload succeeded → preview ready → design approved → design added.
+  // Add to cart, checkout started and purchase come from Shopify's standard events, so they are not sent again here.
+  document.addEventListener('pet-studio:upload-started', e => track('mpm_upload_started', e.target, { file_type: e.detail.type }));
+  document.addEventListener('pet-studio:upload-succeeded', e => track('mpm_upload_succeeded', e.target, {}));
   document.addEventListener('pet-studio:generated', e => track('mpm_preview_ready', e.target, { ms: e.detail.ms }));
+  document.addEventListener('pet-studio:approved', e => track('mpm_design_approved', e.target, { design_id: e.detail.id }));
   document.addEventListener('pet-studio:added', e => track('mpm_design_added', e.target, { design_id: e.detail.id }));
 
   window.MyPetMemoStudio = {

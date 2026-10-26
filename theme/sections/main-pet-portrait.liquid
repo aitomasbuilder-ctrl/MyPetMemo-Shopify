@@ -158,6 +158,13 @@
         <canvas class="mps__canvas" data-canvas tabindex="0" role="img"
           aria-label="{{ 'mpm.portrait.portrait_preview_choose_your_des' | t | escape }}"></canvas>
 
+        {%- comment -%} Shown until a photo is chosen. An illustration of the style, kept apart from the print file. {%- endcomment -%}
+        <figure class="mps__example" data-example>
+          {%- assign example_alt = 'mpm.example.alt_portrait' | t -%}
+          {% render 'pet-image', kind: 'portrait', style_index: 0, alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px' %}
+          <figcaption>{{ 'mpm.example.label' | t }}</figcaption>
+        </figure>
+
         <div class="mpp__scene-bar" role="group" aria-label="{{ 'mpm.portrait.preview_view' | t | escape }}">
           <button type="button" class="mpp__scene-btn" data-scene="design" aria-pressed="true">{{ 'mpm.portrait.your_design' | t }}</button>
           <button type="button" class="mpp__scene-btn" data-scene="close" aria-pressed="false">{{ 'mpm.portrait.framed' | t }}</button>
@@ -206,6 +213,7 @@
       {%- endif -%}
 
       <p class="mpp__price"><strong data-price>{{ current_variant.price | money }}</strong> <s data-compare-price></s> <span class="mpp__price-note" data-price-inline-note>{{ current_variant.title | escape }}</span></p>
+      <p class="mpp__price-from">{% render 'portrait-prices', item: product, key: 'catalog.portrait_prices' %}</p>
 
       <ul class="mpp__promises">
         {%- for i in (1..3) -%}
@@ -227,7 +235,7 @@
         <label class="mps__dropzone" for="PetPhoto-{{ section.id }}" data-dropzone>
           <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3l5 5h-3v6h-4V8H7l5-5zm-8 14h16v4H4v-4z"/></svg>
           <span><strong>{{ 'mpm.portrait.choose_a_photo' | t }}</strong> {{ 'mpm.portrait.or_drag_it_here' | t }}</span>
-          <small>JPG, PNG, WebP or HEIC · up to {{ section.settings.max_upload_mb }} MB · dogs and cats</small>
+          <small>{{ 'mpm.upload.formats_pets' | t: mb: section.settings.max_upload_mb }}</small>
         </label>
         <ul class="mps__tips">
           <li>{{ 'mpm.portrait.one_pet_per_photo' | t }}</li>
@@ -278,6 +286,8 @@
               {%- if block.settings.after != blank -%}{{ block.settings.after | image_url: width: 240 | image_tag: loading: 'lazy', alt: block.settings.caption }}{%- endif -%}
             {%- endfor -%}
           </div>
+        {%- else -%}
+          {% render 'gen-examples', kind: 'portrait' %}
         {%- endif -%}
         <div class="mps__gen-info" data-gen-info{% if rv_json != '' or rv_sample %} hidden{% endif %}>
           <p class="mps__gen-kicker">{{ 'mpm.portrait.how_your_photo_becomes_a_portrai' | t }}</p>
@@ -413,6 +423,7 @@
       </button>
       <p class="mps__hint mps__approve-note" data-approve-note hidden>{{ 'mpm.portrait.check_the_name_colors_and_your_p' | t }}</p>
       <p class="mps__status" data-cart-status aria-live="polite"></p>
+      {% render 'delivery-info', kind: 'portrait' %}
 
       <ul class="mps__benefits">
         {%- if section.settings.shipping_text != blank -%}

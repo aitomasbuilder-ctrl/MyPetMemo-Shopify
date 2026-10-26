@@ -5,6 +5,7 @@
   @param {boolean} [sample_images] - Use the approved illustrations
   @param {collection} [category] - Category page the card opens; its lowest price is shown as "from"
   @param {string} [tag] - Label shown on the image instead of the default one
+  @param {string} [sizes] - Image sizes attribute
 {% enddoc %}
 {% liquid
   assign family = kind
@@ -15,7 +16,7 @@
     assign family = family | strip
   endif
   assign title = item.title
-  if category != blank or title == blank
+  if kind != blank and kind != 'other' or category != blank or title == blank
     assign title_key = 'catalog.' | append: family | append: '_title'
     assign title = title_key | t
   endif
@@ -42,13 +43,14 @@
       assign price = category.products.first.price_min
     endif
   endif
+  assign image_sizes = sizes | default: '(max-width: 700px) 92vw, 45vw'
   assign description_key = 'catalog.' | append: family | append: '_short'
   assign action_key = 'catalog.' | append: family | append: '_action'
 %}
 <article class="product-card">
   <a class="product-image-link" href="{{ link }}">
     {% if family != 'other' and sample_images != false %}
-      {% render 'pet-image', kind: family, tile: 0, alt: title %}
+      {% render 'pet-image', kind: family, tile: 0, alt: title, sizes: image_sizes %}
     {% elsif item.featured_image %}
       {{ item.featured_image | image_url: width: 900 | image_tag: loading: 'lazy', widths: '300,450,650,900', sizes: '(max-width: 700px) 90vw, 30vw', class: 'card-image' }}
     {% else %}
@@ -56,7 +58,8 @@
     {% endif %}
     <span class="product-tag">{% if tag != blank %}{{ tag | escape }}{% elsif family == 'portrait' %}{{ 'catalog.portrait_tag' | t }}{% else %}{{ 'catalog.personal_tag' | t }}{% endif %}</span>
   </a>
-  <div class="product-card-heading"><h3><a href="{{ link }}">{{ title | escape }}</a></h3>{% if item != blank %}<span>{% if price_varies %}<small>{{ 'common.from' | t }} </small>{% endif %}{{ price | money }}</span>{% endif %}</div>
+  <div class="product-card-heading"><h3><a href="{{ link }}">{{ title | escape }}</a></h3>{% if item != blank and family != 'portrait' %}<span>{% if price_varies %}<small>{{ 'common.from' | t }} </small>{% endif %}{{ price | money }}</span>{% endif %}</div>
+  {% if item != blank and family == 'portrait' %}<p class="product-card-prices">{% render 'portrait-prices', item: item, key: 'catalog.portrait_prices' %}</p>{% endif %}
   {% if family != 'other' %}<p>{{ description_key | t }}</p>{% endif %}
   {% if item == blank or category != blank and available == false %}<p class="small">{{ 'catalog.coming_soon' | t }}</p>{% endif %}
   <a class="button mpm-cta" href="{{ link }}">{% if family == 'other' %}{{ 'catalog.view' | t }}{% else %}{{ action_key | t }}{% endif %}</a>

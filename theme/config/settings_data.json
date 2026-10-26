@@ -1,0 +1,30 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "current": {
+    "brand_name": "MyPetMemo",
+    "support_email": "aitomasbuilder@gmail.com",
+    "instagram_url": "https://www.instagram.com/mypetmemo.shop/",
+    "tiktok_url": "https://www.tiktok.com/@mypetmemo.shop",
+    "facebook_url": "https://www.facebook.com/1317498748120049",
+    "background": "#faf8f4",
+    "foreground": "#292a25",
+    "accent": "#80745f",
+    "content_for_index": [],
+    "blocks": {
+      "421424240597080315": {
+        "type": "shopify://apps/teeinblue-product-personalizer/blocks/product-personalizer/67212f31-32b0-450c-97dd-7e182a5fac7b",
+        "disabled": false,
+        "settings": {}
+      }
+    }
+  },
+  "presets": {}
+}
