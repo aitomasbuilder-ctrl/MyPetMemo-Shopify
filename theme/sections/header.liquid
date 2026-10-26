@@ -11,7 +11,7 @@
         {%- form 'localization', class: 'lang-switch' -%}
           <span class="visually-hidden">{{ 'common.language' | t }}</span>
           {%- for language in localization.available_languages -%}
-            <button type="submit" name="locale_code" value="{{ language.iso_code }}" lang="{{ language.iso_code }}" aria-label="{{ language.endonym_name | escape }}"{% if language.iso_code == localization.language.iso_code %} aria-current="true"{% endif %}>{{ language.iso_code | upcase }}</button>
+            <button type="submit" name="locale_code" value="{{ language.iso_code }}" lang="{{ language.iso_code }}" aria-label="{{ language.iso_code | upcase }} – {{ language.endonym_name | escape }}"{% if language.iso_code == localization.language.iso_code %} aria-current="true"{% endif %}>{{ language.iso_code | upcase }}</button>
           {%- endfor -%}
         {%- endform -%}
       {%- endif -%}
