@@ -1,0 +1,41 @@
+<section class="section faq-section wrap" id="faq"><div><p class="eyebrow">{{ 'faq.eyebrow' | t }}</p><h2>{{ section.settings.heading | escape }}</h2><p>{{ 'faq.need_help' | t }}<br><a class="button mpm-cta" href="mailto:{{ settings.support_email | escape }}">{{ 'faq.contact' | t }}</a></p></div><div class="faq-list">{% for block in section.blocks %}<details {{ block.shopify_attributes }}><summary>{{ block.settings.question | escape }}<span aria-hidden="true">+</span></summary><div class="rte">{{ block.settings.answer }}</div></details>{% endfor %}</div></section>
+
+{% schema %}
+{
+  "name": "Questions and answers",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Good questions. Honest answers."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "question",
+      "name": "Question",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "Which pets are welcome?"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>Dogs, cats, and the other animals you call family. Start with a clear photo showing your pet’s full face.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Questions and answers"
+    }
+  ],
+  "max_blocks": 15
+}
+{% endschema %}

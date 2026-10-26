@@ -95,7 +95,6 @@
             {{ 'product-1' | placeholder_svg_tag: 'mpc-img placeholder' }}
           {%- endif -%}
           <span class="product-tag">{{ card.settings.tag | default: section.settings.tag | escape }}</span>
-          <span class="round-link">{% render 'icon', name: 'arrow-up' %}</span>
         </a>
         <div class="product-card-heading">
           <h2 class="mpc-title"><a href="{{ item.url }}">{{ card.settings.title | default: short_title | escape }}</a></h2>
@@ -131,7 +130,7 @@
         </div>
 
         {%- if item.available -%}
-          <a class="button mpc-button" href="{{ item.url }}">{% if section.settings.button_label != blank %}{{ section.settings.button_label | escape }}{% else %}{{ 'mpm.category.personalize' | t: noun: noun }}{% endif %}{% render 'icon', name: 'arrow', size: 16 %}</a>
+          <a class="button mpm-cta mpc-button" href="{{ item.url }}">{% if section.settings.button_label != blank %}{{ section.settings.button_label | escape }}{% else %}{{ 'mpm.category.personalize' | t: noun: noun }}{% endif %}</a>
         {%- else -%}
           <span class="button outline mpc-button is-disabled" aria-disabled="true">{{ 'catalog.coming_soon' | t }}</span>
         {%- endif -%}

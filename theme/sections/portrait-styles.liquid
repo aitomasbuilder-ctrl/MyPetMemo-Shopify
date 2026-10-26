@@ -1,0 +1,45 @@
+{% capture family %}{% render 'product-kind', item: product, override: section.settings.kind %}{% endcapture %}{% assign family = family | strip %}{% if family == 'other' %}{% assign family = 'blanket' %}{% endif %}
+<section class="section wrap" id="portrait-styles"><div class="section-heading"><div><p class="eyebrow">{{ 'styles.eyebrow' | t }}</p><h2>{{ section.settings.heading | escape }}</h2></div><p class="muted">{{ 'styles.intro' | t }}</p></div><div class="styles-grid">{% assign style_keys = 'minimal,watercolor,classic,vintage' | split: ',' %}{% for style_key in style_keys %}{% assign name_key = 'styles.' | append: style_key %}{% assign name = name_key | t %}{% assign text_key = name_key | append: '_text' %}<a class="style-card" href="{% if product %}{{ product.url }}{% else %}{% render 'product-link', kind: family %}{% endif %}?style={{ style_key }}#ProductForm">{% render 'pet-image', kind: family, style_index: forloop.index0, alt: name %}<div><h3>{{ name }}</h3></div><p>{{ text_key | t }}</p><span class="button mpm-cta">{{ 'styles.choose' | t }}</span></a>{% endfor %}</div></section>
+
+{% schema %}
+{
+  "name": "Portrait styles",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Find your kind of forever."
+    },
+    {
+      "type": "select",
+      "id": "kind",
+      "label": "Example pet",
+      "options": [
+        {
+          "value": "auto",
+          "label": "Match product"
+        },
+        {
+          "value": "blanket",
+          "label": "Golden retriever"
+        },
+        {
+          "value": "ornament",
+          "label": "French bulldog"
+        },
+        {
+          "value": "portrait",
+          "label": "Dachshund"
+        }
+      ],
+      "default": "auto"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Portrait styles"
+    }
+  ]
+}
+{% endschema %}

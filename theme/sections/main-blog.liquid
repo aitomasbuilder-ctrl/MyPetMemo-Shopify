@@ -1,0 +1,8 @@
+<section class="section wrap"><div class="collection-heading"><p class="eyebrow">{{ settings.brand_name | escape }}</p><h1>{{ blog.title | escape }}</h1></div>{% paginate blog.articles by 9 %}<div class="product-grid">{% for article in blog.articles %}<article class="product-card">{% if article.image %}<a class="product-image-link" href="{{ article.url }}">{{ article.image | image_url: width: 900 | image_tag: loading: 'lazy', class: 'card-image' }}</a>{% endif %}<h2 class="collection-card-title"><a href="{{ article.url }}">{{ article.title | escape }}</a></h2><p>{{ article.excerpt_or_content | strip_html | truncate: 160 }}</p><a class="button mpm-cta" href="{{ article.url }}">{{ 'blog.read' | t }}</a></article>{% endfor %}</div><nav class="pagination" aria-label="{{ 'common.pagination' | t }}">{{ paginate | default_pagination }}</nav>{% endpaginate %}</section>
+
+{% schema %}
+{
+  "name": "Blog",
+  "settings": []
+}
+{% endschema %}
