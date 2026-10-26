@@ -173,7 +173,7 @@
         "email_capture": false,
         "email_label": "Email (optional), so we can contact you about your design",
         "consent_label": "Send me news and offers from MyPetMemo",
-        "ai_endpoint": "https://mypetmemo-portrait.aitomasbuilder.workers.dev/generate",
+        "ai_endpoint": "https://mypetmemo-shopify.vercel.app/api/portrait",
         "generation_limit": 8,
         "progress_seconds": 60,
         "approve_endpoint": "https://mypetmemo-shopify.vercel.app/api/designs",
@@ -192,9 +192,20 @@
         "line_placeholder": "Write your own or pick one above",
         "line_suggestions": "Best Dog Mom Ever,Best Cat Dad Ever,Dog Mom,Cat Mom,Fur Mama,My Best Friend",
         "mug_note": "",
-        "ai_endpoint": "https://mypetmemo-shopify.vercel.app/api/portrait",
         "gallery_large": true,
-        "photo_files": "mug-white-1-golden-retriever-hand.png | Hand holding a personalized pet mug with a golden retriever portrait on blush pink\nmug-white-2-corgi-table.png | Personalized corgi portrait mug on sage green, on a wooden breakfast table\nmug-white-3-golden-retriever-with-mug.png | Golden retriever lying beside its matching portrait mug\nmug-white-4-tabby-cat-closeup.png | Close-up of a tabby cat portrait mug on lavender, on a cream knit blanket\nmug-white-5-french-bulldog-hands.png | Hands in a knit sweater holding a French bulldog portrait mug with paw prints\nmug-white-6-black-labrador.png | Black labrador portrait mug on beige with coffee and cookies\nmug-white-7-beagle-gift.png | Beagle portrait mug with pink hearts next to a gift box\nmug-white-8-border-collie-both-sides.png | Two border collie portrait mugs showing the design printed on both sides"
+        "photo_files": "mug-white-1-golden-retriever-hand.png | Hand holding a personalized pet mug with a golden retriever portrait on blush pink\nmug-white-2-corgi-table.png | Personalized corgi portrait mug on sage green, on a wooden breakfast table\nmug-white-3-golden-retriever-with-mug.png | Golden retriever lying beside its matching portrait mug\nmug-white-4-tabby-cat-closeup.png | Close-up of a tabby cat portrait mug on lavender, on a cream knit blanket\nmug-white-5-french-bulldog-hands.png | Hands in a knit sweater holding a French bulldog portrait mug with paw prints\nmug-white-6-black-labrador.png | Black labrador portrait mug on beige with coffee and cookies\nmug-white-7-beagle-gift.png | Beagle portrait mug with pink hearts next to a gift box\nmug-white-8-border-collie-both-sides.png | Two border collie portrait mugs showing the design printed on both sides",
+        "promise_1": "Preview before you buy",
+        "promise_2": "Made from your actual pet photo",
+        "promise_3": "No payment required to preview",
+        "reviews_heading": "Customer reviews",
+        "upload_note": "No payment needed. See your design before you buy.",
+        "year_label": "Add a year (optional)",
+        "year_placeholder": "e.g. 2026 or Christmas 2026",
+        "dates_label": "Add dates (optional)",
+        "dates_placeholder": "e.g. 2012 – 2026",
+        "message_label": "Add a message (optional)",
+        "message_placeholder": "Write your own or pick one above",
+        "message_suggestions": "Forever in my heart,Always by my side,Forever loved,Until we meet again,Run free"
       }
     },
     "steps": {
@@ -234,7 +245,9 @@
     },
     "photos": {
       "type": "photo-guide",
-      "settings": {}
+      "settings": {
+        "heading": "Their best side. No filters needed."
+      }
     },
     "faq": {
       "type": "faq",
@@ -306,11 +319,16 @@
         "5",
         "6"
       ],
-      "settings": {}
+      "settings": {
+        "heading": "Good questions. Honest answers."
+      }
     },
     "guarantee": {
       "type": "guarantee",
-      "settings": {}
+      "settings": {
+        "heading": "We want you to love your MyPetMemo.",
+        "text": "If there is a production defect, printing issue, or incorrect item, contact us with your order number and a photo. We’ll help according to our refund and replacement policy."
+      }
     }
   },
   "order": [

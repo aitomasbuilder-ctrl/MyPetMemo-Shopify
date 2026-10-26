@@ -188,7 +188,20 @@
         "fallback_print_size": "1200x1200",
         "extra_fields": "year",
         "year_label": "Add a year (optional)",
-        "year_placeholder": "e.g. 2026 or Christmas 2026"
+        "year_placeholder": "e.g. 2026 or Christmas 2026",
+        "promise_1": "Preview before you buy",
+        "promise_2": "Made from your actual pet photo",
+        "promise_3": "No payment required to preview",
+        "reviews_heading": "Customer reviews",
+        "upload_note": "No payment needed. See your design before you buy.",
+        "dates_label": "Add dates (optional)",
+        "dates_placeholder": "e.g. 2012 – 2026",
+        "message_label": "Add a message (optional)",
+        "message_placeholder": "Write your own or pick one above",
+        "message_suggestions": "Forever in my heart,Always by my side,Forever loved,Until we meet again,Run free",
+        "line_label": "Add your own text (optional)",
+        "line_placeholder": "Write your own or pick one above",
+        "line_suggestions": "Best Dog Mom Ever,Best Cat Dad Ever,Dog Mom,Cat Mom,Fur Mama,My Best Friend"
       }
     },
     "steps": {
@@ -228,7 +241,9 @@
     },
     "photos": {
       "type": "photo-guide",
-      "settings": {}
+      "settings": {
+        "heading": "Their best side. No filters needed."
+      }
     },
     "faq": {
       "type": "faq",
@@ -300,11 +315,16 @@
         "5",
         "6"
       ],
-      "settings": {}
+      "settings": {
+        "heading": "Good questions. Honest answers."
+      }
     },
     "guarantee": {
       "type": "guarantee",
-      "settings": {}
+      "settings": {
+        "heading": "We want you to love your MyPetMemo.",
+        "text": "If there is a production defect, printing issue, or incorrect item, contact us with your order number and a photo. We’ll help according to our refund and replacement policy."
+      }
     }
   },
   "order": [

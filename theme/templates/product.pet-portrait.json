@@ -12,7 +12,27 @@
     "main": {
       "type": "main-pet-portrait",
       "settings": {
-        "ai_endpoint": "https://mypetmemo-shopify.vercel.app/api/portrait"
+        "ai_endpoint": "https://mypetmemo-shopify.vercel.app/api/portrait",
+        "eyebrow": "Personalized Pet Portrait",
+        "heading": "Your Pet, Turned Into Art.",
+        "subheading": "Upload a favorite photo and see your personalized portrait in about a minute. Choose a digital file or a framed print and preview it free before you buy.",
+        "promise_1": "Preview before you buy",
+        "promise_2": "Made from your actual pet photo",
+        "promise_3": "No payment required to preview",
+        "upload_note": "Free preview. You only pay after you approve your portrait.",
+        "reviews_heading": "What customers say",
+        "style_modern_title": "Modern Minimalist",
+        "style_modern_text": "Clean portrait on a solid color",
+        "style_watercolor_title": "Watercolor",
+        "style_watercolor_text": "Soft colors and painted edges",
+        "style_classic_title": "Classic Portrait",
+        "style_classic_text": "Crisp detail in a framed oval",
+        "style_memorial_title": "Memorial Portrait",
+        "style_memorial_text": "Soft glow, name and dates",
+        "name_placeholder": "e.g. Maple",
+        "text_suggestions": "Forever in my heart,Best friend,Good boy,Good girl,Forever loved",
+        "digital_note": "High-resolution file (4800 × 6000 px, prints sharp up to 16 × 20 in). Emailed after payment. No shipping, no frame.",
+        "secure_text": "Secure checkout with Shopify Payments"
       }
     },
     "steps": {
@@ -59,7 +79,9 @@
     },
     "photos": {
       "type": "photo-guide",
-      "settings": {}
+      "settings": {
+        "heading": "Their best side. No filters needed."
+      }
     },
     "faq": {
       "type": "faq",
@@ -147,17 +169,25 @@
         "8",
         "9"
       ],
-      "settings": {}
+      "settings": {
+        "heading": "Good questions. Honest answers."
+      }
     },
     "guarantee": {
       "type": "guarantee",
-      "settings": {}
+      "settings": {
+        "heading": "We want you to love your MyPetMemo.",
+        "text": "If there is a production defect, printing issue, or incorrect item, contact us with your order number and a photo. We’ll help according to our refund and replacement policy."
+      }
     },
     "related": {
       "type": "featured-products",
       "settings": {
         "eyebrow": "MORE FROM MYPETMEMO",
-        "heading": "Their face on your favorite things."
+        "heading": "Their face on your favorite things.",
+        "addons_eyebrow": "COMPLETE THE GIFT",
+        "addons_heading": "Matching keepsakes, same pet.",
+        "addons_text": "Add an ornament or mug made from the same portrait. With a blanket or portrait in your cart, one add-on is 15% off, or two add-ons are 20% off each. The discount applies to the add-ons only."
       }
     }
   },
