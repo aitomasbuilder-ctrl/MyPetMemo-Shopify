@@ -11,7 +11,13 @@
 
 /* Style cards: three styles that exist in the editor */
 .styles-grid.styles-grid--3 { grid-template-columns: repeat(3, 1fr); }
-@media (max-width: 700px) { .styles-grid.styles-grid--3 { grid-template-columns: 1fr; gap: 28px; } }
+@media (max-width: 700px) {
+  .styles-grid.styles-grid--3 { grid-template-columns: 1fr; gap: 18px; }
+  .styles-grid--3 .style-card { display: grid; grid-template-columns: 38% 1fr; column-gap: 16px; align-items: center; }
+  .styles-grid--3 .style-card > .asset, .styles-grid--3 .style-card > img, .styles-grid--3 .style-card > :first-child { grid-row: 1 / span 3; }
+  .styles-grid--3 .style-card > div:not(.asset) { margin-top: 0; }
+  .styles-grid--3 .style-card .mpm-cta { min-height: 42px; padding: 9px 16px; margin-top: 10px; justify-self: start; }
+}
 
 /* Portrait format choice */
 .mpp__formats .mps__option { flex: 1 1 0; min-width: 0; }
