@@ -70,3 +70,7 @@
   .mpm-proof h2, .mpm-delivery-section h2 { font-size: 2rem; }
   .mpm-proof__grid { grid-template-columns: 1fr; gap: 18px; }
 }
+@media (max-width: 1000px) {
+  .hero-copy > p.hero-prices { margin-inline: auto; }
+  .hero-copy > p.hero-preview { justify-content: center; text-align: left; }
+}
