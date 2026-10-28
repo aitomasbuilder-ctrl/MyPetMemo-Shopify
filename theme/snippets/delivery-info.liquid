@@ -2,13 +2,23 @@
   Delivery facts shown next to the buy button. Only states what the shipping policy and the print partners really do:
   production 2–5 business days, delivery 3–10 business days, shipping cost calculated at checkout.
   The arrival window counts 7–21 calendar days from today (5–15 business days plus weekends) and is labelled as an estimate.
+  Blankets shipped to Lithuania use the US print partner's rate, which checkout describes as 7–13 business days,
+  so there the window is 13–26 calendar days (9–18 business days).
   @param {string} kind - blanket, portrait, ornament or mug
 {% enddoc %}
 {%- liquid
   assign today = 'now' | date: '%s' | plus: 0
   assign day = 86400
-  assign earliest = day | times: 7 | plus: today
-  assign latest = day | times: 21 | plus: today
+  assign min_days = 7
+  assign max_days = 21
+  assign shipping_key = 'delivery.shipping'
+  if kind == 'blanket' and localization.country.iso_code == 'LT'
+    assign min_days = 13
+    assign max_days = 26
+    assign shipping_key = 'delivery.shipping_blanket_lt'
+  endif
+  assign earliest = day | times: min_days | plus: today
+  assign latest = day | times: max_days | plus: today
   assign date_format = 'delivery.date_format' | t
   assign from_date = earliest | date: date_format
   assign to_date = latest | date: date_format
@@ -17,7 +27,7 @@
   {%- unless kind == 'home' -%}<p class="mpm-delivery__title">{{ 'delivery.title' | t }}</p>{%- endunless -%}
   <ul>
     <li><strong>{{ 'delivery.production_label' | t }}</strong> {{ 'delivery.production' | t }}</li>
-    <li><strong>{{ 'delivery.shipping_label' | t }}</strong> {{ 'delivery.shipping' | t }}</li>
+    <li><strong>{{ 'delivery.shipping_label' | t }}</strong> {{ shipping_key | t }}</li>
     <li><strong>{{ 'delivery.arrival_label' | t }}</strong> {{ 'delivery.arrival' | t: from: from_date, to: to_date }}</li>
     {%- if kind == 'blanket' or kind == 'home' -%}<li>{{ 'delivery.blanket_origin' | t }}</li>{%- endif -%}
     {%- if kind == 'portrait' -%}<li data-digital-delivery>{{ 'delivery.digital' | t }}</li>{%- elsif kind == 'home' -%}<li>{{ 'delivery.digital' | t }}</li>{%- endif -%}

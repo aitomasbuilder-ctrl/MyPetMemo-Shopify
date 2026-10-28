@@ -567,7 +567,8 @@
     "date_format": "%b %-d",
     "blanket_origin": "Blankets are printed in the USA by our print partner and shipped from there.",
     "digital": "Digital file: emailed after payment. Nothing is shipped.",
-    "policy": "Shipping policy"
+    "policy": "Shipping policy",
+    "shipping_blanket_lt": "7–13 business days from the USA, with tracking. The cost is shown at checkout, before you pay."
   },
   "meta": {
     "home_title": "Personalized Pet Blankets & Pet Portraits from Your Photo | MyPetMemo",

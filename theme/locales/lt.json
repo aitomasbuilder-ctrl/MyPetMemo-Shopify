@@ -562,7 +562,8 @@
     "date_format": "%m-%d",
     "blanket_origin": "Pledus spausdina mūsų spaudos partneris JAV ir siunčia iš ten.",
     "digital": "Skaitmeninis failas: siunčiamas el. paštu po apmokėjimo. Niekas nesiunčiama paštu.",
-    "policy": "Pristatymo taisyklės"
+    "policy": "Pristatymo taisyklės",
+    "shipping_blanket_lt": "7–13 darbo dienų iš JAV, su sekimo nuoroda. Kaina rodoma apmokėjimo metu, prieš mokant."
   },
   "meta": {
     "home_title": "Pledai ir portretai su jūsų augintinio nuotrauka | MyPetMemo",
