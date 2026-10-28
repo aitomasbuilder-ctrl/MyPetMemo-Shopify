@@ -97,3 +97,7 @@
   .mpm-xmas__buttons .button { flex: 1 1 100%; }
   .mpm-xmas__media { gap: 10px; }
 }
+
+/* Payment methods actually enabled in Shopify, under the checkout button */
+.cart-payments { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; list-style: none; margin: 12px 0 0; padding: 0; }
+.cart-payments svg { width: 38px; height: 24px; display: block; }

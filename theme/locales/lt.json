@@ -59,7 +59,8 @@
     "add_extra": "Pridėti derantį prisiminimą",
     "for_product": "Dera prie: {{ title }}. Naudojamos tos pačios augintinio nuotraukos ir užrašai.",
     "discount_matching_addon": "Derantis priedas: -15 %",
-    "discount_matching_set": "Derantis rinkinys: -20 % abiem priedams"
+    "discount_matching_set": "Derantis rinkinys: -20 % abiem priedams",
+    "payment_methods": "Mokėjimo būdai"
   },
   "nav": {
     "best_sellers": "Perkamiausi",
