@@ -270,7 +270,14 @@
     "date": "%B %d, %Y"
   },
   "mpm": {
+    "defaults": {
+      "preview-before-you-buy": "Preview before you buy",
+      "made-from-your-actual-pet-photo": "Made from your actual pet photo",
+      "no-payment-required-to-preview": "No payment required to preview",
+      "no-payment-needed-see-your-design-before-you-buy": "No payment needed. See your design before you buy."
+    },
     "studio": {
+      "upload_formats": "JPG, PNG, WebP or HEIC · up to {{ mb }} MB",
       "drop_your_photo_here": "Drop your photo here",
       "your_design": "Your design",
       "upload_your_pet_s_photo": "Upload your pet's photo",
@@ -356,6 +363,7 @@
       "eyebrow_blanket": "Personalized Pet Blanket"
     },
     "portrait": {
+      "upload_formats": "JPG, PNG, WebP or HEIC · up to {{ mb }} MB · dogs and cats",
       "your_design": "Your design",
       "framed": "Framed",
       "in_a_room": "In a room",

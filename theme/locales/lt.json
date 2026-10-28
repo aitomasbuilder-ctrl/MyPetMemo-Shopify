@@ -261,7 +261,14 @@
     "date": "%Y-%m-%d"
   },
   "mpm": {
+    "defaults": {
+      "preview-before-you-buy": "Peržiūra prieš perkant",
+      "made-from-your-actual-pet-photo": "Sukurta iš tikros jūsų augintinio nuotraukos",
+      "no-payment-required-to-preview": "Peržiūra nemokama",
+      "no-payment-needed-see-your-design-before-you-buy": "Mokėti nereikia. Dizainą pamatysite prieš pirkdami."
+    },
     "studio": {
+      "upload_formats": "JPG, PNG, WebP arba HEIC · iki {{ mb }} MB",
       "drop_your_photo_here": "Numeskite nuotrauką čia",
       "your_design": "Jūsų dizainas",
       "upload_your_pet_s_photo": "Įkelkite augintinio nuotrauką",
@@ -347,6 +354,7 @@
       "eyebrow_blanket": "Asmeninis pledas su augintiniu"
     },
     "portrait": {
+      "upload_formats": "JPG, PNG, WebP arba HEIC · iki {{ mb }} MB · šunys ir katės",
       "your_design": "Jūsų dizainas",
       "framed": "Įrėmintas",
       "in_a_room": "Interjere",
