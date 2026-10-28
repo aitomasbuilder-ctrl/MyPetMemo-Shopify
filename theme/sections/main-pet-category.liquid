@@ -116,7 +116,7 @@
                     {%- if variant.available -%}{%- assign vavailable = true -%}{%- endif -%}
                   {%- endif -%}
                 {%- endfor -%}
-                <li{% unless vavailable %} class="is-sold-out"{% endunless %}>{{ value | escape }}{% if item.price_varies and vprice %} · {{ vprice | money }}{% endif %}{% unless vavailable %} · Sold out{% endunless %}</li>
+                <li{% unless vavailable %} class="is-sold-out"{% endunless %}>{% render 'option-label', value: value %}{% if item.price_varies and vprice %} · {{ vprice | money }}{% endif %}{% unless vavailable %} · {{ 'product.sold_out' | t }}{% endunless %}</li>
               {%- endfor -%}
             </ul>
           </div>

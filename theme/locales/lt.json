@@ -515,6 +515,24 @@
     "upload": {
       "formats": "JPG, PNG, WebP arba HEIC · iki {{ mb }} MB",
       "formats_pets": "JPG, PNG, WebP arba HEIC · iki {{ mb }} MB · šunys ir katės"
+    },
+    "values": {
+      "star": "Žvaigždė",
+      "circle": "Apskritimas",
+      "heart": "Širdelė",
+      "snowflake": "Snaigė",
+      "one_size": "Vienas dydis",
+      "mug_15oz": "440 ml",
+      "blanket_small": "127 × 152 cm",
+      "blanket_large": "152 × 203 cm",
+      "print_8x10": "20 × 25 cm",
+      "print_12x16": "30 × 40 cm",
+      "print_16x20": "40 × 50 cm",
+      "print_24x36": "60 × 90 cm",
+      "digital": "Skaitmeninis failas",
+      "black_frame": "Juodas rėmelis",
+      "white_frame": "Baltas rėmelis",
+      "canvas": "Drobė be rėmelio"
     }
   },
   "proof": {

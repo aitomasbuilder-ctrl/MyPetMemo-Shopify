@@ -520,6 +520,24 @@
     "upload": {
       "formats": "JPG, PNG, WebP or HEIC · up to {{ mb }} MB",
       "formats_pets": "JPG, PNG, WebP or HEIC · up to {{ mb }} MB · dogs and cats"
+    },
+    "values": {
+      "star": "Star",
+      "circle": "Circle",
+      "heart": "Heart",
+      "snowflake": "Snowflake",
+      "one_size": "One Size",
+      "mug_15oz": "15oz",
+      "blanket_small": "50\" × 60\"",
+      "blanket_large": "60\" × 80\"",
+      "print_8x10": "8 × 10 in",
+      "print_12x16": "12 × 16 in",
+      "print_16x20": "16 × 20 in",
+      "print_24x36": "24 × 36 in",
+      "digital": "Digital file",
+      "black_frame": "Black frame",
+      "white_frame": "White frame",
+      "canvas": "Canvas, no frame"
     }
   },
   "proof": {

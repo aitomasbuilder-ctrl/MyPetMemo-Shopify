@@ -33,6 +33,12 @@
   {% style %}:root{--background:{{ settings.background }};--foreground:{{ settings.foreground }};--brand-accent:{{ settings.accent }}}{% endstyle %}
   {%- if request.locale.iso_code == 'lt' -%}<script src="{{ 'pet-i18n-lt.js' | asset_url }}" defer="defer"></script>{%- endif -%}
   <script src="{{ 'theme.js' | asset_url }}" defer="defer"></script>
+  {%- if request.page_type == 'product' -%}
+    <script type="application/ld+json">{{ product | structured_data }}</script>
+  {%- elsif request.page_type == 'index' -%}
+    {%- capture same_as -%}{% if settings.instagram_url != blank %}{{ settings.instagram_url | json }},{% endif %}{% if settings.tiktok_url != blank %}{{ settings.tiktok_url | json }},{% endif %}{% if settings.facebook_url != blank %}{{ settings.facebook_url | json }},{% endif %}{%- endcapture -%}
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":{{ shop.name | json }},"url":{{ shop.url | append: routes.root_url | json }}{% if same_as != blank %},"sameAs":[{{ same_as | remove_last: ',' }}]{% endif %}}</script>
+  {%- endif -%}
   {{ content_for_header }}
 </head>
 <body class="template-{{ request.page_type | handle }}">
