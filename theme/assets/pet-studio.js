@@ -3040,7 +3040,7 @@
   document.addEventListener('pet-studio:upload-started', e => track('mpm_upload_started', e.target, { file_type: e.detail.type }));
   document.addEventListener('pet-studio:upload-succeeded', e => track('mpm_upload_succeeded', e.target, {}));
   document.addEventListener('pet-studio:generated', e => track('mpm_preview_ready', e.target, { ms: e.detail.ms }));
-  document.addEventListener('pet-studio:approved', e => track('mpm_design_approved', e.target, { design_id: e.detail.id }));
+  document.addEventListener('pet-studio:approved', e => { if (e.detail && e.detail.id) track('mpm_design_approved', e.target, { design_id: e.detail.id }); });
   document.addEventListener('pet-studio:added', e => track('mpm_design_added', e.target, { design_id: e.detail.id }));
 
   window.MyPetMemoStudio = {
