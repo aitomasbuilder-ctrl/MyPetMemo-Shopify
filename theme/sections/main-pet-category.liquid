@@ -105,7 +105,7 @@
         {%- assign values = item.options_with_values.first.values -%}
         {%- if item.has_only_default_variant == false and values.size > 1 -%}
           <div class="mpc-options">
-            <p class="mpc-label">{% if option_name contains 'size' or item_family == 'blanket' %}Sizes{% elsif item_family == 'ornament' %}Shapes{% else %}{{ item.options_with_values.first.name | escape }}{% endif %}</p>
+            <p class="mpc-label">{% if option_name contains 'size' or item_family == 'blanket' %}{{ 'mpm.category.sizes' | t }}{% elsif item_family == 'ornament' %}{{ 'mpm.category.shapes' | t }}{% else %}{{ item.options_with_values.first.name | escape }}{% endif %}</p>
             <ul class="mpc-chips">
               {%- for value in values -%}
                 {%- assign vprice = nil -%}

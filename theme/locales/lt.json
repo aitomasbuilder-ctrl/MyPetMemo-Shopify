@@ -93,13 +93,13 @@
     "trust_3": "Apgalvotai asmeniška",
     "image_alt": "Auksaspalvis retriveris šalia asmeninio pledo su Milo portretu",
     "note": "Daugiau nei nuotrauka.",
-    "note_bold": "Mažas amžinybės gabalėlis.",
+    "note_bold": "Dovana, kuri turi prasmę.",
     "value_1": "Jūsų augintinis naujame, gražiame įvaizdyje",
     "value_2": "Asmeninės detalės, begalė prasmės",
     "value_3": "Sukurta tiems, kuriuos mylite",
-    "create_blanket": "Kurti mano pledą",
+    "create_blanket": "Sukurti savo dovaną",
     "prices": "Pledai nuo {{ blanket }} · Skaitmeninis portretas nuo {{ digital }} · Įrėmintas portretas nuo {{ framed }}",
-    "preview": "Nemokama peržiūra: galutinį dizainą pamatysite prieš mokėdami."
+    "preview": "Įkelk nuotrauką, pasirink stilių ir nemokamai peržiūrėk rezultatą prieš pirkdamas."
   },
   "transform": {
     "eyebrow": "NUOTRAUKA TAMPA JAUSMU",
@@ -465,7 +465,9 @@
       "features_christmas_blanket": "Kalėdiniai ir dar 20+ kitų fonų|Augintinio nuotrauka, paversta portretu|Vardas",
       "features_memorial_blanket": "Švelnūs debesys ir dar 20+ kitų fonų|Augintinio nuotrauka, paversta portretu|Vardas",
       "features_blanket": "20+ fonų ir spalvų|Augintinio nuotrauka, paversta portretu|Vardas",
-      "personalize": "Suasmeninti"
+      "personalize": "Suasmeninti",
+      "sizes": "Dydžiai",
+      "shapes": "Formos"
     },
     "reviewcard": {
       "verified_purchase": "Patvirtintas pirkimas",

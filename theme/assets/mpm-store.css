@@ -80,3 +80,20 @@
   .hero-copy > p.hero-prices { margin-inline: auto; }
   .hero-copy > p.hero-preview { justify-content: center; text-align: left; }
 }
+
+/* Three-step strip and Christmas block (homepage) */
+.steps-grid.steps-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.mpm-xmas { background: #f4efe6; }
+.mpm-xmas__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+.mpm-xmas__text { margin-top: 16px; color: #665b4a; font-size: 1.0625rem; line-height: 1.7; max-width: 520px; }
+.mpm-xmas__buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.mpm-xmas__media { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.mpm-xmas__card { position: relative; display: block; border-radius: 8px; overflow: hidden; background: #fff; }
+.mpm-xmas__card img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; }
+@media (max-width: 700px) {
+  .steps-grid.steps-grid--3 { grid-template-columns: 1fr; gap: 22px; }
+  .steps-grid--3 p { max-width: none; }
+  .mpm-xmas__grid { grid-template-columns: 1fr; gap: 26px; }
+  .mpm-xmas__buttons .button { flex: 1 1 100%; }
+  .mpm-xmas__media { gap: 10px; }
+}

@@ -1,0 +1,51 @@
+{%- liquid
+  assign show = false
+  if section.settings.only_locale == blank or request.locale.iso_code == section.settings.only_locale
+    assign show = true
+  endif
+  assign xmas_blanket = all_products[section.settings.blanket_handle]
+  assign xmas_ornament = all_products[section.settings.ornament_handle]
+-%}
+{%- if show -%}
+<section class="mpm-xmas section" aria-labelledby="mpm-xmas-{{ section.id }}">
+  <div class="wrap mpm-xmas__grid">
+    <div class="mpm-xmas__copy">
+      <p class="eyebrow">{{ section.settings.eyebrow | escape }}</p>
+      <h2 id="mpm-xmas-{{ section.id }}">{{ section.settings.heading | escape }}</h2>
+      <p class="mpm-xmas__text">{{ section.settings.text | escape }}</p>
+      <div class="mpm-xmas__buttons">
+        {%- if xmas_blanket != blank -%}<a class="button mpm-cta" href="{{ xmas_blanket.url }}">{{ section.settings.blanket_label | escape }}</a>{%- endif -%}
+        {%- if xmas_ornament != blank -%}<a class="button outline mpm-cta mpm-cta--outline" href="{{ xmas_ornament.url }}">{{ section.settings.ornament_label | escape }}</a>{%- endif -%}
+      </div>
+    </div>
+    <div class="mpm-xmas__media">
+      {%- for item in (1..2) -%}
+        {%- if forloop.first -%}{%- assign p = xmas_blanket -%}{%- else -%}{%- assign p = xmas_ornament -%}{%- endif -%}
+        {%- if p.featured_image -%}
+          <a class="mpm-xmas__card" href="{{ p.url }}">
+            {{ p.featured_image | image_url: width: 900 | image_tag: widths: '360,540,720,900', sizes: '(max-width: 700px) 46vw, 25vw', loading: 'lazy', alt: p.title }}
+            <span class="image-label">{{ 'common.illustration' | t }}</span>
+          </a>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Christmas gifts",
+  "settings": [
+    { "type": "text", "id": "only_locale", "label": "Show only in language (ISO code, e.g. lt)", "info": "Leave empty to show in every language." },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "CHRISTMAS GIFTS" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "A Christmas gift that means something." },
+    { "type": "textarea", "id": "text", "label": "Text", "default": "Surprise someone with a personal gift made from their favorite pet photo." },
+    { "type": "text", "id": "blanket_handle", "label": "Blanket product handle", "default": "christmas-pet-portrait-blanket" },
+    { "type": "text", "id": "blanket_label", "label": "Blanket button", "default": "Christmas blanket" },
+    { "type": "text", "id": "ornament_handle", "label": "Ornament product handle", "default": "custom-pet-christmas-ornament" },
+    { "type": "text", "id": "ornament_label", "label": "Ornament button", "default": "Christmas ornament" }
+  ],
+  "presets": [{ "name": "Christmas gifts" }]
+}
+{% endschema %}

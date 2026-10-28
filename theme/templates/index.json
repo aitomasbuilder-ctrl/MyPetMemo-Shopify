@@ -128,11 +128,64 @@
     "delivery": {
       "type": "mpm-delivery",
       "settings": {}
+    },
+    "lt_steps": {
+      "type": "how-it-works",
+      "blocks": {
+        "s1": {
+          "type": "step",
+          "settings": {
+            "heading": "1. Įkelk nuotrauką",
+            "text": "Užtenka aiškios nuotraukos iš telefono, kurioje matosi visas augintinio snukutis.",
+            "icon": "upload"
+          }
+        },
+        "s2": {
+          "type": "step",
+          "settings": {
+            "heading": "2. Sukurk savo dizainą",
+            "text": "Pasirink stilių, pridėk vardą, jei nori, ir nemokamai peržiūrėk rezultatą.",
+            "icon": "sparkles"
+          }
+        },
+        "s3": {
+          "type": "step",
+          "settings": {
+            "heading": "3. Užsisakyk ypatingą dovaną",
+            "text": "Patvirtink dizainą ir įsidėk į krepšelį. Kiekvienas gaminys gaminamas pagal užsakymą.",
+            "icon": "gift"
+          }
+        }
+      },
+      "block_order": [
+        "s1",
+        "s2",
+        "s3"
+      ],
+      "settings": {
+        "heading": "Kaip sukurti dovaną",
+        "only_locale": "lt"
+      }
+    },
+    "lt_christmas": {
+      "type": "mpm-christmas",
+      "settings": {
+        "only_locale": "lt",
+        "eyebrow": "KALĖDINĖS DOVANOS",
+        "heading": "Kalėdinė dovana, kuri turi prasmę.",
+        "text": "Nustebink artimą žmogų asmenine dovana su jo mylimo augintinio nuotrauka.",
+        "blanket_handle": "christmas-pet-portrait-blanket",
+        "blanket_label": "Kalėdinis pledas",
+        "ornament_handle": "custom-pet-christmas-ornament",
+        "ornament_label": "Kalėdinis žaisliukas"
+      }
     }
   },
   "order": [
     "hero",
+    "lt_steps",
     "featured",
+    "lt_christmas",
     "transform",
     "styles",
     "proof",

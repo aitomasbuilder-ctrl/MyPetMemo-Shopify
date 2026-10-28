@@ -474,7 +474,9 @@
       "features_christmas_blanket": "Christmas and 20+ other backgrounds|Your pet’s photo, turned into a portrait|Name",
       "features_memorial_blanket": "Soft clouds and 20+ other backgrounds|Your pet’s photo, turned into a portrait|Name",
       "features_blanket": "20+ backgrounds and colors|Your pet’s photo, turned into a portrait|Name",
-      "personalize": "Personalize this {{ noun }}"
+      "personalize": "Personalize this {{ noun }}",
+      "sizes": "Sizes",
+      "shapes": "Shapes"
     },
     "reviewcard": {
       "verified_purchase": "Verified purchase",
