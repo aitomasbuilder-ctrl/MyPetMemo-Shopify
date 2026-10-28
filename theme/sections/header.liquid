@@ -14,6 +14,16 @@
             <button type="submit" name="locale_code" value="{{ language.iso_code }}" lang="{{ language.iso_code }}" aria-label="{{ language.iso_code | upcase }} – {{ language.endonym_name | escape }}"{% if language.iso_code == localization.language.iso_code %} aria-current="true"{% endif %}>{{ language.iso_code | upcase }}</button>
           {%- endfor -%}
         {%- endform -%}
+      {%- elsif localization.language.iso_code != 'lt' -%}
+        {%- assign lt_country = localization.available_countries | where: 'iso_code', 'LT' | first -%}
+        {%- if lt_country -%}
+          {%- form 'localization', class: 'lang-switch' -%}
+            <span class="visually-hidden">{{ 'common.language' | t }}</span>
+            <input type="hidden" name="country_code" value="LT">
+            <span class="lang-switch__current" aria-current="true">{{ localization.language.iso_code | upcase }}</span>
+            <button type="submit" name="locale_code" value="lt" lang="lt" aria-label="LT – lietuvių">LT</button>
+          {%- endform -%}
+        {%- endif -%}
       {%- endif -%}
       <a class="icon-button" href="{{ routes.search_url }}" aria-label="{{ 'common.search' | t }}">{% render 'icon', name: 'search' %}</a>
       {% if shop.customer_accounts_enabled %}<a class="icon-button account-icon" href="{{ routes.account_url }}" aria-label="{{ 'common.account' | t }}">{% render 'icon', name: 'user' %}</a>{% endif %}
@@ -25,7 +35,8 @@
 {% style %}
   .lang-switch{display:flex;align-items:center;gap:2px;margin:0 4px;padding:2px;border:1px solid rgba(74,52,40,.18);border-radius:999px}
   .lang-switch button{font:inherit;font-size:12px;font-weight:700;letter-spacing:.04em;min-width:34px;min-height:30px;padding:0 8px;border:0;border-radius:999px;background:transparent;color:inherit;cursor:pointer}
-  .lang-switch button[aria-current]{background:var(--foreground,#4a3428);color:var(--background,#fbf6ef)}
+  .lang-switch .lang-switch__current{font-size:12px;font-weight:700;letter-spacing:.04em;min-width:34px;min-height:30px;padding:0 8px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center}
+  .lang-switch button[aria-current],.lang-switch .lang-switch__current{background:var(--foreground,#4a3428);color:var(--background,#fbf6ef)}
   .lang-switch .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 {% endstyle %}
 
