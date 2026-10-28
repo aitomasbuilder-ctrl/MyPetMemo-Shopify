@@ -6,8 +6,8 @@
   assign portrait = settings.portrait_product | default: all_products['personalized-pet-portrait'] | default: all_products['digital-pet-portrait']
   assign mug = section.settings.mug_product | default: all_products['personalized-pet-coffee-mug']
   assign addon_tag = 'catalog.addon_tag' | t
-%}<div class="product-grid featured-main">{% render 'product-card', item: blanket, kind: 'blanket', category: blankets, sample_images: section.settings.sample_images %}{% render 'product-card', item: portrait, kind: 'portrait', sample_images: section.settings.sample_images %}</div>
-  <div class="featured-addons"><div class="featured-addons-intro"><p class="eyebrow">{{ section.settings.addons_eyebrow | escape }}</p><h3>{{ section.settings.addons_heading | escape }}</h3><p>{{ section.settings.addons_text | escape }}</p></div><div class="product-grid featured-addon-grid">{% render 'product-card', item: ornament, kind: 'ornament', category: ornaments, sample_images: section.settings.sample_images, tag: addon_tag %}{% if mug != blank and mug.available %}{% render 'product-card', item: mug, kind: 'mug', sample_images: false, tag: addon_tag %}{% endif %}</div></div>
+%}<div class="product-grid featured-main">{% render 'product-card', item: blanket, kind: 'blanket', sample_images: section.settings.sample_images %}{% render 'product-card', item: portrait, kind: 'portrait', sample_images: section.settings.sample_images %}</div>
+  <div class="featured-addons"><div class="featured-addons-intro"><p class="eyebrow">{{ section.settings.addons_eyebrow | escape }}</p><h3>{{ section.settings.addons_heading | escape }}</h3><p>{{ section.settings.addons_text | escape }}</p></div><div class="product-grid featured-addon-grid">{% render 'product-card', item: ornament, kind: 'ornament', category: ornaments, sample_images: section.settings.sample_images, tag: addon_tag, sizes: '(max-width: 700px) 45vw, 22vw' %}{% if mug != blank and mug.available %}{% render 'product-card', item: mug, kind: 'mug', sample_images: false, tag: addon_tag %}{% endif %}</div></div>
 </section>
 <style>
   .featured-keepsakes .featured-main{grid-template-columns:repeat(2,minmax(0,1fr));gap:32px}
@@ -16,7 +16,7 @@
   .featured-addons{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:32px;align-items:center;margin-top:56px;padding:32px;border-radius:10px;background:#eeebe3}
   .featured-addons-intro .eyebrow{margin-bottom:12px}
   .featured-addons-intro h3{font:1.9rem/1.2 var(--display);letter-spacing:-.03em}
-  .featured-addons-intro p:not(.eyebrow){margin-top:12px;color:#81745e;font-size:.9375rem}
+  .featured-addons-intro p:not(.eyebrow){margin-top:12px;color:#665b4a;font-size:.9375rem}
   .featured-addon-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
   .featured-addon-grid .product-card>p{font-size:.875rem}
   @media(max-width:1000px){.featured-addons{grid-template-columns:1fr;gap:22px;padding:24px}}
@@ -84,7 +84,7 @@
       "id": "addons_text",
       "label": "Text",
       "info": "Keep the percentages in line with the Matching add-on discounts.",
-      "default": "Add an ornament or mug made from the same portrait. 15% off with any blanket or portrait, 20% off when you add both."
+      "default": "Add an ornament or mug made from the same portrait. With a blanket or portrait in your cart, one add-on is 15% off, or two add-ons are 20% off each. The discount applies to the add-ons only."
     }
   ],
   "presets": [

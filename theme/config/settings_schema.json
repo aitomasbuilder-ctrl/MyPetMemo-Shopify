@@ -1,0 +1,104 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "MyPetMemo",
+    "theme_version": "1.0.0",
+    "theme_author": "MyPetMemo",
+    "theme_documentation_url": "https://help.shopify.com/en/manual/online-store/themes",
+    "theme_support_url": "https://help.shopify.com/en/manual/online-store/themes"
+  },
+  {
+    "name": "Brand",
+    "settings": [
+      {
+        "type": "text",
+        "id": "brand_name",
+        "label": "Store name",
+        "default": "MyPetMemo"
+      },
+      {
+        "type": "image_picker",
+        "id": "logo",
+        "label": "Logo"
+      },
+      {
+        "type": "text",
+        "id": "support_email",
+        "label": "Customer support email",
+        "default": "support@mypetmemo.com"
+      },
+      {
+        "type": "color",
+        "id": "background",
+        "label": "Background",
+        "default": "#faf8f4"
+      },
+      {
+        "type": "color",
+        "id": "foreground",
+        "label": "Text",
+        "default": "#292a25"
+      },
+      {
+        "type": "color",
+        "id": "accent",
+        "label": "Accent",
+        "default": "#80745f"
+      }
+    ]
+  },
+  {
+    "name": "MyPetMemo products",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "Select your published Shopify products. These connect the homepage, navigation and pet personalization forms. Product prices and variants always come from Shopify."
+      },
+      {
+        "type": "product",
+        "id": "blanket_product",
+        "label": "Pet portrait blanket"
+      },
+      {
+        "type": "product",
+        "id": "ornament_product",
+        "label": "Christmas pet ornament"
+      },
+      {
+        "type": "product",
+        "id": "portrait_product",
+        "label": "Digital pet portrait"
+      },
+      {
+        "type": "product",
+        "id": "digital_addon_product",
+        "label": "Optional digital add-on product"
+      },
+      {
+        "type": "product",
+        "id": "ornament_addon_product",
+        "label": "Optional ornament add-on product"
+      }
+    ]
+  },
+  {
+    "name": "Social links",
+    "settings": [
+      {
+        "type": "url",
+        "id": "instagram_url",
+        "label": "Instagram"
+      },
+      {
+        "type": "url",
+        "id": "tiktok_url",
+        "label": "TikTok"
+      },
+      {
+        "type": "url",
+        "id": "facebook_url",
+        "label": "Facebook"
+      }
+    ]
+  }
+]

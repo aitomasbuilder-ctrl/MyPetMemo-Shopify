@@ -29,10 +29,11 @@
     "mug_short": "Their face on your morning coffee.",
     "mug_action": "Create my mug",
     "addon_tag": "MATCHING GIFT",
-    "portrait_tag": "Framed or digital",
+    "portrait_tag": "Digital or framed",
     "blanket_description": "Turn your favorite pet photo into a soft, personalized blanket. A familiar face, made for your favorite place.",
     "ornament_description": "A familiar face for your favorite tradition. Turn your pet photo into a personalized ornament to hang year after year.",
-    "portrait_description": "Your pet photo turned into personalized artwork. Choose the style, color, size and frame, and preview it before you buy."
+    "portrait_description": "Your pet photo turned into personalized artwork. Choose the style, color, size and frame, and preview it before you buy.",
+    "portrait_prices": "Digital from {{ digital }} · Framed from {{ framed }}"
   },
   "common": {
     "from": "from",
@@ -65,7 +66,10 @@
     "personalization_note": "Please check names, options, and photo attachments before checking out.",
     "extra": "A LITTLE MORE TO LOVE",
     "add_extra": "Add matching keepsake",
-    "for_product": "Matches your {{ title }}. Copies the pet photos and personalization from this keepsake."
+    "for_product": "Matches your {{ title }}. Copies the pet photos and personalization from this keepsake.",
+    "discount_matching_addon": "Matching add-on 15% off",
+    "discount_matching_set": "Matching set: 20% off both add-ons",
+    "payment_methods": "Payment methods"
   },
   "nav": {
     "best_sellers": "Best sellers",
@@ -102,7 +106,10 @@
     "note_bold": "A little piece of forever.",
     "value_1": "Your pet, beautifully reimagined",
     "value_2": "Personal details, endless meaning",
-    "value_3": "Made for the ones you love"
+    "value_3": "Made for the ones you love",
+    "create_blanket": "Create my blanket",
+    "prices": "Blankets from {{ blanket }} · Digital portrait from {{ digital }} · Framed portrait from {{ framed }}",
+    "preview": "Free preview: see your finished design before you pay."
   },
   "transform": {
     "eyebrow": "A PHOTO BECOMES A FEELING",
@@ -119,16 +126,18 @@
   },
   "styles": {
     "eyebrow": "SAME PET. YOUR POINT OF VIEW.",
-    "intro": "Four portrait styles. One familiar face.",
+    "intro": "Three portrait styles. Pick one and the portrait editor opens with it selected.",
     "watercolor": "Watercolor",
     "minimal": "Minimal",
-    "classic": "Classic",
+    "classic": "Classic Portrait",
     "vintage": "Vintage",
     "minimal_text": "Clean, simple, unmistakably them.",
-    "watercolor_text": "Soft brushstrokes. All their character.",
-    "classic_text": "Timeless detail. A familiar face.",
+    "watercolor_text": "Soft colors and painted edges.",
+    "classic_text": "Crisp detail in a framed oval.",
     "vintage_text": "Warm tones with an old-soul feel.",
-    "choose": "Choose this style"
+    "choose": "Choose this style",
+    "modern": "Modern Minimalist",
+    "modern_text": "Clean portrait on a solid color."
   },
   "gifting": {
     "eyebrow": "THE MOST PERSONAL PRESENT",
@@ -453,7 +462,8 @@
       "zoom_level": "Zoom level",
       "close_zoom": "Close zoom",
       "your_artwork_zoomed_in": "Your artwork, zoomed in",
-      "dates_example": "e.g. 2012 – 2026"
+      "dates_example": "e.g. 2012 – 2026",
+      "format": "Format"
     },
     "category": {
       "blankets": "Blankets",
@@ -465,7 +475,9 @@
       "features_christmas_blanket": "Christmas and 20+ other backgrounds|Your pet’s photo, turned into a portrait|Name",
       "features_memorial_blanket": "Soft clouds and 20+ other backgrounds|Your pet’s photo, turned into a portrait|Name",
       "features_blanket": "20+ backgrounds and colors|Your pet’s photo, turned into a portrait|Name",
-      "personalize": "Personalize this {{ noun }}"
+      "personalize": "Personalize this {{ noun }}",
+      "sizes": "Sizes",
+      "shapes": "Shapes"
     },
     "reviewcard": {
       "verified_purchase": "Verified purchase",
@@ -497,6 +509,71 @@
       "background": "Background",
       "style": "Style",
       "message": "Message"
+    },
+    "example": {
+      "label": "Example design · illustration",
+      "label_mockup": "Example design · illustrative mockup, not a photo of a delivered item",
+      "alt_portrait": "Example portrait of a dachshund in the Modern Minimalist style",
+      "alt_product": "Example design made from a pet photo (illustrative mockup)",
+      "styles": "Style examples (illustrations)",
+      "mockups": "Examples (illustrative mockups)"
+    },
+    "upload": {
+      "formats": "JPG, PNG, WebP or HEIC · up to {{ mb }} MB",
+      "formats_pets": "JPG, PNG, WebP or HEIC · up to {{ mb }} MB · dogs and cats"
+    },
+    "values": {
+      "star": "Star",
+      "circle": "Circle",
+      "heart": "Heart",
+      "snowflake": "Snowflake",
+      "one_size": "One Size",
+      "mug_15oz": "15oz",
+      "blanket_small": "50\" × 60\"",
+      "blanket_large": "60\" × 80\"",
+      "print_8x10": "8 × 10 in",
+      "print_12x16": "12 × 16 in",
+      "print_16x20": "16 × 20 in",
+      "print_24x36": "24 × 36 in",
+      "digital": "Digital file",
+      "black_frame": "Black frame",
+      "white_frame": "White frame",
+      "canvas": "Canvas, no frame"
     }
+  },
+  "proof": {
+    "eyebrow": "BEFORE YOU PAY",
+    "heading": "Check everything before you order.",
+    "intro": "We’re a new shop, so instead of borrowed reviews, here is exactly what you can see and check yourself.",
+    "preview_title": "Free preview of your design",
+    "preview_text": "Upload a photo and see your finished design on screen. Nothing is charged until checkout.",
+    "photo_title": "Made from your own photo",
+    "photo_text": "The artwork keeps your pet’s face and markings. Try again or use another photo before you approve.",
+    "checkout_title": "Secure checkout",
+    "checkout_text": "Payment runs through Shopify’s secure checkout. You see the shipping cost before you pay.",
+    "care_title": "Damaged or wrong item?",
+    "care_text": "Send us your order number and a photo within 30 days and we replace or refund it."
+  },
+  "delivery": {
+    "eyebrow": "DELIVERY",
+    "heading": "Made to order, then shipped to you.",
+    "intro": "Every item is printed after you approve your design. Digital portraits arrive by email.",
+    "title": "Delivery",
+    "production_label": "Production:",
+    "production": "2–5 business days, made to order.",
+    "shipping_label": "Shipping:",
+    "shipping": "3–10 business days with tracking. The cost is calculated at checkout before you pay.",
+    "arrival_label": "Estimated arrival:",
+    "arrival": "about {{ from }}–{{ to }} (estimate)",
+    "date_format": "%b %-d",
+    "blanket_origin": "Blankets are printed in the USA by our print partner and shipped from there.",
+    "digital": "Digital file: emailed after payment. Nothing is shipped.",
+    "policy": "Shipping policy",
+    "shipping_blanket_lt": "7–13 business days from the USA, with tracking. The cost is shown at checkout, before you pay."
+  },
+  "meta": {
+    "home_title": "Personalized Pet Blankets & Pet Portraits from Your Photo | MyPetMemo",
+    "home_description": "Turn your pet photo into a sherpa blanket or a digital or framed portrait. Free design preview before you pay. Made to order for dogs and cats.",
+    "default_description": "Personalized pet blankets and portraits made from your own pet photo, with a free design preview before you pay."
   }
 }

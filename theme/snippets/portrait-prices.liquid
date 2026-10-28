@@ -1,0 +1,34 @@
+{% doc %}
+  Prints a translated "from" line with live prices taken from the portrait's variants (current market's currency).
+  Digital = SKU MPM-DIGITAL… or a "Digital" option; framed = a "frame" option that is not "no frame"; canvas is left out.
+  @param {product} item - Portrait product
+  @param {string} key - Locale key that takes {{ digital }}, {{ framed }} and {{ blanket }}
+  @param {product} [blanket] - Blanket product, for {{ blanket }}
+{% enddoc %}
+{%- liquid
+  assign digital = nil
+  assign framed = nil
+  for v in item.variants
+    unless v.available
+      continue
+    endunless
+    assign opts = v.options | join: ' ' | downcase
+    if v.sku contains 'MPM-DIGITAL' or opts contains 'digital'
+      if digital == nil or v.price < digital
+        assign digital = v.price
+      endif
+    elsif opts contains 'frame'
+      unless opts contains 'no frame'
+        if framed == nil or v.price < framed
+          assign framed = v.price
+        endif
+      endunless
+    endif
+  endfor
+  assign digital = digital | default: item.price_min
+  assign framed = framed | default: item.price_max
+  assign digital_money = digital | money
+  assign framed_money = framed | money
+  assign blanket_money = blanket.price_min | money
+  echo key | t: digital: digital_money, framed: framed_money, blanket: blanket_money
+-%}

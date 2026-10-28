@@ -1,0 +1,30 @@
+{%- comment -%}
+  Honest proof: what a shopper can check before paying. Real customer reviews saved as mypetmemo_review entries
+  appear here automatically; nothing is shown when there are none, and no sample or invented reviews are used.
+{%- endcomment -%}
+<section class="mpm-proof wrap" id="reviews">
+  <p class="eyebrow">{{ 'proof.eyebrow' | t }}</p>
+  <h2>{{ 'proof.heading' | t }}</h2>
+  <p class="mpm-proof__intro">{{ 'proof.intro' | t }}</p>
+  <div class="mpm-proof__grid">
+    <div class="mpm-proof__item">{% render 'icon', name: 'sparkles', size: 22 %}<h3>{{ 'proof.preview_title' | t }}</h3><p>{{ 'proof.preview_text' | t }}</p></div>
+    <div class="mpm-proof__item">{% render 'icon', name: 'heart', size: 22 %}<h3>{{ 'proof.photo_title' | t }}</h3><p>{{ 'proof.photo_text' | t }}</p></div>
+    <div class="mpm-proof__item">{% render 'icon', name: 'shield', size: 22 %}<h3>{{ 'proof.checkout_title' | t }}</h3><p>{{ 'proof.checkout_text' | t }}</p></div>
+    <div class="mpm-proof__item">{% render 'icon', name: 'gift', size: 22 %}<h3>{{ 'proof.care_title' | t }}</h3><p>{{ 'proof.care_text' | t }}</p></div>
+  </div>
+  {%- assign real_reviews = shop.metaobjects.mypetmemo_review.values -%}
+  {%- if real_reviews.size > 0 -%}
+    <div class="mpm-proof__reviews">
+      {%- for review in real_reviews limit: 3 -%}
+        <figure class="mpm-proof__review"><p>{{ review.text | default: review.body | escape }}</p><small>{{ review.name | default: review.author | escape }}</small></figure>
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+</section>
+
+{% schema %}
+{
+  "name": "Before you pay",
+  "presets": [{ "name": "Before you pay" }]
+}
+{% endschema %}

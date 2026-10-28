@@ -160,6 +160,15 @@
         <canvas class="mps__canvas" data-canvas tabindex="0" role="img"
           aria-label="{% if section.settings.family == 'ornament' %}Ornament{% elsif section.settings.family == 'mug' %}Mug{% else %}Blanket{% endif %} preview. Use Adjust to move, resize or rotate your pet and the name."></canvas>
 
+        {%- if section.settings.family != 'mug' -%}
+          {%- comment -%} Shown until a photo is chosen. An illustrative mockup, kept apart from the print file. {%- endcomment -%}
+          <figure class="mps__example" data-example>
+            {%- assign example_alt = 'mpm.example.alt_product' | t -%}
+            {% render 'pet-image', kind: section.settings.family, tile: 0, alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px' %}
+            <figcaption>{{ 'mpm.example.label_mockup' | t }}</figcaption>
+          </figure>
+        {%- endif -%}
+
         <div class="mps__gallery" data-gallery hidden>
           <div class="mps__gallery-main" data-gallery-main></div>
           <button type="button" class="mps__gallery-nav mps__gallery-nav--prev" data-gallery-prev aria-label="{{ 'mpm.studio.previous_photo' | t | escape }}">&#8249;</button>
@@ -228,7 +237,7 @@
         <label class="mps__dropzone" for="PetPhoto-{{ section.id }}" data-dropzone>
           <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3l5 5h-3v6h-4V8H7l5-5zm-8 14h16v4H4v-4z"/></svg>
           <span><strong>{{ 'mpm.studio.choose_a_photo' | t }}</strong> {{ 'mpm.studio.or_drag_it_here' | t }}</span>
-          <small>JPG, PNG, WebP or HEIC · up to {{ section.settings.max_upload_mb }} MB</small>
+          <small>{{ 'mpm.upload.formats' | t: mb: section.settings.max_upload_mb }}</small>
         </label>
         <ul class="mps__tips">
           <li>{{ 'mpm.studio.one_pet_per_photo' | t }}</li>
@@ -268,6 +277,7 @@
             </div>
           </div>
         </div>
+        {%- if section.settings.family != 'mug' -%}{% render 'gen-examples', kind: section.settings.family %}{%- endif -%}
         <div class="mps__gen-info" data-gen-info{% if rv_json != '' or rv_sample %} hidden{% endif %}>
           <p class="mps__gen-kicker">{{ 'mpm.studio.how_your_photo_becomes_a_portrai' | t }}</p>
           <ol>
@@ -429,6 +439,9 @@
       </button>
       <p class="mps__hint mps__approve-note" data-approve-note hidden>{{ 'mpm.studio.adding_to_cart_approves_this_des' | t }}</p>
       <p class="mps__status" data-cart-status aria-live="polite"></p>
+      {%- capture delivery_kind -%}{% render 'product-kind', item: product %}{%- endcapture -%}
+      {%- assign delivery_kind = delivery_kind | strip -%}
+      {% render 'delivery-info', kind: delivery_kind %}
 
       {%- if section.settings.email_capture -%}
         <div class="mps__email">

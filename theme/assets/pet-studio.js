@@ -768,7 +768,9 @@
         extras: qa('[data-extra]'), suggestions: qa('[data-suggest]'), styles: qa('[data-style]'),
         artStyles: qa('[data-art-style]'), scenes: qa('[data-scene]'), roomNav: q('[data-room-nav]'), roomName: q('[data-room-name]'),
         zoomDialog: q('[data-zoom-dialog]'), zoomImg: q('[data-zoom-img]'), memorialOnly: qa('[data-memorial-only]'),
-        approvedBadge: q('[data-approved]'), frameHint: q('[data-frame-hint]'), digitalNote: q('[data-digital-note]')
+        approvedBadge: q('[data-approved]'), frameHint: q('[data-frame-hint]'), digitalNote: q('[data-digital-note]'),
+        formatGroup: q('[data-format-group]'), variantSummary: q('[data-price-inline-note]'),
+        example: q('[data-example]'), delivery: q('[data-delivery]')
       };
       this.P = window.MyPetMemoPortrait || null;
       this.state = {
@@ -1066,7 +1068,60 @@
           button.addEventListener('keydown', e => this.radioKeys(e, group, '[data-option-value]'));
         });
       });
+      if (this.isPortrait() && this.el.formatGroup) this.initFormats();
       this.resolveVariant(-1, { silent: true });
+    }
+    /** Portrait: digital file, framed print or canvas. Chosen first; the size and frame groups then only show what that format offers. */
+    formatOf(variant = this.state.variant) {
+      const k = this.frameKind(variant);
+      return k === 'digital' || k === 'canvas' ? k : 'framed';
+    }
+    initFormats() {
+      const { config, el } = this;
+      const money = c => formatMoney(c, config.moneyFormat);
+      const labels = { digital: 'Digital file', framed: 'Framed print', canvas: 'Canvas' };
+      ['digital', 'framed', 'canvas'].forEach(f => {
+        const variants = config.variants.filter(v => v.available && this.formatOf(v) === f);
+        if (!variants.length) return;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'mps__option mpp__format';
+        b.setAttribute('role', 'radio');
+        b.dataset.format = f;
+        const main = document.createElement('span'), sub = document.createElement('span');
+        main.className = 'mps__option-main'; sub.className = 'mps__option-sub';
+        main.textContent = T(labels[f]);
+        sub.textContent = T('from {price}', { price: money(Math.min(...variants.map(v => v.price))) });
+        b.append(main, sub);
+        b.addEventListener('click', () => this.chooseFormat(f));
+        b.addEventListener('keydown', e => this.radioKeys(e, el.formatGroup, '[data-format]'));
+        el.formatGroup.append(b);
+      });
+      const wrap = el.formatGroup.closest('[data-format-wrap]');
+      if (wrap) wrap.hidden = el.formatGroup.children.length < 2;
+    }
+    chooseFormat(format) {
+      const { config } = this, names = config.optionNames || [];
+      const si = names.findIndex(n => /size/i.test(n)), fi = names.findIndex(n => /frame|finish|format/i.test(n));
+      const cur = this.state.variant;
+      if (cur && this.formatOf(cur) === format) return;
+      const variants = config.variants.filter(v => v.available && this.formatOf(v) === format);
+      if (!variants.length) return;
+      const sameSize = v => cur && si >= 0 && v.options[si] === cur.options[si];
+      const lastFrame = v => !this.lastFrame || fi < 0 || v.options[fi] === this.lastFrame;
+      const pick = variants.find(v => sameSize(v) && lastFrame(v)) || variants.find(sameSize)
+        || variants.filter(lastFrame).sort((a, b) => a.price - b.price)[0] || variants.slice().sort((a, b) => a.price - b.price)[0];
+      this.selectedOptions = pick.options.slice();
+      this.resolveVariant(-1);
+    }
+    /** "20 × 25 cm (8 × 10 in) · Black frame", or the digital delivery line. */
+    variantSummary(variant = this.state.variant) {
+      if (!variant) return '';
+      if (this.isDigital(variant)) return T('Digital file · delivered by email');
+      const i = this.sizeInches(variant);
+      const size = i ? (METRIC ? `${Math.round(i.w * 2.54)} × ${Math.round(i.h * 2.54)} cm (${i.w} × ${i.h} in)` : `${i.w} × ${i.h} in (${Math.round(i.w * 2.54)} × ${Math.round(i.h * 2.54)} cm)`) : '';
+      const frame = this.P && this.P.FRAMES[this.frameKind(variant)];
+      return [size, frame ? T(frame.label) : ''].filter(Boolean).join(' · ');
     }
     resolveVariant(changedIndex, opts = {}) {
       const { config } = this;
@@ -1257,6 +1312,7 @@
     }
     async handleFile(file) {
       this.clearError();
+      this.emit('pet-studio:upload-started', { type: (file.type || '').toLowerCase() || 'unknown' });
       if (this.state.galleryOpen) this.toggleGallery(false);
       const maxMb = this.config.maxUploadMb || 20;
       const type = (file.type || '').toLowerCase();
@@ -1282,8 +1338,9 @@
       }
       const minSide = this.config.minPhotoSide || 500;
       if (Math.min(bitmap.width, bitmap.height) < minSide) {
+        const { width: w, height: h } = bitmap;
         if (bitmap.close) bitmap.close();
-        return this.showError(new StudioError('small', T('This photo is too small to print well ({w} × {h} px). Please use one at least {min} px on its shortest side.', { w: bitmap.width, h: bitmap.height, min: minSide }), false));
+        return this.showError(new StudioError('small', T('This photo is too small to print well ({w} × {h} px). Please use one at least {min} px on its shortest side.', { w, h, min: minSide }), false));
       }
       let blob;
       try { blob = await normalizePhoto(bitmap); }
@@ -1292,6 +1349,7 @@
       if (this.state.photo && this.state.photo.url) URL.revokeObjectURL(this.state.photo.url);
       this.state.photo = { blob, hash, url: URL.createObjectURL(blob) };
       kv.set(`photo:${this.config.productId}`, { blob, hash, at: Date.now() });
+      this.emit('pet-studio:upload-succeeded');
       this.generate();
     }
     retry() {
@@ -1420,7 +1478,7 @@
       const { el } = this;
       const start = performance.now();
       const expected = this.config.progressSeconds || 60;
-      const steps = [[0, T('Uploading your photo and creating your portrait…')]];
+      const steps = [[0, T('Uploading your photo and creating your portrait…')], [0.25, T('Finding your pet in the photo…')], [0.5, T('Painting the artwork…')], [0.75, T('Adding the final details…')]];
       this.progressFloor = 0;
       this.progressLocked = false;
       el.gen.hidden = false;
@@ -2200,15 +2258,32 @@
       const si = names.findIndex(n => /size/i.test(n)), fi = names.findIndex(n => /frame|finish|format/i.test(n));
       const v = this.state.variant, digital = this.isDigital();
       const money = c => formatMoney(c, config.moneyFormat);
+      const format = this.formatOf(v), formats = !!el.formatGroup && el.formatGroup.children.length > 1;
+      if (format === 'framed' && fi >= 0) this.lastFrame = v.options[fi];
+      if (el.formatGroup) el.formatGroup.querySelectorAll('[data-format]').forEach(b => {
+        const on = b.dataset.format === format;
+        b.setAttribute('aria-checked', String(on));
+        b.tabIndex = on ? 0 : -1;
+      });
+      if (el.variantSummary) el.variantSummary.textContent = this.variantSummary(v);
       el.optionGroups.forEach(group => {
         const index = Number(group.dataset.optionGroup) - 1;
+        if (formats && index === fi) {
+          // Frame colour only matters for framed prints; digital and canvas are chosen in Format.
+          const wrap = group.closest('.mps__group');
+          const colours = Array.from(group.querySelectorAll('[data-option-value]'));
+          colours.forEach(btn => { btn.hidden = !['black', 'white', 'wood'].includes(this.P.frameKind(btn.dataset.optionValue)); });
+          if (wrap) wrap.hidden = format !== 'framed' || colours.filter(b => !b.hidden).length < 2;
+          return;
+        }
         if (index !== si) return;
         const wrap = group.closest('.mps__group');
         if (wrap) wrap.hidden = digital;
         group.querySelectorAll('[data-option-value]').forEach(btn => {
           const val = btn.dataset.optionValue;
           const all = config.variants.filter(x => x.options[si] === val);
-          btn.hidden = all.length > 0 && all.every(x => this.isDigital(x));
+          btn.hidden = (all.length > 0 && all.every(x => this.isDigital(x)))
+            || (formats && !all.some(x => x.available && this.formatOf(x) === format));
           const match = all.find(x => x.available && (fi < 0 || x.options[fi] === v.options[fi]));
           btn.disabled = !match && val !== v.options[si];
           const sub = btn.querySelector('[data-size-sub]');
@@ -2222,6 +2297,7 @@
         el.frameHint.hidden = !el.frameHint.textContent;
       }
       if (el.digitalNote) el.digitalNote.hidden = !digital;
+      if (el.delivery) el.delivery.classList.toggle('is-digital', digital);
       this.updateSceneButtons();
     }
     sceneMode() {
@@ -2516,6 +2592,9 @@
       this.el.nameErrors.forEach(n => { n.textContent = msg; n.hidden = !msg; });
       return !msg;
     }
+    emit(name, detail = {}) {
+      if (!this.headless) this.root.dispatchEvent(new CustomEvent(name, { bubbles: true, detail }));
+    }
     setPhase(phase) {
       this.state.phase = phase;
       this.updateUI();
@@ -2575,6 +2654,8 @@
     updateUI() {
       const s = this.state, { el } = this;
       const has = !!s.artwork;
+      // The labelled example only fills the empty preview; it goes as soon as a photo is chosen.
+      if (el.example) el.example.hidden = !!s.photo || s.phase !== 'empty';
       const v = s.variant;
       const available = !!(v && v.available);
       let label;
@@ -2781,6 +2862,7 @@
         this.clampAll();
         const design = this.designData();
         const approval = await this.approve(design);
+        this.emit('pet-studio:approved', { id: approval.id });
         if (await this.inCart(approval.id)) {
           s.addedId = approval.id;
           this.persist();
@@ -2944,7 +3026,7 @@
   else init();
   document.addEventListener('shopify:section:load', e => init(e.target));
 
-  // Customer events for analytics: a custom pixel can subscribe to mpm_preview_ready and mpm_design_added.
+  // Customer events for analytics: a custom pixel can subscribe to the mpm_* events below.
   const track = (name, root, data) => {
     const studio = root && root.__petStudio;
     const a = window.Shopify && window.Shopify.analytics;
@@ -2953,7 +3035,12 @@
       a.publish(name, Object.assign({ family: studio.familyKey(), locale: document.documentElement.lang || '' }, data));
     } catch (_) { /* analytics must never break the studio */ }
   };
+  // Funnel: upload started → upload succeeded → preview ready → design approved → design added.
+  // Add to cart, checkout started and purchase come from Shopify's standard events, so they are not sent again here.
+  document.addEventListener('pet-studio:upload-started', e => track('mpm_upload_started', e.target, { file_type: e.detail.type }));
+  document.addEventListener('pet-studio:upload-succeeded', e => track('mpm_upload_succeeded', e.target, {}));
   document.addEventListener('pet-studio:generated', e => track('mpm_preview_ready', e.target, { ms: e.detail.ms }));
+  document.addEventListener('pet-studio:approved', e => { if (e.detail && e.detail.id) track('mpm_design_approved', e.target, { design_id: e.detail.id }); });
   document.addEventListener('pet-studio:added', e => track('mpm_design_added', e.target, { design_id: e.detail.id }));
 
   window.MyPetMemoStudio = {

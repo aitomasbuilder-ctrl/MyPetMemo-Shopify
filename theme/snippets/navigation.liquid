@@ -1,0 +1,16 @@
+{% doc %}
+  Renders a Shopify menu or the MyPetMemo default navigation.
+  @param {linklist} [menu] - Navigation menu
+{% enddoc %}
+{% if menu.links.size > 0 %}
+  {% for link in menu.links %}
+    {% if link.links.size > 0 %}<details class="nav-dropdown"><summary>{{ link.title | escape }}</summary><div><a href="{{ link.url }}">{{ link.title | escape }}</a>{% for child in link.links %}<a href="{{ child.url }}">{{ child.title | escape }}</a>{% endfor %}</div></details>{% else %}<a href="{{ link.url }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title | escape }}</a>{% endif %}
+  {% endfor %}
+{% else %}
+  <a href="{{ routes.root_url }}#bestsellers">{{ 'nav.best_sellers' | t }}</a>
+  {%- assign blanket_category = collections['pet-blankets'] -%}
+  <a href="{% if blanket_category.products_count > 0 %}{{ blanket_category.url }}{% else %}{% render 'product-link', kind: 'blanket' %}{% endif %}">{{ 'nav.blankets' | t }}</a>
+  <a href="{% render 'product-link', kind: 'ornament' %}">{{ 'nav.christmas' | t }}</a>
+  <a href="{% render 'product-link', kind: 'portrait' %}">{{ 'nav.portraits' | t }}</a>
+  <a href="{{ routes.root_url }}#how-it-works">{{ 'nav.how' | t }}</a>
+{% endif %}
