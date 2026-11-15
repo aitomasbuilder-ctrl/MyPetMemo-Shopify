@@ -1,21 +1,180 @@
-/*
- * ------------------------------------------------------------
- * IMPORTANT: The contents of this file are auto-generated.
- *
- * This file may be updated by the Shopify admin theme editor
- * or related systems. Please exercise caution as any changes
- * made to this file may be overwritten.
- * ------------------------------------------------------------
- */
 {
   "sections": {
-    "hero": {
-      "type": "hero",
-      "settings": {
-        "eyebrow": "FOR THE PETS WHO ARE FAMILY",
-        "heading": "Turn your favorite pet photo into something forever.",
-        "text": "Soft sherpa blankets and pet portraits, digital or framed, made from your own pet photo. Upload a photo, see your design free and order only when you love it."
-      }
+    "rd_hero": {
+      "type": "rd-hero",
+      "settings": {}
+    },
+    "rd_products": {
+      "type": "rd-products",
+      "blocks": {
+        "p0": {
+          "type": "product",
+          "settings": {
+            "product": "custom-pet-portrait-blanket",
+            "kind": "blanket",
+            "image": "shopify://shop_images/mpm-gallery-0.jpg"
+          }
+        },
+        "p1": {
+          "type": "product",
+          "settings": {
+            "product": "christmas-pet-portrait-blanket",
+            "kind": "blanket"
+          }
+        },
+        "p2": {
+          "type": "product",
+          "settings": {
+            "product": "cozy-hooded-sherpa-fleece-blanket",
+            "kind": "blanket"
+          }
+        },
+        "p3": {
+          "type": "product",
+          "settings": {
+            "product": "personalized-pet-portrait",
+            "kind": "portrait",
+            "image": "shopify://shop_images/mpm-portrait-dachshund-0.jpg"
+          }
+        },
+        "p4": {
+          "type": "product",
+          "settings": {
+            "product": "custom-pet-christmas-ornament",
+            "kind": "ornament",
+            "image": "shopify://shop_images/hf_20261012_133726_5358539c-5c6e-4a13-aba1-3f621be52b8d.png"
+          }
+        },
+        "p5": {
+          "type": "product",
+          "settings": {
+            "product": "pet-memorial-ornament",
+            "kind": "ornament",
+            "image": "shopify://shop_images/hf_20261012_133917_325a1351-c5aa-4de5-a9dc-6d014c4bdaae.png"
+          }
+        },
+        "p6": {
+          "type": "product",
+          "settings": {
+            "product": "pet-memorial-blanket",
+            "kind": "blanket"
+          }
+        },
+        "p7": {
+          "type": "product",
+          "settings": {
+            "product": "personalized-pet-coffee-mug",
+            "kind": "blanket"
+          }
+        }
+      },
+      "block_order": [
+        "p0",
+        "p1",
+        "p2",
+        "p3",
+        "p4",
+        "p5",
+        "p6",
+        "p7"
+      ],
+      "settings": {}
+    },
+    "rd_categories": {
+      "type": "rd-categories",
+      "blocks": {
+        "t0": {
+          "type": "tile",
+          "settings": {
+            "title_en": "Blankets",
+            "title_lt": "Pledai",
+            "image": "shopify://shop_images/mpm-gallery-3.jpg",
+            "kind": "blanket",
+            "link": "shopify://collections/pet-blankets"
+          }
+        },
+        "t1": {
+          "type": "tile",
+          "settings": {
+            "title_en": "Pet portraits",
+            "title_lt": "Augintinių portretai",
+            "image": "shopify://shop_images/mpm-portrait-dachshund-8.jpg",
+            "kind": "portrait",
+            "product": "personalized-pet-portrait"
+          }
+        },
+        "t2": {
+          "type": "tile",
+          "settings": {
+            "title_en": "Christmas ornaments",
+            "title_lt": "Kalėdiniai žaisliukai",
+            "image": "shopify://shop_images/mpm-ornament-french-bulldog-0.jpg",
+            "kind": "ornament",
+            "product": "custom-pet-christmas-ornament"
+          }
+        },
+        "t3": {
+          "type": "tile",
+          "settings": {
+            "title_en": "Memorial gifts",
+            "title_lt": "Atminimo dovanos",
+            "image": "shopify://shop_images/hf_20261012_134003_c32e40f1-8c06-4103-a38d-6e20ed9504e9.png",
+            "kind": "blanket",
+            "link": "shopify://collections/pet-memorial-gifts"
+          }
+        }
+      },
+      "block_order": [
+        "t0",
+        "t1",
+        "t2",
+        "t3"
+      ],
+      "settings": {}
+    },
+    "rd_steps": {
+      "type": "rd-steps",
+      "settings": {}
+    },
+    "rd_story": {
+      "type": "rd-story",
+      "blocks": {
+        "r0": {
+          "type": "row",
+          "settings": {
+            "image": "shopify://shop_images/mpm-gallery-7.jpg",
+            "eyebrow_en": "For Christmas",
+            "eyebrow_lt": "Kalėdoms",
+            "heading_en": "A gift they will keep for years",
+            "heading_lt": "Dovana, kurią jie saugos ilgus metus",
+            "text_en": "A blanket or ornament with their beloved pet’s portrait is a personal gift for family, friends or yourself. You design it in a few minutes and see it before you pay.",
+            "text_lt": "Pledas ar žaisliukas su mylimo augintinio portretu – asmeniška dovana šeimai, draugams ar sau. Sukursite ją per kelias minutes ir pamatysite prieš mokėdami.",
+            "button_en": "Christmas gifts",
+            "button_lt": "Kalėdinės dovanos",
+            "link": "shopify://collections/christmas-gifts"
+          }
+        },
+        "r1": {
+          "type": "row",
+          "settings": {
+            "image": "shopify://shop_images/hf_20261012_133829_bf8653e8-a093-4677-8b9e-980d25e5bcd2.png",
+            "eyebrow_en": "In loving memory",
+            "eyebrow_lt": "Atminimui",
+            "heading_en": "When they are gone, the love stays",
+            "heading_lt": "Kai jo nebėra šalia, meilė lieka",
+            "text_en": "A memorial ornament or blanket with your pet’s portrait, name and dates. A gentle way to keep them close every day.",
+            "text_lt": "Atminimo žaisliukas ar pledas su augintinio portretu, vardu ir datomis – švelnus būdas jį prisiminti kasdien.",
+            "button_en": "Memorial gifts",
+            "button_lt": "Atminimo dovanos",
+            "link": "shopify://collections/pet-memorial-gifts"
+          }
+        }
+      },
+      "block_order": [
+        "r0",
+        "r1"
+      ],
+      "settings": {}
     },
     "transform": {
       "type": "transformation",
@@ -23,21 +182,13 @@
         "heading": "From your camera roll to your favorite keepsake."
       }
     },
-    "featured": {
-      "type": "featured-products",
-      "settings": {
-        "eyebrow": "MADE FOR YOUR KIND OF LOVE",
-        "heading": "Their face. Your favorite things.",
-        "addons_eyebrow": "COMPLETE THE GIFT",
-        "addons_heading": "Matching keepsakes, same pet.",
-        "addons_text": "Add an ornament or mug made from the same portrait. With a blanket or portrait in your cart, one add-on is 15% off, or two add-ons are 20% off each. The discount applies to the add-ons only."
-      }
+    "rd_usp": {
+      "type": "rd-usp",
+      "settings": {}
     },
-    "styles": {
-      "type": "portrait-styles",
-      "settings": {
-        "heading": "Find your kind of forever."
-      }
+    "delivery": {
+      "type": "mpm-delivery",
+      "settings": {}
     },
     "faq": {
       "type": "faq",
@@ -120,75 +271,16 @@
       "settings": {
         "heading": "Good questions. Honest answers."
       }
-    },
-    "proof": {
-      "type": "mpm-proof",
-      "settings": {}
-    },
-    "delivery": {
-      "type": "mpm-delivery",
-      "settings": {}
-    },
-    "lt_steps": {
-      "type": "how-it-works",
-      "blocks": {
-        "s1": {
-          "type": "step",
-          "settings": {
-            "heading": "1. Įkelk nuotrauką",
-            "text": "Užtenka aiškios nuotraukos iš telefono, kurioje matosi visas augintinio snukutis.",
-            "icon": "upload"
-          }
-        },
-        "s2": {
-          "type": "step",
-          "settings": {
-            "heading": "2. Sukurk savo dizainą",
-            "text": "Pasirink stilių, pridėk vardą, jei nori, ir nemokamai peržiūrėk rezultatą.",
-            "icon": "sparkles"
-          }
-        },
-        "s3": {
-          "type": "step",
-          "settings": {
-            "heading": "3. Užsisakyk ypatingą dovaną",
-            "text": "Patvirtink dizainą ir įsidėk į krepšelį. Kiekvienas gaminys gaminamas pagal užsakymą.",
-            "icon": "gift"
-          }
-        }
-      },
-      "block_order": [
-        "s1",
-        "s2",
-        "s3"
-      ],
-      "settings": {
-        "heading": "Kaip sukurti dovaną",
-        "only_locale": "lt"
-      }
-    },
-    "lt_christmas": {
-      "type": "mpm-christmas",
-      "settings": {
-        "only_locale": "lt",
-        "eyebrow": "KALĖDINĖS DOVANOS",
-        "heading": "Kalėdinė dovana, kuri turi prasmę.",
-        "text": "Nustebink artimą žmogų asmenine dovana su jo mylimo augintinio nuotrauka.",
-        "blanket_handle": "christmas-pet-portrait-blanket",
-        "blanket_label": "Kalėdinis pledas",
-        "ornament_handle": "custom-pet-christmas-ornament",
-        "ornament_label": "Kalėdinis žaisliukas"
-      }
     }
   },
   "order": [
-    "hero",
-    "lt_steps",
-    "featured",
-    "lt_christmas",
+    "rd_hero",
+    "rd_products",
+    "rd_categories",
+    "rd_steps",
+    "rd_story",
     "transform",
-    "styles",
-    "proof",
+    "rd_usp",
     "delivery",
     "faq"
   ]

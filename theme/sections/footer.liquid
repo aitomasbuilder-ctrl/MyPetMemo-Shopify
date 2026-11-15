@@ -1,11 +1,24 @@
-<footer class="footer">
-  <div class="wrap footer-main">
-    <div class="footer-brand"><a class="wordmark" href="{{ routes.root_url }}">{{ settings.brand_name | escape }}{% render 'icon', name: 'heart', size: 16 %}</a><p>{{ 'footer.tagline' | t }}<br>{{ 'footer.personal' | t }}</p>{% if settings.support_email != blank %}<a href="mailto:{{ settings.support_email | escape }}">{{ settings.support_email | escape }}</a>{% endif %}</div>
+<footer class="footer rd-footer">
+  <div class="rd-wrap rd-footer__main">
+    <div class="rd-footer__brand">
+      <a class="wordmark" href="{{ routes.root_url }}">{{ settings.brand_name | escape }}{% render 'icon', name: 'heart', size: 16 %}</a>
+      <p>{{ 'footer.tagline' | t }}<br>{{ 'footer.personal' | t }}</p>
+      {% if settings.support_email != blank %}<a class="rd-footer__mail" href="mailto:{{ settings.support_email | escape }}">{{ settings.support_email | escape }}</a>{% endif %}
+      <div class="rd-footer__social">
+        {%- if settings.facebook_url != blank -%}<a href="{{ settings.facebook_url }}" rel="noopener" target="_blank" aria-label="{{ 'social.facebook' | t }}"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3.1Z"/></svg></a>{%- endif -%}
+        {%- if settings.instagram_url != blank -%}<a href="{{ settings.instagram_url }}" rel="noopener" target="_blank" aria-label="{{ 'social.instagram' | t }}"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".9" fill="currentColor" stroke="none"/></svg></a>{%- endif -%}
+        {%- if settings.tiktok_url != blank -%}<a href="{{ settings.tiktok_url }}" rel="noopener" target="_blank" aria-label="{{ 'social.tiktok' | t }}"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M16.6 3h-3v12.2a2.6 2.6 0 1 1-2.6-2.6c.3 0 .6 0 .8.1V9.6a5.7 5.7 0 1 0 4.8 5.6V9.1a7 7 0 0 0 4 1.3V7.3a4 4 0 0 1-4-4.3Z"/></svg></a>{%- endif -%}
+      </div>
+    </div>
     <div><h3>{{ 'footer.shop' | t }}</h3>{% render 'navigation' %}</div>
-    <div><h3>{{ 'footer.help' | t }}</h3>{% if section.settings.help_menu.links.size > 0 %}{% for link in section.settings.help_menu.links %}<a href="{{ link.url }}">{{ link.title | escape }}</a>{% endfor %}{% else %}{% assign photo_guide_product = settings.blanket_product | default: all_products['custom-pet-portrait-blanket'] %}<a href="mailto:{{ settings.support_email | escape }}">{{ 'footer.contact' | t }}</a><a href="{{ routes.root_url }}#faq">{{ 'footer.faq' | t }}</a><a href="{{ routes.root_url }}#delivery">{{ 'delivery.title' | t }}</a><a href="{{ photo_guide_product.url }}#photo-guide">{{ 'footer.photo_guide' | t }}</a>{% for policy in shop.policies %}{% if policy.body != blank %}<a href="{{ policy.url }}">{{ policy.title | escape }}</a>{% endif %}{% endfor %}{% endif %}</div>
-    <div><h3>{{ 'footer.world' | t }}</h3>{% if section.settings.about_page != blank %}<a href="{{ section.settings.about_page.url }}">{{ 'footer.story' | t }}</a>{% endif %}<a href="{{ routes.root_url }}#how-it-works">{{ 'nav.how' | t }}</a>{% if settings.instagram_url != blank %}<a href="{{ settings.instagram_url }}" rel="noopener" target="_blank">{{ 'social.instagram' | t }}</a>{% endif %}{% if settings.tiktok_url != blank %}<a href="{{ settings.tiktok_url }}" rel="noopener" target="_blank">{{ 'social.tiktok' | t }}</a>{% endif %}{% if settings.facebook_url != blank %}<a href="{{ settings.facebook_url }}" rel="noopener" target="_blank">{{ 'social.facebook' | t }}</a>{% endif %}</div>
+    <div><h3>{{ 'footer.help' | t }}</h3>{% if section.settings.help_menu.links.size > 0 %}{% for link in section.settings.help_menu.links %}<a href="{{ link.url }}">{{ link.title | escape }}</a>{% endfor %}{% else %}{% assign photo_guide_product = settings.blanket_product | default: all_products['custom-pet-portrait-blanket'] %}<a href="mailto:{{ settings.support_email | escape }}">{{ 'footer.contact' | t }}</a><a href="{{ routes.root_url }}#faq">{{ 'footer.faq' | t }}</a><a href="{{ routes.root_url }}#delivery">{{ 'delivery.title' | t }}</a><a href="{{ photo_guide_product.url }}#photo-guide">{{ 'footer.photo_guide' | t }}</a>{% if section.settings.about_page != blank %}<a href="{{ section.settings.about_page.url }}">{{ 'footer.story' | t }}</a>{% endif %}{% endif %}</div>
+    <div><h3>{% render 'rd-t', en: 'Legal', lt: 'Teisinė informacija' %}</h3>{% for policy in shop.policies %}{% if policy.body != blank %}<a href="{{ policy.url }}">{{ policy.title | escape }}</a>{% endif %}{% endfor %}</div>
   </div>
-  <div class="wrap footer-bottom"><span>© {{ 'now' | date: '%Y' }} {{ settings.brand_name | escape }}</span><div>{% for policy in shop.policies %}{% if policy.body != blank %}<a href="{{ policy.url }}">{{ policy.title | escape }}</a>{% endif %}{% endfor %}</div><span>{{ localization.country.name | escape }} · {{ cart.currency.iso_code }}</span></div>
+  <div class="rd-wrap rd-footer__bottom">
+    <span class="rd-footer__market">{{ localization.country.name | escape }} ({{ cart.currency.iso_code }})</span>
+    <span>© {{ 'now' | date: '%Y' }} {{ settings.brand_name | escape }}</span>
+    <ul class="rd-footer__pay" aria-label="{% render 'rd-t', en: 'Payment methods', lt: 'Mokėjimo būdai' %}">{%- for type in shop.enabled_payment_types -%}<li>{{ type | payment_type_svg_tag }}</li>{%- endfor -%}</ul>
+  </div>
 </footer>
 
 {% schema %}
