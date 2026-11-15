@@ -417,3 +417,9 @@ html body .mps .mps__thumb-btn.mps__thumb-btn--design { background: var(--rd-san
 .rd-paytrust p svg { color: var(--rd-cta); }
 .rd-paytrust__icons { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .rd-paytrust__icons svg { width: 34px; height: 22px; display: block; }
+
+/* Portrait page: same green buttons and eyebrow as the rest of the store */
+html body .mps.mps--portrait .mps__btn--primary { background: var(--rd-cta); }
+html body .mps.mps--portrait .mps__btn--primary:hover:not(:disabled) { background: var(--rd-cta-hover); }
+html body .mps--portrait .mpp__eyebrow { color: var(--rd-cta); font-family: var(--rd-font); letter-spacing: .08em; }
+html body .mps.mps--portrait { --mpp-pink: var(--rd-sand); --mpp-pink-2: #b9b2a3; }
