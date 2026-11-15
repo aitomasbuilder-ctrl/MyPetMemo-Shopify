@@ -10,7 +10,12 @@
       {%- for block in section.blocks -%}
         {%- assign item = block.settings.product -%}
         {%- if item != blank and item.available -%}
-          <div class="rd-grid__item" {{ block.shopify_attributes }}>{% render 'rd-card', item: item, image: block.settings.image, kind: block.settings.kind %}</div>
+          <div class="rd-grid__item" {{ block.shopify_attributes }}>{%- liquid
+            assign badge = block.settings.badge_en
+            if request.locale.iso_code == 'lt'
+              assign badge = block.settings.badge_lt
+            endif
+          -%}{% render 'rd-card', item: item, image: block.settings.image, hover: block.settings.hover, kind: block.settings.kind, badge: badge %}</div>
         {%- endif -%}
       {%- endfor -%}
     </div>
@@ -28,6 +33,9 @@
       "settings": [
         { "type": "product", "id": "product", "label": "Product" },
         { "type": "image_picker", "id": "image", "label": "Card image (optional)" },
+        { "type": "image_picker", "id": "hover", "label": "Hover image (optional)" },
+        { "type": "text", "id": "badge_en", "label": "Label (English)" },
+        { "type": "text", "id": "badge_lt", "label": "Label (Lithuanian)" },
         { "type": "select", "id": "kind", "label": "Sample image when the product has no photo", "options": [ { "value": "blanket", "label": "Blanket" }, { "value": "ornament", "label": "Ornament" }, { "value": "portrait", "label": "Portrait" } ], "default": "blanket" }
       ]
     }

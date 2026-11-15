@@ -4,12 +4,15 @@
   @param {image} [image] - Image to show instead of the product photo
   @param {string} [kind] - blanket, ornament or portrait: use a MyPetMemo sample illustration when the product has no photo
   @param {string} [badge] - Small label on the image
+  @param {image} [hover] - Image shown on hover instead of the product photo
 {% enddoc %}
 {%- liquid
   assign title = item.title | split: ' – ' | first | split: ' - ' | first
   assign main_image = image | default: item.featured_image
   assign hover_image = nil
-  if image != blank
+  if hover != blank
+    assign hover_image = hover
+  elsif image != blank
     assign hover_image = item.featured_image
   elsif item.images.size > 1
     assign hover_image = item.images[1]

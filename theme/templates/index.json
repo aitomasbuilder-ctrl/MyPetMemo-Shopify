@@ -12,21 +12,29 @@
           "settings": {
             "product": "custom-pet-portrait-blanket",
             "kind": "blanket",
-            "image": "shopify://shop_images/mpm-gallery-0.jpg"
+            "image": "shopify://shop_images/mpm-gallery-0.jpg",
+            "hover": "shopify://shop_images/mpm-gallery-3.jpg"
           }
         },
         "p1": {
           "type": "product",
           "settings": {
             "product": "christmas-pet-portrait-blanket",
-            "kind": "blanket"
+            "kind": "blanket",
+            "image": "shopify://shop_images/11010451392216290013_2048.jpg",
+            "hover": "shopify://shop_images/2123783775463480541_2048.jpg",
+            "badge_en": "Christmas",
+            "badge_lt": "Kalėdoms"
           }
         },
         "p2": {
           "type": "product",
           "settings": {
             "product": "cozy-hooded-sherpa-fleece-blanket",
-            "kind": "blanket"
+            "kind": "blanket",
+            "hover": "shopify://shop_images/17376613350854401492_2048.jpg",
+            "badge_en": "New",
+            "badge_lt": "Naujiena"
           }
         },
         "p3": {
@@ -34,7 +42,10 @@
           "settings": {
             "product": "personalized-pet-portrait",
             "kind": "portrait",
-            "image": "shopify://shop_images/mpm-portrait-dachshund-0.jpg"
+            "image": "shopify://shop_images/mpm-portrait-dachshund-0.jpg",
+            "hover": "shopify://shop_images/mpm-portrait-dachshund-8.jpg",
+            "badge_en": "Digital file too",
+            "badge_lt": "Ir skaitmeninis"
           }
         },
         "p4": {
@@ -42,7 +53,10 @@
           "settings": {
             "product": "custom-pet-christmas-ornament",
             "kind": "ornament",
-            "image": "shopify://shop_images/hf_20261012_133726_5358539c-5c6e-4a13-aba1-3f621be52b8d.png"
+            "image": "shopify://shop_images/hf_20261012_133726_5358539c-5c6e-4a13-aba1-3f621be52b8d.png",
+            "hover": "shopify://shop_images/hf_20261012_133727_e541975b-5a37-48f1-93b0-7ada2737da93.png",
+            "badge_en": "Christmas",
+            "badge_lt": "Kalėdoms"
           }
         },
         "p5": {
@@ -50,14 +64,17 @@
           "settings": {
             "product": "pet-memorial-ornament",
             "kind": "ornament",
-            "image": "shopify://shop_images/hf_20261012_133917_325a1351-c5aa-4de5-a9dc-6d014c4bdaae.png"
+            "image": "shopify://shop_images/hf_20261012_133917_325a1351-c5aa-4de5-a9dc-6d014c4bdaae.png",
+            "hover": "shopify://shop_images/hf_20261012_133829_bf8653e8-a093-4677-8b9e-980d25e5bcd2.png"
           }
         },
         "p6": {
           "type": "product",
           "settings": {
             "product": "pet-memorial-blanket",
-            "kind": "blanket"
+            "kind": "blanket",
+            "image": "shopify://shop_images/9557284658634264093_2048.jpg",
+            "hover": "shopify://shop_images/5720199029838372784_2048.jpg"
           }
         },
         "p7": {
@@ -275,12 +292,149 @@
     "rd_trustbar": {
       "type": "rd-trustbar",
       "settings": {}
+    },
+    "rd_guide": {
+      "type": "rd-guide",
+      "blocks": {
+        "g0": {
+          "type": "product",
+          "settings": {
+            "group": "1",
+            "product": "christmas-pet-portrait-blanket",
+            "kind": "blanket",
+            "image": "shopify://shop_images/11010451392216290013_2048.jpg",
+            "hover": "shopify://shop_images/2123783775463480541_2048.jpg"
+          }
+        },
+        "g1": {
+          "type": "product",
+          "settings": {
+            "group": "1",
+            "product": "custom-pet-christmas-ornament",
+            "kind": "ornament",
+            "image": "shopify://shop_images/hf_20261012_133727_58a564f8-16dd-4cee-b7b5-bef5bb097f03.png",
+            "hover": "shopify://shop_images/hf_20261012_133726_5358539c-5c6e-4a13-aba1-3f621be52b8d.png"
+          }
+        },
+        "g2": {
+          "type": "product",
+          "settings": {
+            "group": "1",
+            "product": "cozy-hooded-sherpa-fleece-blanket",
+            "kind": "blanket",
+            "hover": "shopify://shop_images/14942201749006682460_2048.jpg"
+          }
+        },
+        "g3": {
+          "type": "product",
+          "settings": {
+            "group": "1",
+            "product": "personalized-pet-portrait",
+            "kind": "portrait",
+            "image": "shopify://shop_images/mpm-portrait-dachshund-7.jpg",
+            "hover": "shopify://shop_images/mpm-portrait-dachshund-2.jpg"
+          }
+        },
+        "g4": {
+          "type": "product",
+          "settings": {
+            "group": "2",
+            "product": "pet-memorial-ornament",
+            "kind": "ornament",
+            "image": "shopify://shop_images/hf_20261012_133829_bf8653e8-a093-4677-8b9e-980d25e5bcd2.png",
+            "hover": "shopify://shop_images/hf_20261012_133916_16604f39-ccde-4e40-967a-001fae04b325.png"
+          }
+        },
+        "g5": {
+          "type": "product",
+          "settings": {
+            "group": "2",
+            "product": "pet-memorial-blanket",
+            "kind": "blanket",
+            "image": "shopify://shop_images/9557284658634264093_2048.jpg",
+            "hover": "shopify://shop_images/149823594305653432_2048.jpg"
+          }
+        },
+        "g6": {
+          "type": "product",
+          "settings": {
+            "group": "2",
+            "product": "personalized-pet-portrait",
+            "kind": "portrait",
+            "image": "shopify://shop_images/mpm-portrait-dachshund-6.jpg",
+            "hover": "shopify://shop_images/mpm-portrait-dachshund-1.jpg"
+          }
+        },
+        "g7": {
+          "type": "product",
+          "settings": {
+            "group": "2",
+            "product": "custom-pet-portrait-blanket",
+            "kind": "blanket",
+            "image": "shopify://shop_images/mpm-gallery-7.jpg",
+            "hover": "shopify://shop_images/mpm-gallery-3.jpg"
+          }
+        },
+        "g8": {
+          "type": "product",
+          "settings": {
+            "group": "3",
+            "product": "custom-pet-portrait-blanket",
+            "kind": "blanket",
+            "image": "shopify://shop_images/mpm-gallery-8.jpg",
+            "hover": "shopify://shop_images/mpm-gallery-0.jpg"
+          }
+        },
+        "g9": {
+          "type": "product",
+          "settings": {
+            "group": "3",
+            "product": "cozy-hooded-sherpa-fleece-blanket",
+            "kind": "blanket",
+            "hover": "shopify://shop_images/17376613350854401492_2048.jpg"
+          }
+        },
+        "g10": {
+          "type": "product",
+          "settings": {
+            "group": "3",
+            "product": "personalized-pet-coffee-mug",
+            "kind": "blanket"
+          }
+        },
+        "g11": {
+          "type": "product",
+          "settings": {
+            "group": "3",
+            "product": "personalized-pet-portrait",
+            "kind": "portrait",
+            "image": "shopify://shop_images/mpm-portrait-dachshund-8.jpg",
+            "hover": "shopify://shop_images/mpm-portrait-dachshund-0.jpg"
+          }
+        }
+      },
+      "block_order": [
+        "g0",
+        "g1",
+        "g2",
+        "g3",
+        "g4",
+        "g5",
+        "g6",
+        "g7",
+        "g8",
+        "g9",
+        "g10",
+        "g11"
+      ],
+      "settings": {}
     }
   },
   "order": [
     "rd_hero",
     "rd_trustbar",
     "rd_products",
+    "rd_guide",
     "rd_categories",
     "rd_steps",
     "rd_story",

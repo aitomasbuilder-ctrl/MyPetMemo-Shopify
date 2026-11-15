@@ -392,3 +392,21 @@ html body .mps__price-line { font-size: 1.75rem; }
 html body .mps__info details, html body .mps details { border-color: var(--rd-line); }
 html body .mps.mps--soft { --mps-soft-pink: var(--rd-sand); --mps-soft-pink-2: #b9b2a3; }
 html body .mps .mps__thumb-btn.mps__thumb-btn--design { background: var(--rd-sand); color: var(--rd-ink); }
+
+/* Gift guide tabs (HeyBalu-style "shop by" switcher) */
+.rd-guide { background: #fff; }
+.rd-guide__tabs { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: -6px 0 34px; }
+.rd-guide__tab { appearance: none; border: 1px solid var(--rd-ink); background: #fff; color: var(--rd-ink); font: 500 .875rem/1 var(--rd-font); letter-spacing: .08em; text-transform: uppercase; padding: 13px 24px; min-height: 44px; cursor: pointer; transition: background .2s, color .2s; }
+.rd-guide__tab:hover { background: var(--rd-sand); }
+.rd-guide__tab[aria-selected="true"] { background: var(--rd-ink); color: #fff; }
+.rd-guide__tab:focus-visible { outline: 2px solid var(--rd-cta); outline-offset: 2px; }
+.rd-guide:not(.is-ready) .rd-guide__panel + .rd-guide__panel { margin-top: 24px; }
+.rd-guide .rd-card { background: var(--rd-sand-2); }
+@media (max-width: 700px) {
+  .rd-guide__tabs { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; margin: -4px -16px 24px; padding: 0 16px; scrollbar-width: none; }
+  .rd-guide__tabs::-webkit-scrollbar { display: none; }
+  .rd-guide__tab { flex: 0 0 auto; padding: 11px 16px; font-size: .75rem; }
+}
+
+/* Product card label: sand chip, like the reference's small corner labels */
+.rd-card__badge { background: #fff; color: var(--rd-ink); border: 1px solid var(--rd-line); }
