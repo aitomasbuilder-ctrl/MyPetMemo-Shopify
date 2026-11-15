@@ -31,7 +31,8 @@
     pacifico: { family: 'Pacifico', weight: 400 },
     montserrat: { family: 'Montserrat', weight: 800 },
     playfair: { family: 'Playfair Display', weight: 700 },
-    greatvibes: { family: 'Great Vibes', weight: 400 }   // handwritten name for the watercolor style
+    greatvibes: { family: 'Great Vibes', weight: 400 },
+    msmadi: { family: 'Ms Madi', weight: 400 }         // signature-style name for the watercolor style
   };
   // Mug drawing: handle width and rim depth as fractions of the body width.
   const MUG_HANDLE = 0.26;
@@ -961,7 +962,8 @@
         this.beforePaint = { background: { ...s.background }, name: { font: s.name.font, fill: s.name.fill, stroke: s.name.stroke } };
         const white = this.backgrounds.find(b => b.id === 'white') || { id: 'white', kind: 'solid', name: 'White', color: '#ffffff' };
         this.selectBackground(white, { silent: true });
-        Object.assign(s.name, { font: 'greatvibes', fill: '#2b2624', stroke: '#ffffff' });
+        // No outline: the stroke in the fill colour only thickens the pen line a little, so it reads like a signature.
+        Object.assign(s.name, { font: 'msmadi', fill: '#1f1b1a', stroke: '#1f1b1a' });
       } else if (this.beforePaint) {
         const bg = this.beforePaint.background;
         this.selectBackground(bg.id === 'custom' ? bg : (this.backgrounds.find(b => b.id === bg.id) || bg), { silent: true });
@@ -1869,6 +1871,12 @@
         this.defaultLayout = s.artwork ? this.layoutKey() : null;
         return;
       }
+      if (this.paint() === 'watercolor' && !this.shape()) {
+        this.placeSignature();
+        this.clampAll();
+        this.defaultLayout = s.artwork ? this.layoutKey() : null;
+        return;
+      }
       if (this.config.nameBelow && !this.shape()) {
         this.placeNameBelow();
         this.clampAll();
@@ -1885,6 +1893,18 @@
       this.placePet();
       this.clampAll();
       this.defaultLayout = s.artwork ? this.layoutKey() : null;
+    }
+    /** Watercolor blankets: one large painting from near the top edge down, with the name signed across its lower
+     *  right like an artist's signature (low enough to stay visible on the hooded blanket when it is worn). */
+    placeSignature() {
+      const s = this.state, p = this.printSize(), wide = p.width > p.height;
+      delete s.name.cap; delete s.name.breaks;
+      Object.assign(s.name, { cx: wide ? 0.66 : 0.7, cy: wide ? 0.84 : 0.8, size: wide ? 0.085 : 0.11, rot: -10 });
+      if (!s.artwork) return;
+      const top = 0.04, bottom = 0.97;
+      const aspect = s.artwork.height / s.artwork.width;
+      const w = Math.min(((bottom - top) * p.height) / (p.width * aspect), 0.94);
+      s.pet = { cx: 0.5, cy: round4(top + this.petHeightFrac(w) / 2), w: round4(w), rot: 0 };
     }
     /** Blankets whose top edge is covered when worn (the hooded blanket): the pet from the top edge down and the
      *  name and text under it, near the bottom edge. */

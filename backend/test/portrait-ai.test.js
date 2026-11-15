@@ -87,5 +87,6 @@ test('watercolor: asks for the watercolor painting and says the background is wh
   const fetchImpl = async (url, init) => { sent = JSON.parse(init.body); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { data: 'eA==' } }] } }] }), { status: 200 }); };
   await generatePortrait({ image: Buffer.from('jpg'), mimeType: 'image/jpeg' }, { apiKey: 'k', fetchImpl, style: 'watercolor' });
   assert.strictEqual(sent.contents[0].parts[0].text, WATERCOLOR_PROMPT);
+  assert.strictEqual(sent.generationConfig.imageConfig.aspectRatio, '3:4');
   assert.match(WATERCOLOR_PROMPT, /watercolor/); assert.match(WATERCOLOR_PROMPT, /#FFFFFF/); assert.match(WATERCOLOR_PROMPT, /exact animal/); assert.match(WATERCOLOR_PROMPT, /No text/);
 });

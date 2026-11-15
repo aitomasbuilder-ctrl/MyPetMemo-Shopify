@@ -26,26 +26,28 @@ const PROMPT = [
 ].join(' ');
 
 const WATERCOLOR_PROMPT = [
-  'Turn the pet in this photo into a loose, hand-painted watercolor portrait.',
+  'Turn the pet in this photo into a realistic watercolor painting.',
   'Keep this exact animal: the same breed, face shape, markings, fur colors and pattern, eye color, ear shape,',
-  'expression and head angle, and keep any collar, tag or bandana it is wearing. Do not replace it with a different or generic animal.',
-  'Style: real watercolor on white paper. The face is the most detailed part: crisp eyes with catchlights, a detailed nose,',
-  'fine brush strokes for the whiskers and the fur around the eyes and muzzle. Away from the face the painting gets looser:',
-  'soft transparent washes, wet-in-wet blooms and a few paint splashes and spatter dots in the pet\'s own fur colors,',
-  'and two or three thin paint drips running down from the chest that fade out. The edges dissolve softly into the white paper.',
-  'Composition: head and upper chest only, centered, facing the viewer as in the photo, with wide empty white margins on every side;',
-  'no paint touches the edges of the image.',
-  'Remove the original background completely. The background is plain pure white (#FFFFFF): no paper texture, no shadow,',
-  'no frame, no other objects.',
+  'expression and head angle. Do not replace it with a different or generic animal.',
+  'Style: a realistic, finely detailed watercolor painting, as a skilled watercolor artist would paint it from the photo:',
+  'the eyes, nose, mouth and fur are painted with true-to-life detail, shading and soft fur texture.',
+  'Not a cartoon, not a flat illustration, no outlines.',
+  'Toward the outer edges the painting breaks up into loose watercolor: soft wet-in-wet washes, irregular paint blots and blooms,',
+  'and scattered spatter dots of different sizes in the pet\'s own fur colors (darker and lighter shades), so the outline of the pet',
+  'dissolves organically into the white paper instead of ending in a clean edge.',
+  'Composition: head, chest and shoulders, large and centered, facing the viewer as in the photo. The painting fills about',
+  '85 percent of the image height and 75 percent of the width; at the bottom the chest fades out into loose washes and spatter.',
+  'Remove the original background completely: the background is plain pure white (#FFFFFF) with no paper texture, shadow or frame.',
   'Show only the animal: leave out blankets, scarves, pillows, furniture, toys, hands and people that touch or cover it,',
-  'and paint the chest fur that would be underneath. Keep only a collar, tag, harness or bandana the pet is actually wearing.',
+  'and paint the fur that would be underneath. Keep only a collar, tag, harness or bandana the pet is actually wearing.',
   'If there are several animals, portray only the most prominent one. No text, no letters, no signature, no watermark.'
 ].join(' ');
 
 /** Art styles the service paints. `background` tells the storefront how to cut the pet out. */
 const STYLES = {
-  vector: { prompt: PROMPT, background: 'chroma' },
-  watercolor: { prompt: WATERCOLOR_PROMPT, background: 'white' }
+  vector: { prompt: PROMPT, background: 'chroma', aspectRatio: '1:1' },
+  // Portrait format: head, chest and the loose washes below it, for a large painting on the blanket.
+  watercolor: { prompt: WATERCOLOR_PROMPT, background: 'white', aspectRatio: '3:4' }
 };
 const styleFor = name => STYLES[name] || STYLES.vector;
 
@@ -63,9 +65,10 @@ async function generatePortrait(photo, opts = {}) {
   if (!apiKey) throw new PortraitError('not_configured', 'Our portrait service isn’t connected yet. Please try again later.', 503);
   const model = opts.model || process.env.GEMINI_IMAGE_MODEL || DEFAULT_MODEL;
   const doFetch = opts.fetchImpl || fetch;
+  const style = styleFor(opts.style);
   const body = {
-    contents: [{ role: 'user', parts: [{ text: styleFor(opts.style).prompt }, { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }] }],
-    generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '1:1' } }
+    contents: [{ role: 'user', parts: [{ text: style.prompt }, { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }] }],
+    generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: style.aspectRatio } }
   };
   const res = await doFetch(`${GEMINI_URL}/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
