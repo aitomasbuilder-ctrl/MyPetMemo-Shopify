@@ -287,3 +287,35 @@ a:hover > .button.mpm-cta { background: var(--rd-cta-hover); border-color: var(-
 .mps--soft .mps__title, .mps--portrait .mpp__title { font-family: var(--rd-font); font-weight: 700; letter-spacing: -.01em; }
 .mps__eyebrow, .mpp__eyebrow { color: var(--rd-cta); }
 .mps-steps h2 { font-family: var(--rd-font); }
+
+/* Studio overrides need "html body" because pet-studio.css / pet-portrait.css load later, inside the page. */
+html body .mps, html body .mps--soft, html body .mps--portrait { --mps-navy: var(--rd-ink); --mps-navy-2: #3a3a3a; --mps-text: var(--rd-ink); --mps-muted: var(--rd-ink-soft); --mps-cream: #ffffff; --mpp-cream: #ffffff; --mpp-ink: var(--rd-ink); background: #fff; font-family: var(--rd-font); }
+html body .mps__title, html body .mps--soft .mps__title, html body .mps--portrait .mpp__title { font-family: var(--rd-font); font-weight: 700; letter-spacing: -.01em; color: var(--rd-ink); }
+html body .mps__eyebrow { font-family: var(--rd-font); color: var(--rd-cta); letter-spacing: .08em; }
+html body .mps__price-line, html body .mpp__price { font-weight: 600; color: var(--rd-ink); }
+html body .mps__btn { font-family: var(--rd-font); border-radius: 2px; }
+html body .mps__btn--primary { background: var(--rd-cta); color: #fff; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; font-size: 15px; }
+html body .mps__btn--primary:hover:not(:disabled) { background: var(--rd-cta-hover); }
+html body .mps__btn--outline, html body .mps__btn--small { border-radius: 2px; }
+html body .mps__input, html body .mps__option-main, html body .mps__link, html body .mps__chip, html body .mps__field-row select, html body .mpp__style-name, html body .mps__thumb-btn--design { font-family: var(--rd-font); }
+html body .mps__input, html body .mps__field-row select { border-radius: 2px; }
+html body .mps__option { border-radius: 2px; }
+html body .mps__promises li { color: var(--rd-cta); }
+html body .mps__promises svg { color: var(--rd-cta); }
+html body .mps__stage, html body .mps__thumb { border-radius: 0; }
+html body .mps__sticky { font-family: var(--rd-font); }
+html body .mpu, html body .mpu__title { font-family: var(--rd-font); }
+html body .mpu__title { font-weight: 700; }
+html body .mps-steps { color: var(--rd-ink); font-family: var(--rd-font); background: var(--rd-sand); border-top: 0; }
+html body .mps-steps__title { text-transform: none; font-weight: 700; letter-spacing: -.01em; }
+html body .mps-steps__title::after { content: ''; display: block; width: 52px; height: 3px; margin: 16px auto 0; background: var(--rd-cta); }
+html body .mps-steps__sub, html body .mps-steps__item p { color: var(--rd-ink-soft); }
+html body .mps-steps__num { background: #fff; color: var(--rd-cta); font-weight: 700; }
+html body .mps-steps__item h3 { font-weight: 700; }
+html body .mps-steps__media { border-radius: 0; }
+
+/* Category pages */
+html body .mpc-intro { color: var(--rd-ink-soft); }
+html body .mpc-label { color: var(--rd-ink-soft); font-weight: 600; }
+html body .mpc-chips li { border-radius: 2px; border-color: var(--rd-line); }
+.faq-section > div > p:not(.eyebrow) { color: var(--rd-ink-soft); }
