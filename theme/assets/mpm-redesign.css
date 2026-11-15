@@ -423,3 +423,19 @@ html body .mps.mps--portrait .mps__btn--primary { background: var(--rd-cta); }
 html body .mps.mps--portrait .mps__btn--primary:hover:not(:disabled) { background: var(--rd-cta-hover); }
 html body .mps--portrait .mpp__eyebrow { color: var(--rd-cta); font-family: var(--rd-font); letter-spacing: .08em; }
 html body .mps.mps--portrait { --mpp-pink-2: #b9b2a3; }
+
+/* Cart page */
+.cart-payments { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; list-style: none; margin: 14px 0 0; padding: 0; }
+.cart-payments svg { width: 38px; height: 24px; display: block; }
+.cart-page .section-heading { align-items: center; gap: 16px; }
+.cart-page .section-heading h1 { font-size: clamp(1.9rem, 3vw, 2.6rem); letter-spacing: -.01em; }
+.cart-page .cart-item { border-color: var(--rd-line); }
+.cart-page .cart-line-title { font-size: 1rem; font-weight: 600; }
+.cart-page .cart-summary { background: var(--rd-sand); border-radius: 0; }
+.cart-page .cart-summary h2 { font-size: 1.375rem; }
+.cart-page .update-cart { border-radius: 2px; }
+.cart-page .cart-controls input { border-radius: 2px; border-color: var(--rd-line); }
+@media (max-width: 700px) {
+  .cart-page .section-heading { flex-direction: row; justify-content: space-between; }
+  .cart-page .section-heading .button { min-height: 40px; padding: 8px 14px; font-size: .6875rem; }
+}
