@@ -105,7 +105,7 @@
         {%- assign values = item.options_with_values.first.values -%}
         {%- if item.has_only_default_variant == false and values.size > 1 -%}
           <div class="mpc-options">
-            <p class="mpc-label">{% if option_name contains 'size' or item_family == 'blanket' %}{{ 'mpm.category.sizes' | t }}{% elsif item_family == 'ornament' %}{{ 'mpm.category.shapes' | t }}{% else %}{{ item.options_with_values.first.name | escape }}{% endif %}</p>
+            <p class="mpc-label">{% if option_name contains 'size' or item_family == 'blanket' %}{% render 'rd-t', en: 'Sizes', lt: 'Dydžiai' %}{% elsif item_family == 'ornament' %}{% render 'rd-t', en: 'Shapes', lt: 'Formos' %}{% else %}{{ item.options_with_values.first.name | escape }}{% endif %}</p>
             <ul class="mpc-chips">
               {%- for value in values -%}
                 {%- assign vprice = nil -%}
@@ -116,7 +116,7 @@
                     {%- if variant.available -%}{%- assign vavailable = true -%}{%- endif -%}
                   {%- endif -%}
                 {%- endfor -%}
-                <li{% unless vavailable %} class="is-sold-out"{% endunless %}>{% render 'option-label', value: value %}{% if item.price_varies and vprice %} · {{ vprice | money }}{% endif %}{% unless vavailable %} · {{ 'product.sold_out' | t }}{% endunless %}</li>
+                <li{% unless vavailable %} class="is-sold-out"{% endunless %}>{% render 'option-label', value: value %}{% if item.price_varies and vprice %} · {{ vprice | money }}{% endif %}{% unless vavailable %} · {% render 'rd-t', en: 'Sold out', lt: 'Išparduota' %}{% endunless %}</li>
               {%- endfor -%}
             </ul>
           </div>

@@ -40,10 +40,15 @@
         assign key = 'white_frame'
       when 'Canvas, no frame'
         assign key = 'canvas'
+      when 'Cream'
+        assign key = 'cream'
     endcase
     if key != blank
       assign full_key = 'mpm.values.' | append: key
       assign label = full_key | t
+      if label contains 'mpm.values.' or label contains 'ranslation missing'
+        assign label = part
+      endif
     else
       assign label = part
     endif
