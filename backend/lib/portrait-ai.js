@@ -2,6 +2,8 @@
 // Turns a customer's pet photo into the MyPetMemo vector-style portrait with Google Gemini.
 // The pet comes back on a flat chroma-green background; the storefront keys that out and puts the
 // pet on whichever pastel background the shopper picks, so changing the background never re-generates.
+// The watercolor style is painted on plain white instead: its soft edges and splashes can't be keyed
+// out of green, so the storefront turns the white paper transparent (see whiteToAlpha in pet-studio.js).
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_MODEL = 'gemini-2.5-flash-image';
@@ -23,13 +25,36 @@ const PROMPT = [
   'If there are several animals, portray only the most prominent one. No text, no border, no watermark.'
 ].join(' ');
 
+const WATERCOLOR_PROMPT = [
+  'Turn the pet in this photo into a loose, hand-painted watercolor portrait.',
+  'Keep this exact animal: the same breed, face shape, markings, fur colors and pattern, eye color, ear shape,',
+  'expression and head angle, and keep any collar, tag or bandana it is wearing. Do not replace it with a different or generic animal.',
+  'Style: real watercolor on white paper. The face is the most detailed part: crisp eyes with catchlights, a detailed nose,',
+  'fine brush strokes for the whiskers and the fur around the eyes and muzzle. Away from the face the painting gets looser:',
+  'soft transparent washes, wet-in-wet blooms and a few paint splashes and spatter dots in the pet\'s own fur colors,',
+  'and two or three thin paint drips running down from the chest that fade out. The edges dissolve softly into the white paper.',
+  'Composition: head and upper chest only, centered, facing the viewer as in the photo, with wide empty white margins on every side;',
+  'no paint touches the edges of the image.',
+  'Remove the original background completely. The background is plain pure white (#FFFFFF): no paper texture, no shadow,',
+  'no frame, no other objects.',
+  'Show only the animal: leave out blankets, pillows, furniture, toys, hands and people that touch or cover it.',
+  'If there are several animals, portray only the most prominent one. No text, no letters, no signature, no watermark.'
+].join(' ');
+
+/** Art styles the service paints. `background` tells the storefront how to cut the pet out. */
+const STYLES = {
+  vector: { prompt: PROMPT, background: 'chroma' },
+  watercolor: { prompt: WATERCOLOR_PROMPT, background: 'white' }
+};
+const styleFor = name => STYLES[name] || STYLES.vector;
+
 class PortraitError extends Error {
   constructor(code, message, status) { super(message); this.code = code; this.status = status; }
 }
 
 /**
  * @param {{ image: Buffer, mimeType: string }} photo
- * @param {{ apiKey?: string, model?: string, fetchImpl?: typeof fetch, signal?: AbortSignal }} opts
+ * @param {{ style?: string, apiKey?: string, model?: string, fetchImpl?: typeof fetch, signal?: AbortSignal }} opts
  * @returns {Promise<{ image: Buffer, mimeType: string }>}
  */
 async function generatePortrait(photo, opts = {}) {
@@ -38,7 +63,7 @@ async function generatePortrait(photo, opts = {}) {
   const model = opts.model || process.env.GEMINI_IMAGE_MODEL || DEFAULT_MODEL;
   const doFetch = opts.fetchImpl || fetch;
   const body = {
-    contents: [{ role: 'user', parts: [{ text: PROMPT }, { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }] }],
+    contents: [{ role: 'user', parts: [{ text: styleFor(opts.style).prompt }, { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }] }],
     generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '1:1' } }
   };
   const res = await doFetch(`${GEMINI_URL}/${encodeURIComponent(model)}:generateContent`, {
@@ -65,4 +90,4 @@ async function generatePortrait(photo, opts = {}) {
   return { image: Buffer.from(out.data, 'base64'), mimeType: out.mimeType || out.mime_type || 'image/png' };
 }
 
-module.exports = { generatePortrait, PortraitError, PROMPT, CHROMA, DEFAULT_MODEL };
+module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, STYLES, styleFor, CHROMA, DEFAULT_MODEL };

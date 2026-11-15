@@ -6,14 +6,15 @@ const path = require('node:path');
 const { Readable } = require('node:stream');
 const sharp = require('sharp');
 const handler = require('../api/portrait');
-const { generatePortrait, PROMPT } = require('../lib/portrait-ai');
+const { generatePortrait, PROMPT, WATERCOLOR_PROMPT } = require('../lib/portrait-ai');
 
 const photo = fs.readFileSync(path.join(__dirname, 'fixtures/style-corgi.jpg'));
 
-async function call({ origin = 'https://mypetmemo.com', file = photo, generate } = {}) {
+async function call({ origin = 'https://mypetmemo.com', file = photo, generate, style } = {}) {
   const form = new FormData();
   if (file) form.append('image', new Blob([file], { type: 'image/jpeg' }), 'pet.jpg');
   form.append('product', '123');
+  if (style) form.append('style', style);
   const r = new Request('http://x/', { method: 'POST', body: form });
   const body = Buffer.from(await r.arrayBuffer());
   const req = Readable.from([body]);
@@ -71,4 +72,20 @@ test('no image in the answer means no pet was found; rate limits pass through', 
   await assert.rejects(generatePortrait({ image: Buffer.from('x'), mimeType: 'image/jpeg' }, { apiKey: 'k', fetchImpl: noImage }), e => e.status === 422);
   const busy = async () => new Response('{}', { status: 429 });
   await assert.rejects(generatePortrait({ image: Buffer.from('x'), mimeType: 'image/jpeg' }, { apiKey: 'k', fetchImpl: busy }), e => e.status === 429);
+});
+
+test('watercolor: asks for the watercolor painting and says the background is white paper', async () => {
+  const white = await sharp({ create: { width: 64, height: 64, channels: 3, background: '#ffffff' } }).jpeg().toBuffer();
+  let opts;
+  const res = await call({ style: 'watercolor', generate: async (p, o) => { opts = o; return { image: white, mimeType: 'image/jpeg' }; } });
+  assert.strictEqual(res.statusCode, 200);
+  assert.strictEqual(opts.style, 'watercolor');
+  assert.strictEqual(res.body.background, 'white');
+  const other = await call({ style: 'cubist', generate: async (p, o) => { opts = o; return { image: white, mimeType: 'image/jpeg' }; } });
+  assert.strictEqual(opts.style, 'vector'); assert.strictEqual(other.body.background, 'chroma');
+  let sent;
+  const fetchImpl = async (url, init) => { sent = JSON.parse(init.body); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { data: 'eA==' } }] } }] }), { status: 200 }); };
+  await generatePortrait({ image: Buffer.from('jpg'), mimeType: 'image/jpeg' }, { apiKey: 'k', fetchImpl, style: 'watercolor' });
+  assert.strictEqual(sent.contents[0].parts[0].text, WATERCOLOR_PROMPT);
+  assert.match(WATERCOLOR_PROMPT, /watercolor/); assert.match(WATERCOLOR_PROMPT, /#FFFFFF/); assert.match(WATERCOLOR_PROMPT, /exact animal/); assert.match(WATERCOLOR_PROMPT, /No text/);
 });
