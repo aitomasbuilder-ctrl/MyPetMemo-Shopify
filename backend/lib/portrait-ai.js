@@ -37,7 +37,8 @@ const WATERCOLOR_PROMPT = [
   'no paint touches the edges of the image.',
   'Remove the original background completely. The background is plain pure white (#FFFFFF): no paper texture, no shadow,',
   'no frame, no other objects.',
-  'Show only the animal: leave out blankets, pillows, furniture, toys, hands and people that touch or cover it.',
+  'Show only the animal: leave out blankets, scarves, pillows, furniture, toys, hands and people that touch or cover it,',
+  'and paint the chest fur that would be underneath. Keep only a collar, tag, harness or bandana the pet is actually wearing.',
   'If there are several animals, portray only the most prominent one. No text, no letters, no signature, no watermark.'
 ].join(' ');
 

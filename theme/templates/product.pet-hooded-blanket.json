@@ -190,7 +190,9 @@
         "line_label": "Add your own text (optional)",
         "line_placeholder": "Write your own or pick one above",
         "line_suggestions": "Best Dog Mom Ever,Best Cat Dad Ever,Dog Mom,Cat Mom,Fur Mama,My Best Friend",
-        "name_below": true
+        "name_below": true,
+        "watercolor": true,
+        "default_paint": "vector"
       }
     },
     "steps": {
