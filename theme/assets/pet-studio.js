@@ -1462,7 +1462,7 @@
           if (used.length >= (this.config.generationLimit || 8)) {
             throw new StudioError('limit', T('You’ve reached today’s limit for new portraits. Your earlier photos still work, or come back tomorrow.'), false);
           }
-          if (!this.config.aiEndpoint) throw new StudioError('not_configured', T('Our portrait service isn’t connected yet. Please try again later.'), false);
+          if (!this.config.aiEndpoint && !(this.paint() === 'watercolor' && this.config.watercolorEndpoint)) throw new StudioError('not_configured', T('Our portrait service isn’t connected yet. Please try again later.'), false);
           const canvas = await this.requestPortrait(controller.signal);
           try { localStorage.setItem('mps-generations', JSON.stringify(used.concat(Date.now()))); } catch (e) { /* private mode */ }
           const blob = await canvasToBlob(canvas, 'image/png');
@@ -1513,7 +1513,9 @@
       if (this.isPortrait() && this.config.aiStyles) form.append('style', this.state.artStyle);
       else if (this.paint() === 'watercolor') form.append('style', 'watercolor');
       this.setProgress(0.06, T('Uploading your photo and creating your portrait…'));
-      const res = await fetch(this.config.aiEndpoint, { method: 'POST', body: form, signal, headers: { Accept: 'application/json, image/png' } });
+      // Watercolor comes from our own portrait service even where the illustrated style uses another one.
+      const endpoint = this.paint() === 'watercolor' ? (this.config.watercolorEndpoint || this.config.aiEndpoint) : this.config.aiEndpoint;
+      const res = await fetch(endpoint, { method: 'POST', body: form, signal, headers: { Accept: 'application/json, image/png' } });
       if (!res.ok) {
         let info = {};
         try { info = await res.json(); } catch (e) { /* ignore */ }

@@ -200,7 +200,8 @@
         "line_placeholder": "Write your own or pick one above",
         "line_suggestions": "Best Dog Mom Ever,Best Cat Dad Ever,Dog Mom,Cat Mom,Fur Mama,My Best Friend",
         "watercolor": true,
-        "default_paint": "vector"
+        "default_paint": "vector",
+        "watercolor_endpoint": "https://mypetmemo-shopify.vercel.app/api/portrait"
       }
     },
     "steps": {
