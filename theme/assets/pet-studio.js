@@ -18,6 +18,8 @@
   const TAU = Math.PI * 2;
   const NAME_BASELINE = 0.35;          // baseline offset from the name centre, in font sizes
   const NAME_STROKE = 0.16;            // outline width, in font sizes
+  const NAME_PEN = 0.03;               // outline in the fill colour (no visible outline): only a slightly heavier pen line
+  const strokeFor = n => (String(n.stroke).toLowerCase() === String(n.fill).toLowerCase() ? NAME_PEN : NAME_STROKE);
   const CAPTION_LINE = 1.25;           // caption line spacing, in caption font sizes
   const CAPTION_RATIO = 0.5;           // caption size relative to the name
   const MAX_SOURCE_EDGE = 1536;
@@ -1899,7 +1901,7 @@
     placeSignature() {
       const s = this.state, p = this.printSize(), wide = p.width > p.height;
       delete s.name.cap; delete s.name.breaks;
-      Object.assign(s.name, { cx: wide ? 0.66 : 0.7, cy: wide ? 0.84 : 0.8, size: wide ? 0.085 : 0.11, rot: -10 });
+      Object.assign(s.name, { cx: wide ? 0.66 : 0.7, cy: wide ? 0.84 : 0.8, size: wide ? 0.1 : 0.14, rot: -10 });
       if (!s.artwork) return;
       const top = 0.04, bottom = 0.97;
       const aspect = s.artwork.height / s.artwork.width;
@@ -2615,7 +2617,7 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'alphabetic';
         ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        ctx.lineWidth = NAME_STROKE * size;
+        ctx.lineWidth = strokeFor(n) * size;
         ctx.strokeStyle = n.stroke;
         ctx.strokeText(n.text, 0, NAME_BASELINE * size);
         ctx.fillStyle = n.fill;
@@ -2632,7 +2634,7 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'alphabetic';
         ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        ctx.lineWidth = NAME_STROKE * size;
+        ctx.lineWidth = strokeFor(c) * size;
         ctx.strokeStyle = c.stroke;
         ctx.fillStyle = c.fill;
         c.lines.forEach((line, i) => {
