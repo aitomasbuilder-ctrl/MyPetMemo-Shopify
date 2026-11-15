@@ -1,6 +1,7 @@
 'use strict';
 // GET /api/print-template?sku=... — exact Printify print-area size for a Shopify variant,
-// so the storefront preview uses the real print proportions. Cached at the edge for a day.
+// so the storefront preview uses the real print proportions. Cached in the browser only: the CORS
+// headers differ per Origin, and a shared edge copy made without Origin broke the storefront fetch.
 const { catalog } = require('../lib/printify-catalog');
 const { cors, send } = require('../lib/http');
 const config = require('../config/printify-variants.json');
@@ -15,7 +16,7 @@ async function handler(req, res, deps = {}) {
     cat = deps.catalog || cat || catalog({ overrides: config.studio_products || {} });
     const mapping = await cat.variantForSku(sku);
     const area = await cat.printArea(mapping);
-    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+    res.setHeader('Cache-Control', 'private, max-age=3600');
     res.statusCode = 200; res.setHeader('Content-Type', 'application/json');
     return res.end(JSON.stringify({ sku, width: area.width, height: area.height, position: area.position, title: mapping.title }));
   } catch (err) {

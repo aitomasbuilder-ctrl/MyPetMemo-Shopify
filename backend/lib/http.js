@@ -16,9 +16,9 @@ function originAllowed(origin, env = process.env) {
 /** Applies CORS headers. Returns false (and ends the response) for preflight or forbidden origins. */
 function cors(req, res, methods = 'GET, POST, OPTIONS') {
   const origin = req.headers.origin;
+  res.setHeader('Vary', 'Origin'); // every response depends on Origin, so no cache may share one across origins
   if (origin && originAllowed(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Methods', methods);
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.setHeader('Access-Control-Max-Age', '600');
