@@ -390,3 +390,5 @@ html body .mps__option[aria-checked="true"] { border-color: var(--rd-ink); box-s
 html body .mps__label { letter-spacing: .08em; }
 html body .mps__price-line { font-size: 1.75rem; }
 html body .mps__info details, html body .mps details { border-color: var(--rd-line); }
+html body .mps.mps--soft { --mps-soft-pink: var(--rd-sand); --mps-soft-pink-2: #b9b2a3; }
+html body .mps .mps__thumb-btn.mps__thumb-btn--design { background: var(--rd-sand); color: var(--rd-ink); }
