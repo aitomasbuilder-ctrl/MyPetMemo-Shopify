@@ -334,3 +334,59 @@ html body .mpc-chips li { border-radius: 2px; border-color: var(--rd-line); }
 html body .mpu { --mpu-ink: var(--rd-ink); background: #fff; }
 html body .mpu__add, html body .mpu__continue { font-family: var(--rd-font); border-radius: 2px; text-transform: uppercase; letter-spacing: .08em; font-weight: 500; font-size: 14px; }
 html body .mpu__continue { background: var(--rd-cta); }
+
+/* ---------- Round 2 (2026-11-15): promise strip, motion, product page polish ---------- */
+/* Promise strip under the hero */
+.rd-trustbar { background: #fff; border-bottom: 1px solid var(--rd-line); }
+.rd-trustbar__list { list-style: none; margin: 0 auto; padding: 22px 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.rd-trustbar li { display: flex; align-items: center; gap: 14px; justify-content: center; }
+.rd-trustbar svg { flex-shrink: 0; color: var(--rd-cta); }
+.rd-trustbar span { display: flex; flex-direction: column; font-size: .8125rem; line-height: 1.4; color: var(--rd-ink-soft); }
+.rd-trustbar strong { font-size: .9375rem; font-weight: 600; color: var(--rd-ink); }
+@media (max-width: 900px) {
+  .rd-trustbar__list { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 18px 0; gap: 16px 12px; }
+  .rd-trustbar li { justify-content: flex-start; gap: 10px; }
+  .rd-trustbar svg { width: 22px; height: 22px; }
+  .rd-trustbar strong { font-size: .8125rem; }
+  .rd-trustbar span { font-size: .75rem; }
+}
+
+/* Hero: text slides in on load, darker left side so the copy always reads */
+.rd-hero__media::after { background: linear-gradient(90deg, rgb(24 20 16 / .78) 0%, rgb(24 20 16 / .55) 40%, rgb(24 20 16 / 0) 70%); }
+@keyframes rd-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes rd-zoom { from { transform: scale(1.06); } to { transform: scale(1); } }
+@media (prefers-reduced-motion: no-preference) {
+  .rd-hero__copy > * { animation: rd-rise .8s cubic-bezier(.2,.7,.2,1) both; }
+  .rd-hero__copy > *:nth-child(2) { animation-delay: .08s; }
+  .rd-hero__copy > *:nth-child(3) { animation-delay: .16s; }
+  .rd-hero__copy > *:nth-child(4) { animation-delay: .24s; }
+  .rd-hero__media img { animation: rd-zoom 1.6s cubic-bezier(.2,.7,.2,1) both; }
+}
+
+/* Scroll reveal (class added by mpm-redesign.js only when motion is allowed) */
+.rd-anim .rd-reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
+.rd-anim .rd-reveal.is-in { opacity: 1; transform: none; }
+
+/* Buttons and cards: soft lift on hover */
+@media (hover: hover) {
+  .rd-btn, .button.mpm-cta, html body .mps__btn--primary { transition: background .2s, transform .2s, box-shadow .2s; }
+  .rd-btn:hover, .button.mpm-cta:hover, html body .mps__btn--primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 18px rgb(45 106 87 / .22); }
+  .rd-card:hover { box-shadow: 0 14px 30px rgb(40 40 40 / .08); transform: translateY(-3px); }
+  .rd-tile:hover .rd-tile__media img { transform: scale(1.04); }
+}
+
+/* Sticky header gets a hairline once the page scrolls */
+.header { transition: box-shadow .25s; }
+.header.is-scrolled { box-shadow: 0 1px 0 var(--rd-line), 0 6px 18px rgb(40 40 40 / .05); }
+
+/* Product page (studio): calm sand and green instead of pink and caramel */
+html body .mps .mps__dropzone, html body .mps--soft .mps__dropzone { background: var(--rd-sand-2); border: 1.5px dashed #b9b2a3; border-radius: 2px; transition: border-color .2s, background .2s; }
+html body .mps .mps__dropzone:hover, html body .mps .mps__dropzone.is-dragover { border-color: var(--rd-cta); background: #eef3f0; }
+html body .mps .mps__dropzone svg { color: var(--rd-cta); }
+html body .mps[data-gallery-style="large"] { --mps-cocoa: var(--rd-ink); --mps-caramel: var(--rd-ink); --mps-beige: var(--rd-line); --mps-cream-2: var(--rd-sand-2); }
+html body .mps__thumb-btn { border-radius: 2px; }
+html body .mps__thumb-btn--design, html body .mps[data-gallery-style="large"] .mps__thumb-btn--design { background: var(--rd-sand); color: var(--rd-ink); }
+html body .mps__option[aria-checked="true"] { border-color: var(--rd-ink); box-shadow: inset 0 0 0 1px var(--rd-ink); }
+html body .mps__label { letter-spacing: .08em; }
+html body .mps__price-line { font-size: 1.75rem; }
+html body .mps__info details, html body .mps details { border-color: var(--rd-line); }

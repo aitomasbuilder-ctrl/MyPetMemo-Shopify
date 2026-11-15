@@ -271,10 +271,15 @@
       "settings": {
         "heading": "Good questions. Honest answers."
       }
+    },
+    "rd_trustbar": {
+      "type": "rd-trustbar",
+      "settings": {}
     }
   },
   "order": [
     "rd_hero",
+    "rd_trustbar",
     "rd_products",
     "rd_categories",
     "rd_steps",
