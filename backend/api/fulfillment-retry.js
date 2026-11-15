@@ -26,9 +26,9 @@ async function handler(req, res, deps = {}) {
     const order = await wired.store.fetchOrder(id);
     if (!order) return send(res, 404, { error: 'order_not_found' });
     const record = await wired.store.get(id);
-    if (body.force && record && record.claimed && !record.printify_order_id) await wired.store.set(id, { claimed: false });
+    if (body.force && record && record.claimed && (record.complete === false || (!record.printify_order_id && !record.printful_order_id))) await wired.store.set(id, { claimed: false });
     const mode = process.env.PRINTIFY_MODE === 'production' ? 'production' : 'draft';
-    const result = await processPaidOrder(order, { store: wired.store, printify: wired.printify, prepare: wired.prepare, deliver: wired.deliver, gateOptions: wired.gateOptions, mode });
+    const result = await processPaidOrder(order, { store: wired.store, printify: wired.printify, printful: wired.printful, prepare: wired.prepare, deliver: wired.deliver, gateOptions: wired.gateOptions, mode });
     return send(res, 200, result);
   } catch (err) {
     console.error('fulfillment-retry failed', err.message);
