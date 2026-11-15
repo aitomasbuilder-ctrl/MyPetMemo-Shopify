@@ -1,3 +1,12 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin language editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "catalog": {
     "digital_tag": "SKAITMENINIS FAILAS",
@@ -297,13 +306,6 @@
       "see_all_backgrounds": "Visi fonai",
       "add_your_pet_s_name_optional": "Įrašykite augintinio vardą (neprivaloma)",
       "choose_a_style": "Pasirinkite stilių",
-      "art_style": "Piešinio stilius",
-      "paint_vector": "Iliustracija",
-      "paint_vector_sub": "Ryški, bet kokiame fone",
-      "paint_watercolor": "Akvarelė",
-      "paint_watercolor_sub": "Švelnus piešinys baltame fone",
-      "handwritten": "Ranka rašytas",
-      "signature": "Parašas",
       "name_below": "Vardas apačioje",
       "name_on_top": "Vardas viršuje",
       "big_portrait": "Didelis portretas",
@@ -360,7 +362,14 @@
       "pet_s_name": "Augintinio vardas",
       "eyebrow_mug": "Asmeninis puodelis su augintiniu",
       "eyebrow_ornament": "Asmeninis žaisliukas su augintiniu",
-      "eyebrow_blanket": "Asmeninis pledas su augintiniu"
+      "eyebrow_blanket": "Asmeninis pledas su augintiniu",
+      "art_style": "Piešinio stilius",
+      "paint_vector": "Iliustracija",
+      "paint_vector_sub": "Ryški, bet kokiame fone",
+      "paint_watercolor": "Akvarelė",
+      "paint_watercolor_sub": "Švelnus piešinys baltame fone",
+      "handwritten": "Ranka rašytas",
+      "signature": "Parašas"
     },
     "portrait": {
       "your_design": "Jūsų dizainas",
@@ -540,7 +549,8 @@
       "digital": "Skaitmeninis failas",
       "black_frame": "Juodas rėmelis",
       "white_frame": "Baltas rėmelis",
-      "canvas": "Drobė be rėmelio"
+      "canvas": "Drobė be rėmelio",
+      "cream": "Kreminė"
     }
   },
   "proof": {

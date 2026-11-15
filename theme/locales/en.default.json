@@ -68,8 +68,7 @@
     "add_extra": "Add matching keepsake",
     "for_product": "Matches your {{ title }}. Copies the pet photos and personalization from this keepsake.",
     "discount_matching_addon": "Matching add-on 15% off",
-    "discount_matching_set": "Matching set: 20% off both add-ons",
-    "payment_methods": "Payment methods"
+    "discount_matching_set": "Matching set: 20% off both add-ons"
   },
   "nav": {
     "best_sellers": "Best sellers",
@@ -306,13 +305,6 @@
       "see_all_backgrounds": "See all backgrounds",
       "add_your_pet_s_name_optional": "Add your pet's name (optional)",
       "choose_a_style": "Choose a style",
-      "art_style": "Art style",
-      "paint_vector": "Illustrated",
-      "paint_vector_sub": "Clean, bright, any background",
-      "paint_watercolor": "Watercolor",
-      "paint_watercolor_sub": "Soft painting on white",
-      "handwritten": "Handwritten",
-      "signature": "Signature",
       "name_below": "Name below",
       "name_on_top": "Name on top",
       "big_portrait": "Big portrait",
@@ -369,7 +361,14 @@
       "pet_s_name": "Pet's name",
       "eyebrow_mug": "Personalized Pet Mug",
       "eyebrow_ornament": "Personalized Pet Ornament",
-      "eyebrow_blanket": "Personalized Pet Blanket"
+      "eyebrow_blanket": "Personalized Pet Blanket",
+      "art_style": "Art style",
+      "paint_vector": "Illustrated",
+      "paint_vector_sub": "Clean, bright, any background",
+      "paint_watercolor": "Watercolor",
+      "paint_watercolor_sub": "Soft painting on white",
+      "handwritten": "Handwritten",
+      "signature": "Signature"
     },
     "portrait": {
       "your_design": "Your design",
@@ -482,9 +481,7 @@
       "features_christmas_blanket": "Christmas and 20+ other backgrounds|Your pet’s photo, turned into a portrait|Name",
       "features_memorial_blanket": "Soft clouds and 20+ other backgrounds|Your pet’s photo, turned into a portrait|Name",
       "features_blanket": "20+ backgrounds and colors|Your pet’s photo, turned into a portrait|Name",
-      "personalize": "Personalize this {{ noun }}",
-      "sizes": "Sizes",
-      "shapes": "Shapes"
+      "personalize": "Personalize this {{ noun }}"
     },
     "reviewcard": {
       "verified_purchase": "Verified purchase",
@@ -528,24 +525,6 @@
     "upload": {
       "formats": "JPG, PNG, WebP or HEIC · up to {{ mb }} MB",
       "formats_pets": "JPG, PNG, WebP or HEIC · up to {{ mb }} MB · dogs and cats"
-    },
-    "values": {
-      "star": "Star",
-      "circle": "Circle",
-      "heart": "Heart",
-      "snowflake": "Snowflake",
-      "one_size": "One Size",
-      "mug_15oz": "15oz",
-      "blanket_small": "50\" × 60\"",
-      "blanket_large": "60\" × 80\"",
-      "print_8x10": "8 × 10 in",
-      "print_12x16": "12 × 16 in",
-      "print_16x20": "16 × 20 in",
-      "print_24x36": "24 × 36 in",
-      "digital": "Digital file",
-      "black_frame": "Black frame",
-      "white_frame": "White frame",
-      "canvas": "Canvas, no frame"
     }
   },
   "proof": {
@@ -575,8 +554,7 @@
     "date_format": "%b %-d",
     "blanket_origin": "Blankets are printed in the USA by our print partner and shipped from there.",
     "digital": "Digital file: emailed after payment. Nothing is shipped.",
-    "policy": "Shipping policy",
-    "shipping_blanket_lt": "7–13 business days from the USA, with tracking. The cost is shown at checkout, before you pay."
+    "policy": "Shipping policy"
   },
   "meta": {
     "home_title": "Personalized Pet Blankets & Pet Portraits from Your Photo | MyPetMemo",
