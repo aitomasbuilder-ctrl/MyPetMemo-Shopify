@@ -8,6 +8,21 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
   }
+  // Product pages: secure-payment row with the store's real payment icons under the delivery box.
+  var delivery = document.querySelector('.mps .mpm-delivery, .mpp .mpm-delivery');
+  var pay = document.querySelector('.rd-footer__pay');
+  if (delivery && pay && !document.querySelector('.rd-paytrust')) {
+    var lt = (document.documentElement.lang || '').indexOf('lt') === 0;
+    var row = document.createElement('div');
+    row.className = 'rd-paytrust';
+    row.innerHTML = '<p><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>' +
+      (lt ? 'Saugus apmokėjimas' : 'Secure checkout') + '</p>';
+    var list = pay.cloneNode(true);
+    list.removeAttribute('aria-label');
+    list.className = 'rd-paytrust__icons';
+    row.appendChild(list);
+    delivery.parentNode.insertBefore(row, delivery.nextSibling);
+  }
   if (reduce || !('IntersectionObserver' in window)) return;
   var selectors = [
     '[data-rd-reveal]', '.rd-heading', '.rd-grid__item', '.rd-tile', '.rd-steps__list > li',
@@ -30,11 +45,18 @@
     el.style.transitionDelay = Math.min(siblings, 5) * 70 + 'ms';
     io.observe(el);
   });
-  // Anything already on screen at load shows immediately.
-  setTimeout(function () {
+  // Safety net: anything that is on screen or already scrolled past is shown, even if the observer missed it.
+  var pending = true;
+  function sweep() {
+    pending = false;
+    var left = 0;
     items.forEach(function (el) {
-      var r = el.getBoundingClientRect();
-      if (r.top < window.innerHeight && r.bottom > 0) el.classList.add('is-in');
+      if (el.classList.contains('is-in')) return;
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('is-in'); else left++;
     });
-  }, 60);
+    if (!left) window.removeEventListener('scroll', onSweep);
+  }
+  function onSweep() { if (!pending) { pending = true; setTimeout(sweep, 150); } }
+  window.addEventListener('scroll', onSweep, { passive: true });
+  setTimeout(sweep, 60);
 })();
