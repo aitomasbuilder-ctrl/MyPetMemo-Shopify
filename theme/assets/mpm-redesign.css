@@ -422,4 +422,4 @@ html body .mps .mps__thumb-btn.mps__thumb-btn--design { background: var(--rd-san
 html body .mps.mps--portrait .mps__btn--primary { background: var(--rd-cta); }
 html body .mps.mps--portrait .mps__btn--primary:hover:not(:disabled) { background: var(--rd-cta-hover); }
 html body .mps--portrait .mpp__eyebrow { color: var(--rd-cta); font-family: var(--rd-font); letter-spacing: .08em; }
-html body .mps.mps--portrait { --mpp-pink: var(--rd-sand); --mpp-pink-2: #b9b2a3; }
+html body .mps.mps--portrait { --mpp-pink-2: #b9b2a3; }
