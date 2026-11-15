@@ -1787,6 +1787,12 @@
         this.defaultLayout = s.artwork ? this.layoutKey() : null;
         return;
       }
+      if (this.config.nameBelow && !this.shape()) {
+        this.placeNameBelow();
+        this.clampAll();
+        this.defaultLayout = s.artwork ? this.layoutKey() : null;
+        return;
+      }
       delete s.name.cap; delete s.name.breaks;
       const L = this.layout();
       Object.assign(s.name, L ? { cx: 0.5, cy: L.name[0], size: L.name[1], rot: 0 } : { cx: 0.5, cy: 0.115, size: 0.13, rot: 0 });
@@ -1797,6 +1803,22 @@
       this.placePet();
       this.clampAll();
       this.defaultLayout = s.artwork ? this.layoutKey() : null;
+    }
+    /** Blankets whose top edge is covered when worn (the hooded blanket): the pet from the top edge down and the
+     *  name and text under it, near the bottom edge. */
+    placeNameBelow() {
+      const s = this.state, p = this.printSize();
+      delete s.name.cap; delete s.name.breaks;
+      Object.assign(s.name, { cx: 0.5, cy: 0.86, size: 0.1, rot: 0 });
+      const block = () => { const g = this.geometry('name', { x: 0, y: 0, w: p.width, h: p.height }); return g ? { top: (g.y - g.h / 2) / p.height, bottom: (g.y + g.h / 2) / p.height } : null; };
+      let b = this.hasLabel() ? block() : null;
+      if (b) { s.name.cy = round4(s.name.cy + 0.95 - b.bottom); b = block(); }
+      if (!s.artwork) return;
+      // Without a name the pet stands on the bottom edge; above a name its chest fades out instead of a hard cut.
+      const top = 0.04, bottom = b ? b.top - 0.01 : 1;
+      const aspect = s.artwork.height / s.artwork.width;
+      const w = Math.min(((bottom - top) * p.height) / (p.width * aspect), 0.88);
+      s.pet = { cx: 0.5, cy: round4(bottom - this.petHeightFrac(w) / 2), w: round4(w), rot: 0, ...(b ? { fade: 0.2 } : {}) };
     }
     /** Mug styles (one side of the mug): "below" = pet with the name and text under it, "above" = name on top and the
      *  pet below, "big" = a large pet on the bottom edge with the name across its chest. */
