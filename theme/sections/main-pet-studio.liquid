@@ -5,6 +5,11 @@
   built-in patterns in pet-backgrounds.js plus any image backgrounds added as blocks.
 {%- endcomment -%}
 {%- assign current_variant = product.selected_or_first_available_variant -%}
+{%- comment -%} Painted scene (e.g. moonlight memorial): the product metafield mypetmemo.scene wins over the section setting, so
+  one blanket template serves both. A scene page uses scene_example_file / scene_photo_files for its pictures. {%- endcomment -%}
+{%- assign mps_scene = section.settings.scene_style | default: '' -%}
+{%- if section.settings.watercolor_only and product.metafields.mypetmemo.scene != blank -%}{%- assign mps_scene = product.metafields.mypetmemo.scene.value | strip -%}{%- endif -%}
+{%- unless section.settings.watercolor_only -%}{%- assign mps_scene = '' -%}{%- endunless -%}
 {%- assign rating = product.metafields.reviews.rating.value -%}
 {%- assign rating_count = product.metafields.reviews.rating_count.value -%}
 {%- assign short_title = product.title | split: ' – ' | first | split: ' - ' | first -%}
@@ -165,6 +170,7 @@
           <figure class="mps__example" data-example>
             {%- assign example_alt = 'mpm.example.alt_product' | t -%}
             {%- assign example_file = product.metafields.mypetmemo.example_file.value | default: '' | strip -%}
+            {%- if mps_scene != blank and product.metafields.mypetmemo.scene_example_file != blank -%}{%- assign example_file = product.metafields.mypetmemo.scene_example_file.value | strip -%}{%- endif -%}
             {%- if example_file != blank -%}
               <img class="mps__example-img" src="{{ example_file | file_img_url: '1200x1200' }}" srcset="{{ example_file | file_img_url: '600x600' }} 600w, {{ example_file | file_img_url: '900x900' }} 900w, {{ example_file | file_img_url: '1200x1200' }} 1200w" sizes="(max-width: 899px) 92vw, 600px" alt="{{ example_alt | escape }}" width="1200" height="1200" loading="eager" fetchpriority="high">
             {%- elsif section.settings.example_image != blank -%}
@@ -186,6 +192,7 @@
       </div>
       {%- assign photo_src = section.settings.photo_files -%}
       {%- if product.metafields.mypetmemo.photo_files != blank -%}{%- assign photo_src = product.metafields.mypetmemo.photo_files.value -%}{%- endif -%}
+      {%- if mps_scene != blank and product.metafields.mypetmemo.scene_photo_files != blank -%}{%- assign photo_src = product.metafields.mypetmemo.scene_photo_files.value -%}{%- endif -%}
       {%- assign photo_files = photo_src | newline_to_br | split: '<br />' -%}
       {%- assign has_photo_files = false -%}
       {%- for f in photo_files -%}{%- if f != blank -%}{%- assign has_photo_files = true -%}{%- endif -%}{%- endfor -%}
@@ -589,6 +596,7 @@
       "watercolor": {{ section.settings.watercolor | json }},
       "defaultPaint": {{ section.settings.default_paint | json }},
       "watercolorOnly": {{ section.settings.watercolor_only | json }},
+      "scene": {{ mps_scene | json }},
       "watercolorEndpoint": {{ section.settings.watercolor_endpoint | json }},
       "optionNames": {{ product.options | json }},
       "extraFields": {{ section.settings.extra_fields | json }},
@@ -634,6 +642,7 @@
     { "type": "text", "id": "watercolor_endpoint", "label": "Watercolor generation URL", "default": "https://mypetmemo-shopify.vercel.app/api/portrait", "info": "The service that paints the watercolor style. Empty: the Portrait generation URL below." },
     { "type": "image_picker", "id": "example_image", "label": "Example photo before upload", "info": "Optional. Shown with the illustrative mockup label until the shopper adds a photo." },
     { "type": "checkbox", "id": "watercolor_only", "label": "Watercolor only (hide the style choice and backgrounds)", "default": false },
+    { "type": "select", "id": "scene_style", "label": "Painted scene", "info": "With Watercolor only on: the AI paints a whole picture for the blanket instead of a watercolor pet on white.", "options": [{ "value": "", "label": "None (watercolor pet on white)" }, { "value": "moonlight", "label": "Pet in the moonlight (memorial)" }, { "value": "christmas", "label": "Cozy Christmas Eve" }], "default": "" },
     { "type": "select", "id": "default_paint", "label": "Style selected first", "options": [{ "value": "vector", "label": "Illustrated" }, { "value": "watercolor", "label": "Watercolor" }], "default": "vector" },
     { "type": "checkbox", "id": "name_below", "label": "Name under the pet (blankets)", "info": "For blankets whose top edge is hidden when worn, like the hooded blanket.", "default": false },
     { "type": "select", "id": "look", "label": "Page look", "default": "soft", "options": [{ "value": "soft", "label": "Soft (cream, like the pet portrait page)" }, { "value": "classic", "label": "Classic (white and navy)" }] },
