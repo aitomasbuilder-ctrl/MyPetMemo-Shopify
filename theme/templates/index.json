@@ -45,8 +45,8 @@
           "settings": {
             "product": "personalized-pet-portrait",
             "kind": "portrait",
-            "image": "shopify://shop_images/mpm-portrait-dachshund-0.jpg",
-            "hover": "shopify://shop_images/mpm-portrait-dachshund-8.jpg",
+            "image": "shopify://shop_images/wc-portrait-boston-archie.png",
+            "hover": "shopify://shop_images/wc-portrait-ragdoll-muza.png",
             "badge_en": "Digital file too",
             "badge_lt": "Ir skaitmeninis"
           }
@@ -120,7 +120,7 @@
           "settings": {
             "title_en": "Pet portraits",
             "title_lt": "Augintinių portretai",
-            "image": "shopify://shop_images/mpm-portrait-dachshund-8.jpg",
+            "image": "shopify://shop_images/wc-portrait-ragdoll-muza.png",
             "kind": "portrait",
             "product": "personalized-pet-portrait"
           }
@@ -340,8 +340,8 @@
             "group": "1",
             "product": "personalized-pet-portrait",
             "kind": "portrait",
-            "image": "shopify://shop_images/mpm-portrait-dachshund-7.jpg",
-            "hover": "shopify://shop_images/mpm-portrait-dachshund-2.jpg"
+            "image": "shopify://shop_images/wc-portrait-ragdoll-muza.png",
+            "hover": "shopify://shop_images/wc-portrait-boston-archie.png"
           }
         },
         "g4": {
@@ -370,8 +370,8 @@
             "group": "2",
             "product": "personalized-pet-portrait",
             "kind": "portrait",
-            "image": "shopify://shop_images/mpm-portrait-dachshund-6.jpg",
-            "hover": "shopify://shop_images/mpm-portrait-dachshund-1.jpg"
+            "image": "shopify://shop_images/wc-portrait-bernedoodle-print.png",
+            "hover": "shopify://shop_images/wc-portrait-ragdoll-muza.png"
           }
         },
         "g7": {
@@ -420,8 +420,8 @@
             "group": "3",
             "product": "personalized-pet-portrait",
             "kind": "portrait",
-            "image": "shopify://shop_images/mpm-portrait-dachshund-8.jpg",
-            "hover": "shopify://shop_images/mpm-portrait-dachshund-0.jpg"
+            "image": "shopify://shop_images/wc-portrait-boston-archie.png",
+            "hover": "shopify://shop_images/wc-portrait-bernedoodle-print.png"
           }
         }
       },
