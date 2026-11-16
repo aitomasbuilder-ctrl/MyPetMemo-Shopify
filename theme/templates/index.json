@@ -2,7 +2,9 @@
   "sections": {
     "rd_hero": {
       "type": "rd-hero",
-      "settings": {}
+      "settings": {
+        "image": "shopify://shop_images/wc-hero-bernese-bruno.png"
+      }
     },
     "rd_products": {
       "type": "rd-products",
@@ -12,8 +14,8 @@
           "settings": {
             "product": "custom-pet-portrait-blanket",
             "kind": "blanket",
-            "image": "shopify://shop_images/mpm-gallery-0.jpg",
-            "hover": "shopify://shop_images/mpm-gallery-3.jpg"
+            "image": "shopify://shop_images/wc-blanket-held-milo.png",
+            "hover": "shopify://shop_images/wc-blanket-husky-luka.png"
           }
         },
         "p1": {
@@ -21,8 +23,8 @@
           "settings": {
             "product": "christmas-pet-portrait-blanket",
             "kind": "blanket",
-            "image": "shopify://shop_images/11010451392216290013_2048.jpg",
-            "hover": "shopify://shop_images/2123783775463480541_2048.jpg",
+            "image": "shopify://shop_images/wc-xmas-frenchie-max.png",
+            "hover": "shopify://shop_images/wc-xmas-tabby-rudis.png",
             "badge_en": "Christmas",
             "badge_lt": "Kalėdoms"
           }
@@ -32,9 +34,10 @@
           "settings": {
             "product": "cozy-hooded-sherpa-fleece-blanket",
             "kind": "blanket",
-            "hover": "shopify://shop_images/17376613350854401492_2048.jpg",
+            "hover": "shopify://shop_images/wc-hooded-lab-rex.png",
             "badge_en": "New",
-            "badge_lt": "Naujiena"
+            "badge_lt": "Naujiena",
+            "image": "shopify://shop_images/wc-hooded-bella.png"
           }
         },
         "p3": {
@@ -73,8 +76,8 @@
           "settings": {
             "product": "pet-memorial-blanket",
             "kind": "blanket",
-            "image": "shopify://shop_images/9557284658634264093_2048.jpg",
-            "hover": "shopify://shop_images/5720199029838372784_2048.jpg"
+            "image": "shopify://shop_images/wc-memorial-collie-charlie.png",
+            "hover": "shopify://shop_images/wc-memorial-cavalier-coco.png"
           }
         },
         "p7": {
@@ -105,7 +108,7 @@
           "settings": {
             "title_en": "Blankets",
             "title_lt": "Pledai",
-            "image": "shopify://shop_images/mpm-gallery-3.jpg",
+            "image": "shopify://shop_images/wc-blanket-held-milo.png",
             "kind": "blanket",
             "link": "shopify://collections/pet-blankets"
           }
@@ -135,7 +138,7 @@
           "settings": {
             "title_en": "Memorial gifts",
             "title_lt": "Atminimo dovanos",
-            "image": "shopify://shop_images/hf_20261012_134003_c32e40f1-8c06-4103-a38d-6e20ed9504e9.png",
+            "image": "shopify://shop_images/wc-memorial-collie-charlie.png",
             "kind": "blanket",
             "link": "shopify://collections/pet-memorial-gifts"
           }
@@ -302,8 +305,8 @@
             "group": "1",
             "product": "christmas-pet-portrait-blanket",
             "kind": "blanket",
-            "image": "shopify://shop_images/11010451392216290013_2048.jpg",
-            "hover": "shopify://shop_images/2123783775463480541_2048.jpg"
+            "image": "shopify://shop_images/wc-xmas-tabby-rudis.png",
+            "hover": "shopify://shop_images/wc-xmas-frenchie-max.png"
           }
         },
         "g1": {
@@ -322,7 +325,8 @@
             "group": "1",
             "product": "cozy-hooded-sherpa-fleece-blanket",
             "kind": "blanket",
-            "hover": "shopify://shop_images/14942201749006682460_2048.jpg"
+            "hover": "shopify://shop_images/wc-hooded-bella.png",
+            "image": "shopify://shop_images/wc-hooded-lab-rex.png"
           }
         },
         "g3": {
@@ -351,8 +355,8 @@
             "group": "2",
             "product": "pet-memorial-blanket",
             "kind": "blanket",
-            "image": "shopify://shop_images/9557284658634264093_2048.jpg",
-            "hover": "shopify://shop_images/149823594305653432_2048.jpg"
+            "image": "shopify://shop_images/wc-memorial-cavalier-coco.png",
+            "hover": "shopify://shop_images/wc-memorial-collie-charlie.png"
           }
         },
         "g6": {
@@ -371,8 +375,8 @@
             "group": "2",
             "product": "custom-pet-portrait-blanket",
             "kind": "blanket",
-            "image": "shopify://shop_images/mpm-gallery-7.jpg",
-            "hover": "shopify://shop_images/mpm-gallery-3.jpg"
+            "image": "shopify://shop_images/wc-blanket-sofa-luna.png",
+            "hover": "shopify://shop_images/wc-blanket-held-milo.png"
           }
         },
         "g8": {
@@ -381,8 +385,8 @@
             "group": "3",
             "product": "custom-pet-portrait-blanket",
             "kind": "blanket",
-            "image": "shopify://shop_images/mpm-gallery-8.jpg",
-            "hover": "shopify://shop_images/mpm-gallery-0.jpg"
+            "image": "shopify://shop_images/wc-blanket-husky-luka.png",
+            "hover": "shopify://shop_images/wc-blanket-sofa-luna.png"
           }
         },
         "g9": {
@@ -391,7 +395,8 @@
             "group": "3",
             "product": "cozy-hooded-sherpa-fleece-blanket",
             "kind": "blanket",
-            "hover": "shopify://shop_images/17376613350854401492_2048.jpg"
+            "hover": "shopify://shop_images/wc-hooded-lab-rex.png",
+            "image": "shopify://shop_images/wc-hooded-bella.png"
           }
         },
         "g10": {
