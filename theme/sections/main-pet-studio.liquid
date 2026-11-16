@@ -164,7 +164,11 @@
           {%- comment -%} Shown until a photo is chosen. An illustrative mockup, kept apart from the print file. {%- endcomment -%}
           <figure class="mps__example" data-example>
             {%- assign example_alt = 'mpm.example.alt_product' | t -%}
-            {% render 'pet-image', kind: section.settings.family, tile: 0, alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px' %}
+            {%- if section.settings.example_image != blank -%}
+              {{ section.settings.example_image | image_url: width: 1200 | image_tag: class: 'mps__example-img', alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px', widths: '600, 900, 1200', loading: 'eager', fetchpriority: 'high' }}
+            {%- else -%}
+              {% render 'pet-image', kind: section.settings.family, tile: 0, alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px' %}
+            {%- endif -%}
             <figcaption>{{ 'mpm.example.label_mockup' | t }}</figcaption>
           </figure>
         {%- endif -%}
@@ -623,6 +627,7 @@
     { "type": "select", "id": "family", "label": "Product type", "default": "blanket", "options": [{ "value": "blanket", "label": "Blanket" }, { "value": "ornament", "label": "Ornament (shape from the variant)" }, { "value": "mug", "label": "Mug (design printed on both sides)" }] },
     { "type": "checkbox", "id": "watercolor", "label": "Offer the watercolor style (blankets)", "info": "Adds Illustrated / Watercolor buttons. Watercolor is painted by the AI on a white blanket with the name as a signature. Needs the Vercel portrait service.", "default": false },
     { "type": "text", "id": "watercolor_endpoint", "label": "Watercolor generation URL", "default": "https://mypetmemo-shopify.vercel.app/api/portrait", "info": "The service that paints the watercolor style. Empty: the Portrait generation URL below." },
+    { "type": "image_picker", "id": "example_image", "label": "Example photo before upload", "info": "Optional. Shown with the illustrative mockup label until the shopper adds a photo." },
     { "type": "checkbox", "id": "watercolor_only", "label": "Watercolor only (hide the style choice and backgrounds)", "default": false },
     { "type": "select", "id": "default_paint", "label": "Style selected first", "options": [{ "value": "vector", "label": "Illustrated" }, { "value": "watercolor", "label": "Watercolor" }], "default": "vector" },
     { "type": "checkbox", "id": "name_below", "label": "Name under the pet (blankets)", "info": "For blankets whose top edge is hidden when worn, like the hooded blanket.", "default": false },

@@ -439,3 +439,6 @@ html body .mps.mps--portrait { --mpp-pink-2: #b9b2a3; }
   .cart-page .section-heading { flex-direction: row; justify-content: space-between; }
   .cart-page .section-heading .button { min-height: 40px; padding: 8px 14px; font-size: .6875rem; }
 }
+
+/* Studio: optional example photo (section setting) fills the stage. */
+.mps__example > .mps__example-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
