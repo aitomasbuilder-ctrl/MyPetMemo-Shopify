@@ -6,7 +6,8 @@ const { checkOrder } = require('./gate');
 // prepare(order, items) -> items: renders and stores print files for pet-studio designs (design-fulfillment.js).
 // deliver(order, digitalItems): sends digital portraits to the customer (Shopify fulfillment with the download link).
 // Production is only reached if MODE === 'production'. Default is draft: nothing is produced.
-async function processPaidOrder(order, { store, printify, prepare, deliver, gateOptions, mode = 'draft' }) {
+// printful (optional): EU blanket lines marked fulfiller 'printful' by prepare() go there as a Printful draft.
+async function processPaidOrder(order, { store, printify, printful, prepare, deliver, gateOptions, mode = 'draft' }) {
   const id = String(order.id);
   const gate = checkOrder(order, gateOptions);
   if (!gate.ok) {
@@ -17,7 +18,8 @@ async function processPaidOrder(order, { store, printify, prepare, deliver, gate
     return { action: 'blocked', reasons: gate.reasons };
   }
   const existing = await store.get(id);
-  if (existing && (existing.printify_order_id || existing.status === 'delivered')) return { action: 'duplicate_skipped', printify_order_id: existing.printify_order_id };
+  // A run that stopped half way (complete === false) is resumed; each maker's order is created only once.
+  if (existing && existing.complete !== false && (existing.printify_order_id || existing.printful_order_id || existing.status === 'delivered')) return { action: 'duplicate_skipped', printify_order_id: existing.printify_order_id, printful_order_id: existing.printful_order_id };
   if (!(await store.claim(id))) return { action: 'duplicate_skipped' }; // another worker holds the lock
   try {
     let items = gate.items;
@@ -28,6 +30,7 @@ async function processPaidOrder(order, { store, printify, prepare, deliver, gate
     }
     const lines = Object.fromEntries(items.map(i => [String(i.line_id), {
       kind: i.kind, printify_variant_id: i.printify_variant_id, print_file_url: i.print_file_url,
+      ...(i.fulfiller === 'printful' ? { fulfiller: 'printful', printful_variant_id: i.printful_variant_id } : {}),
       ...(i.production ? { design_id: i.production.design_id, size: `${i.production.width}x${i.production.height}`, sha256: i.production.sha256, artwork_check: i.production.artwork_check } : {})
     }]));
     const physical = items.filter(i => !i.digital), digital = items.filter(i => i.digital);
@@ -49,14 +52,29 @@ async function processPaidOrder(order, { store, printify, prepare, deliver, gate
       await store.set(id, { status: 'delivered', error: null, hold: false, lines });
       return { action: 'digital_delivered' };
     }
-    const draft = await printify.createDraftOrder(order, physical, config);
-    await store.set(id, { status: 'paid', printify_order_id: draft.id, error: null, hold: false, lines });
-    if (mode === 'production') {
-      await printify.sendToProduction(draft.id);
-      await store.set(id, { status: 'sent_to_printify' });
-      return { action: 'sent', printify_order_id: draft.id };
+    const viaPrintful = physical.filter(i => i.fulfiller === 'printful'), viaPrintify = physical.filter(i => i.fulfiller !== 'printful');
+    const result = { action: mode === 'production' ? 'sent' : 'draft_created' };
+    let pfId = existing && existing.printful_order_id, pyId = existing && existing.printify_order_id;
+    if (viaPrintful.length && !pfId) {
+      if (!printful) throw new Error('printful_not_configured');
+      const draft = await printful.createDraftOrder(order, viaPrintful);
+      pfId = String(draft.id);
+      await store.set(id, { printful_order_id: pfId, complete: false, lines });
     }
-    return { action: 'draft_created', printify_order_id: draft.id };
+    if (viaPrintify.length && !pyId) {
+      const draft = await printify.createDraftOrder(order, viaPrintify, config);
+      pyId = draft.id;
+      await store.set(id, { printify_order_id: pyId, complete: false, lines });
+    }
+    await store.set(id, { status: 'paid', error: null, hold: false, lines, complete: mode !== 'production' });
+    if (pfId) result.printful_order_id = pfId;
+    if (pyId) result.printify_order_id = pyId;
+    if (mode === 'production') {
+      if (viaPrintful.length && !(existing && existing.printful_confirmed)) { await printful.confirmOrder(pfId); await store.set(id, { printful_confirmed: true }); }
+      if (viaPrintify.length && !(existing && existing.printify_sent)) { await printify.sendToProduction(pyId); await store.set(id, { printify_sent: true }); }
+      await store.set(id, { status: 'sent_to_printify', complete: true });
+    }
+    return result;
   } catch (err) {
     await store.set(id, { status: 'error', error: String(err.message).slice(0, 500), hold: true, claimed: false });
     if (store.applyHold) await store.applyHold(id, err.message);

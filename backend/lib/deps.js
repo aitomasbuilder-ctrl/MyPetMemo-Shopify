@@ -2,6 +2,7 @@
 // Production wiring shared by the webhook and the retry endpoint.
 const { shopifyStore } = require('./shopify-store');
 const { client } = require('./printify');
+const printfulLib = require('./printful');
 const { catalog } = require('./printify-catalog');
 const { putPrintFile } = require('./storage');
 const { prepareDesignItems } = require('./design-fulfillment');
@@ -10,15 +11,19 @@ const config = require('../config/printify-variants.json');
 function productionDeps() {
   let cat;
   const store = shopifyStore();
+  const printfulApi = printfulLib.enabled() ? printfulLib.client() : null;
+  const printfulRoute = printfulApi ? printfulLib.blanketRouter({ api: printfulApi }) : null;
   return {
     store,
     // Digital portraits: Shopify fulfils the line with the download link and emails the customer
     // (DIGITAL_DELIVERY=hold keeps the link on the order for a manual check instead).
     deliver: (order, items) => store.fulfillDigital(order.id, items, { notify: process.env.DIGITAL_DELIVERY !== 'hold' }),
     printify: client(),
+    // EU blanket orders go to Printful in Europe when PRINTFUL_API_TOKEN is set (see lib/printful.js).
+    printful: printfulApi,
     prepare: (order, items) => {
       cat = cat || catalog({ overrides: config.studio_products || {} });
-      return prepareDesignItems(order, items, { catalog: cat, put: putPrintFile });
+      return prepareDesignItems(order, items, { catalog: cat, put: putPrintFile, printfulRoute });
     }
   };
 }

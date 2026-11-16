@@ -1,9 +1,10 @@
 'use strict';
 // POST /api/portrait — the pet studio's "Portrait generation URL".
-// Body: multipart form with `image` (the shopper's pet photo); `product`, `shape` and `style` are accepted and ignored.
-// Response: { image: data URL of the vector portrait on flat green, background: 'chroma' }.
+// Body: multipart form with `image` (the shopper's pet photo) and optional `style` (`watercolor`; anything else is
+// the vector style); `product` and `shape` are accepted and ignored.
+// Response: { image: data URL, background: 'chroma' (vector, on flat green) or 'white' (watercolor, on white paper) }.
 const sharp = require('sharp');
-const { generatePortrait, PortraitError } = require('../lib/portrait-ai');
+const { generatePortrait, PortraitError, STYLES, styleFor } = require('../lib/portrait-ai');
 const { cors, send, limiter, clientIp } = require('../lib/http');
 
 const MAX_UPLOAD = 15 * 1024 * 1024;
@@ -21,7 +22,8 @@ async function readPhoto(req) {
   // Re-encode: checks it really is an image, applies phone rotation and keeps the AI request small.
   try {
     const image = await sharp(Buffer.from(await file.arrayBuffer())).rotate().resize(1536, 1536, { fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 90 }).toBuffer();
-    return { image, mimeType: 'image/jpeg' };
+    const style = String(form.get('style') || '');
+    return { image, mimeType: 'image/jpeg', style: STYLES[style] ? style : 'vector' };
   } catch { throw new PortraitError('bad_image', 'That photo couldn’t be processed. Please try a different one.', 400); }
 }
 
@@ -30,10 +32,10 @@ async function handler(req, res, deps = {}) {
   if (req.method !== 'POST') return send(res, 405, { error: 'method_not_allowed' });
   if (!allow(clientIp(req))) return send(res, 429, { code: 'rate_limited', message: 'You’ve made a lot of portraits in a short time. Please wait a little and try again.' });
   try {
-    const photo = await readPhoto(req);
-    const art = await (deps.generate || generatePortrait)(photo);
+    const { style, ...photo } = await readPhoto(req);
+    const art = await (deps.generate || generatePortrait)(photo, { style });
     const png = await sharp(art.image).png().toBuffer();
-    return send(res, 200, { image: `data:image/png;base64,${png.toString('base64')}`, background: 'chroma' });
+    return send(res, 200, { image: `data:image/png;base64,${png.toString('base64')}`, background: styleFor(style).background, style });
   } catch (err) {
     if (err instanceof PortraitError) return send(res, err.status, { code: err.code, message: err.message });
     console.error('portrait failed', err);

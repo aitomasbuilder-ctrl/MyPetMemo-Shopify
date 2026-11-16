@@ -2,6 +2,8 @@
 // Turns a customer's pet photo into the MyPetMemo vector-style portrait with Google Gemini.
 // The pet comes back on a flat chroma-green background; the storefront keys that out and puts the
 // pet on whichever pastel background the shopper picks, so changing the background never re-generates.
+// The watercolor style is painted on plain white instead: its soft edges and splashes can't be keyed
+// out of green, so the storefront turns the white paper transparent (see whiteToAlpha in pet-studio.js).
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_MODEL = 'gemini-2.5-flash-image';
@@ -23,13 +25,39 @@ const PROMPT = [
   'If there are several animals, portray only the most prominent one. No text, no border, no watermark.'
 ].join(' ');
 
+const WATERCOLOR_PROMPT = [
+  'Turn the pet in this photo into a realistic watercolor painting.',
+  'Keep this exact animal: the same breed, face shape, markings, fur colors and pattern, eye color, ear shape,',
+  'expression and head angle. Do not replace it with a different or generic animal.',
+  'Style: a realistic, finely detailed watercolor painting, as a skilled watercolor artist would paint it from the photo:',
+  'the eyes, nose, mouth and fur are painted with true-to-life detail, shading and soft fur texture.',
+  'Not a cartoon, not a flat illustration, no outlines.',
+  'Toward the outer edges the painting breaks up into loose watercolor: soft wet-in-wet washes, irregular paint blots and blooms,',
+  'and scattered spatter dots of different sizes in the pet\'s own fur colors (darker and lighter shades), so the outline of the pet',
+  'dissolves organically into the white paper instead of ending in a clean edge.',
+  'Composition: head, chest and shoulders, large and centered, facing the viewer as in the photo. The painting fills about',
+  '85 percent of the image height and 75 percent of the width; at the bottom the chest fades out into loose washes and spatter.',
+  'Remove the original background completely: the background is plain pure white (#FFFFFF) with no paper texture, shadow or frame.',
+  'Show only the animal: leave out blankets, scarves, pillows, furniture, toys, hands and people that touch or cover it,',
+  'and paint the fur that would be underneath. Keep only a collar, tag, harness or bandana the pet is actually wearing.',
+  'If there are several animals, portray only the most prominent one. No text, no letters, no signature, no watermark.'
+].join(' ');
+
+/** Art styles the service paints. `background` tells the storefront how to cut the pet out. */
+const STYLES = {
+  vector: { prompt: PROMPT, background: 'chroma', aspectRatio: '1:1' },
+  // Portrait format: head, chest and the loose washes below it, for a large painting on the blanket.
+  watercolor: { prompt: WATERCOLOR_PROMPT, background: 'white', aspectRatio: '3:4' }
+};
+const styleFor = name => STYLES[name] || STYLES.vector;
+
 class PortraitError extends Error {
   constructor(code, message, status) { super(message); this.code = code; this.status = status; }
 }
 
 /**
  * @param {{ image: Buffer, mimeType: string }} photo
- * @param {{ apiKey?: string, model?: string, fetchImpl?: typeof fetch, signal?: AbortSignal }} opts
+ * @param {{ style?: string, apiKey?: string, model?: string, fetchImpl?: typeof fetch, signal?: AbortSignal }} opts
  * @returns {Promise<{ image: Buffer, mimeType: string }>}
  */
 async function generatePortrait(photo, opts = {}) {
@@ -37,9 +65,10 @@ async function generatePortrait(photo, opts = {}) {
   if (!apiKey) throw new PortraitError('not_configured', 'Our portrait service isn’t connected yet. Please try again later.', 503);
   const model = opts.model || process.env.GEMINI_IMAGE_MODEL || DEFAULT_MODEL;
   const doFetch = opts.fetchImpl || fetch;
+  const style = styleFor(opts.style);
   const body = {
-    contents: [{ role: 'user', parts: [{ text: PROMPT }, { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }] }],
-    generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '1:1' } }
+    contents: [{ role: 'user', parts: [{ text: style.prompt }, { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }] }],
+    generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: style.aspectRatio } }
   };
   const res = await doFetch(`${GEMINI_URL}/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
@@ -65,4 +94,4 @@ async function generatePortrait(photo, opts = {}) {
   return { image: Buffer.from(out.data, 'base64'), mimeType: out.mimeType || out.mime_type || 'image/png' };
 }
 
-module.exports = { generatePortrait, PortraitError, PROMPT, CHROMA, DEFAULT_MODEL };
+module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, STYLES, styleFor, CHROMA, DEFAULT_MODEL };

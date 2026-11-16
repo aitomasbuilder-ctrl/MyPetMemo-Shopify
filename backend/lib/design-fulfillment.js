@@ -26,11 +26,11 @@ async function checkArtwork(buf, expected) {
   throw new Error('artwork_does_not_match_approved_design');
 }
 
-async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetch, hosts = defaultHosts(), render = renderDesign }) {
+async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetch, hosts = defaultHosts(), render = renderDesign, printfulRoute = null }) {
   const out = [];
   for (const item of items) {
     if (item.kind !== 'design') { out.push(item); continue; }
-    let mapping = null, area;
+    let mapping = null, area, printful = null;
     if (item.digital) {
       area = { width: item.design.print.w, height: item.design.print.h };
       if (Math.max(area.width, area.height) < 3000) throw new Error('digital_file_too_small');
@@ -39,12 +39,15 @@ async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetc
       if (!mapping.is_enabled) throw new Error(`printify_variant_disabled:${item.sku}`);
       if (catalog.regionalVariant) mapping = await catalog.regionalVariant(mapping, order.shipping_address && order.shipping_address.country_code);
       area = await catalog.printArea(mapping);
+      // EU blankets go to Printful in Europe unless Printify already found an EU maker.
+      if (printfulRoute && !mapping.region) printful = await printfulRoute(mapping, area, order.shipping_address && order.shipping_address.country_code);
     }
     const artwork = await download(item.artwork_url, { fetchImpl, hosts, label: 'artwork' });
     const artworkCheck = await checkArtwork(artwork, item.design.artwork);
     const bg = item.design.background;
     const backgroundImage = bg.kind === 'image' ? await download(bg.image_url, { fetchImpl, hosts, label: 'background' }) : null;
-    const file = await render({ design: item.design, artwork, backgroundImage, width: area.width, height: area.height, ...(item.digital ? { dpi: 300 } : {}) });
+    let file = await render({ design: item.design, artwork, backgroundImage, width: printful ? printful.width : area.width, height: printful ? printful.height : area.height, ...(item.digital ? { dpi: 300 } : {}) });
+    if (printful && printful.rotate) file = await rotated(file);
     const ext = file.format === 'png' ? 'png' : 'jpg';
     const folder = item.digital ? 'digital' : 'print-files';
     const url = await put(`${folder}/${order.id}/${item.line_id}-${item.design_id}.${ext}`, file.buffer, file.format === 'png' ? 'image/png' : 'image/jpeg');
@@ -53,12 +56,20 @@ async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetc
     if (!head.ok || (Number.isFinite(length) && length !== file.buffer.length)) throw new Error('print_file_upload_unverified');
     out.push({
       ...item,
+      ...(printful ? { fulfiller: 'printful', printful_variant_id: printful.printful_variant_id } : {}),
       ...(mapping ? { blueprint_id: mapping.blueprint_id, print_provider_id: mapping.print_provider_id, printify_variant_id: mapping.printify_variant_id, position: area.position } : {}),
       print_file_url: url,
       production: { design_id: item.design_id, width: file.width, height: file.height, sha256: file.sha256, bytes: file.buffer.length, artwork_check: artworkCheck, url }
     });
   }
   return out;
+}
+
+// Turns a rendered print file 90° (Printful's blanket file is the other way round from the design).
+async function rotated(file) {
+  const img = sharp(file.buffer).rotate(90);
+  const buffer = file.format === 'png' ? await img.png().toBuffer() : await img.jpeg({ quality: 95 }).toBuffer();
+  return { ...file, buffer, width: file.height, height: file.width, sha256: sha256(buffer) };
 }
 
 module.exports = { prepareDesignItems, checkArtwork };

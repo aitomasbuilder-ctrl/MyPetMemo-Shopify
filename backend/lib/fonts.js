@@ -9,7 +9,10 @@ const FONTS = {
   fredoka: { family: 'Fredoka', weight: 600, files: ['fredoka-latin-600-normal.woff', 'fredoka-latin-ext-600-normal.woff', 'nunito-latin-ext-600-normal.woff'] },
   pacifico: { family: 'Pacifico', weight: 400, files: ['pacifico-latin-400-normal.woff', 'pacifico-latin-ext-400-normal.woff'] },
   montserrat: { family: 'Montserrat', weight: 800, files: ['montserrat-latin-800-normal.woff', 'montserrat-latin-ext-800-normal.woff'] },
-  playfair: { family: 'Playfair Display', weight: 700, files: ['playfair-display-latin-700-normal.woff', 'playfair-display-latin-ext-700-normal.woff'] }
+  playfair: { family: 'Playfair Display', weight: 700, files: ['playfair-display-latin-700-normal.woff', 'playfair-display-latin-ext-700-normal.woff'] },
+  // Handwritten lettering for the watercolor style.
+  greatvibes: { family: 'Great Vibes', weight: 400, files: ['great-vibes-latin-400-normal.woff', 'great-vibes-latin-ext-400-normal.woff'] },
+  msmadi: { family: 'Ms Madi', weight: 400, files: ['ms-madi-latin-400-normal.woff', 'ms-madi-latin-ext-400-normal.woff'] }
 };
 const DEFAULT_FONT = 'fredoka';
 const fontFile = name => path.join(__dirname, '..', 'fonts', name);

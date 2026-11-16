@@ -18,6 +18,8 @@
   const TAU = Math.PI * 2;
   const NAME_BASELINE = 0.35;          // baseline offset from the name centre, in font sizes
   const NAME_STROKE = 0.16;            // outline width, in font sizes
+  const NAME_PEN = 0.03;               // outline in the fill colour (no visible outline): only a slightly heavier pen line
+  const strokeFor = n => (String(n.stroke).toLowerCase() === String(n.fill).toLowerCase() ? NAME_PEN : NAME_STROKE);
   const CAPTION_LINE = 1.25;           // caption line spacing, in caption font sizes
   const CAPTION_RATIO = 0.5;           // caption size relative to the name
   const MAX_SOURCE_EDGE = 1536;
@@ -30,7 +32,9 @@
     fredoka: { family: 'Fredoka', weight: 600, fallback: 'Nunito' },   // Fredoka lacks ą č ę ė į ų ū: Nunito draws those
     pacifico: { family: 'Pacifico', weight: 400 },
     montserrat: { family: 'Montserrat', weight: 800 },
-    playfair: { family: 'Playfair Display', weight: 700 }
+    playfair: { family: 'Playfair Display', weight: 700 },
+    greatvibes: { family: 'Great Vibes', weight: 400 },
+    msmadi: { family: 'Ms Madi', weight: 400 }         // signature-style name for the watercolor style
   };
   // Mug drawing: handle width and rim depth as fractions of the body width.
   const MUG_HANDLE = 0.26;
@@ -385,6 +389,29 @@
     const out = createCanvas(maxX - minX + 1, maxY - minY + 1);
     out.getContext('2d').drawImage(canvas, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
     return out;
+  }
+
+  /** Watercolor art comes on white paper. White becomes transparent and every other colour is kept as it looks on
+   *  white ("colour to alpha"), so soft edges, splashes and drips sit on the blanket with no halo or cut-out edge. */
+  function whiteToAlpha(image) {
+    const w = image.width, h = image.height, canvas = createCanvas(w, h);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0);
+    const data = ctx.getImageData(0, 0, w, h), px = data.data;
+    let painted = 0;
+    for (let i = 0; i < px.length; i += 4) {
+      const r = px[i], g = px[i + 1], b = px[i + 2];
+      const a0 = Math.max(255 - r, 255 - g, 255 - b) / 255;
+      const a = clamp((a0 - 0.04) / 0.96, 0, 1);   // near-white paper and JPEG noise count as white
+      if (a <= 0) { px[i + 3] = 0; continue; }
+      px[i] = clamp(Math.round(255 - (255 - r) / a0), 0, 255);
+      px[i + 1] = clamp(Math.round(255 - (255 - g) / a0), 0, 255);
+      px[i + 2] = clamp(Math.round(255 - (255 - b) / a0), 0, 255);
+      px[i + 3] = Math.round(a * 255);
+      if (a > 0.1) painted++;
+    }
+    ctx.putImageData(data, 0, 0);
+    return { canvas: trimTransparent(canvas), paintedRatio: painted / (w * h) };
   }
 
   /* ---------- views (main stage and full editor share one design) ---------- */
@@ -766,7 +793,7 @@
         gallery: q('[data-gallery]'), galleryMain: q('[data-gallery-main]'), galleryThumbs: q('[data-gallery-thumbs]'),
         thumbs: q('[data-thumbs]'), thumbDesign: q('[data-thumb-design]'), email: q('[data-email-input]'), consent: q('[data-marketing-consent]'),
         extras: qa('[data-extra]'), suggestions: qa('[data-suggest]'), styles: qa('[data-style]'),
-        artStyles: qa('[data-art-style]'), scenes: qa('[data-scene]'), roomNav: q('[data-room-nav]'), roomName: q('[data-room-name]'),
+        artStyles: qa('[data-art-style]'), paints: qa('[data-paint]'), paintHide: qa('[data-paint-hide]'), scenes: qa('[data-scene]'), roomNav: q('[data-room-nav]'), roomName: q('[data-room-name]'),
         zoomDialog: q('[data-zoom-dialog]'), zoomImg: q('[data-zoom-img]'), memorialOnly: qa('[data-memorial-only]'),
         approvedBadge: q('[data-approved]'), frameHint: q('[data-frame-hint]'), digitalNote: q('[data-digital-note]'),
         formatGroup: q('[data-format-group]'), variantSummary: q('[data-price-inline-note]'),
@@ -785,6 +812,7 @@
         extra: { year: '', dates: '', message: '' },   // optional lines under the name (see captionLines)
         style: 'below',            // mug layout (see placeMug)
         artStyle: 'modern',        // portrait artwork style (pet-portrait.js STYLES)
+        paint: 'vector',           // blankets: vector | watercolor (the AI paints each; see setPaint)
         baseArt: null,             // portraits: { img, art } the unstyled AI portrait; styles are derived from it
         scene: 'design',           // portraits: design | close | room | compare
         roomIndex: 0,
@@ -809,6 +837,10 @@
       this.initVariants();
       this.bindUI();
       this.setStyle(this.state.style, { silent: true });
+      if (this.config.watercolor && !this.isPortrait()) {
+        const wanted = new URLSearchParams(window.location.search).get('style');
+        this.setPaint(wanted === 'watercolor' || wanted === 'vector' ? wanted : (this.config.defaultPaint || 'vector'), { silent: true });
+      }
       this.initGallery();
       this.initReviews();
       this.initSticky();
@@ -864,6 +896,10 @@
         onExtra('message', this.state.extra.message === b.dataset.suggest ? '' : b.dataset.suggest);
       }));
       if (el.editorName) el.editorName.addEventListener('input', () => onName(el.editorName));
+      el.paints.forEach(b => {
+        b.addEventListener('click', () => this.setPaint(b.dataset.paint));
+        b.addEventListener('keydown', e => this.radioKeys(e, b.parentElement, '[data-paint]'));
+      });
       el.styles.forEach(b => {
         b.addEventListener('click', () => this.setStyle(b.dataset.style));
         b.addEventListener('keydown', e => this.radioKeys(e, b.parentElement, '[data-style]'));
@@ -905,6 +941,48 @@
       });
     }
 
+    /** Blankets: which painting the AI makes. */
+    paint() {
+      return this.config.watercolor && !this.isPortrait() && this.state.paint === 'watercolor' ? 'watercolor' : 'vector';
+    }
+    artKey(hash) {
+      if (this.isPortrait()) return this.config.aiStyles ? `art:${hash}:${this.state.artStyle}` : `art:${hash}`;
+      return this.paint() === 'watercolor' ? `art:${hash}:watercolor` : `art:${hash}`;
+    }
+    /** Watercolor is painted on a white blanket with a handwritten name; switching back restores the earlier
+     *  background and lettering. Each painting is its own (cached) AI portrait. */
+    setPaint(paint, opts = {}) {
+      const s = this.state;
+      if (!this.config.watercolor || this.isPortrait()) return;
+      paint = paint === 'watercolor' ? 'watercolor' : 'vector';
+      const prev = s.paint, wasDefault = this.isDefaultLayout();
+      s.paint = paint;
+      this.el.paints.forEach(b => { const on = b.dataset.paint === paint; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+      this.el.paintHide.forEach(n => { n.hidden = paint === 'watercolor'; });
+      if (prev === paint) return;
+      if (paint === 'watercolor') {
+        this.beforePaint = { background: { ...s.background }, name: { font: s.name.font, fill: s.name.fill, stroke: s.name.stroke } };
+        const white = this.backgrounds.find(b => b.id === 'white') || { id: 'white', kind: 'solid', name: 'White', color: '#ffffff' };
+        this.selectBackground(white, { silent: true });
+        // No outline: the stroke in the fill colour only thickens the pen line a little, so it reads like a signature.
+        Object.assign(s.name, { font: 'msmadi', fill: '#1f1b1a', stroke: '#1f1b1a' });
+      } else if (this.beforePaint) {
+        const bg = this.beforePaint.background;
+        this.selectBackground(bg.id === 'custom' ? bg : (this.backgrounds.find(b => b.id === bg.id) || bg), { silent: true });
+        Object.assign(s.name, this.beforePaint.name);
+        this.beforePaint = null;
+      } else {
+        Object.assign(s.name, { font: 'fredoka', fill: '#ffffff', stroke: '#2a2230' });
+      }
+      if (this.el.font) { this.el.font.value = s.name.font; this.el.fill.value = s.name.fill; this.el.stroke.value = s.name.stroke; }
+      if (opts.silent) return;
+      if (s.photo && s.artwork) {
+        this.generate().then(() => { if (wasDefault && s.artwork) { this.placeDefault(); this.changed({ design: true }); } });
+      } else {
+        if (wasDefault && s.artwork) this.placeDefault();
+        this.changed({ design: true });
+      }
+    }
     /** Mug style: re-places the pet and name (an adjusted layout is replaced, like Reset). */
     setStyle(style, opts = {}) {
       this.state.style = style;
@@ -1380,7 +1458,7 @@
       const started = performance.now();
       try {
         // With an AI service that paints each style itself, every style is its own (cached) portrait.
-        const artKey = this.isPortrait() && this.config.aiStyles ? `art:${photo.hash}:${this.state.artStyle}` : `art:${photo.hash}`;
+        const artKey = this.artKey(photo.hash);
         let art = force ? null : await kv.get(artKey);
         let fromCache = !!(art && art.blob);
         if (!fromCache) {
@@ -1388,7 +1466,7 @@
           if (used.length >= (this.config.generationLimit || 8)) {
             throw new StudioError('limit', T('You’ve reached today’s limit for new portraits. Your earlier photos still work, or come back tomorrow.'), false);
           }
-          if (!this.config.aiEndpoint) throw new StudioError('not_configured', T('Our portrait service isn’t connected yet. Please try again later.'), false);
+          if (!this.config.aiEndpoint && !(this.paint() === 'watercolor' && this.config.watercolorEndpoint)) throw new StudioError('not_configured', T('Our portrait service isn’t connected yet. Please try again later.'), false);
           const canvas = await this.requestPortrait(controller.signal);
           try { localStorage.setItem('mps-generations', JSON.stringify(used.concat(Date.now()))); } catch (e) { /* private mode */ }
           const blob = await canvasToBlob(canvas, 'image/png');
@@ -1437,8 +1515,11 @@
       form.append('product', String(this.config.productId));
       form.append('shape', 'blanket');
       if (this.isPortrait() && this.config.aiStyles) form.append('style', this.state.artStyle);
+      else if (this.paint() === 'watercolor') form.append('style', 'watercolor');
       this.setProgress(0.06, T('Uploading your photo and creating your portrait…'));
-      const res = await fetch(this.config.aiEndpoint, { method: 'POST', body: form, signal, headers: { Accept: 'application/json, image/png' } });
+      // Watercolor comes from our own portrait service even where the illustrated style uses another one.
+      const endpoint = this.paint() === 'watercolor' ? (this.config.watercolorEndpoint || this.config.aiEndpoint) : this.config.aiEndpoint;
+      const res = await fetch(endpoint, { method: 'POST', body: form, signal, headers: { Accept: 'application/json, image/png' } });
       if (!res.ok) {
         let info = {};
         try { info = await res.json(); } catch (e) { /* ignore */ }
@@ -1461,6 +1542,11 @@
       } else {
         background = res.headers.get('x-background') || 'chroma';
         image = await loadImage(URL.createObjectURL(await res.blob()));
+      }
+      if (background === 'white') {
+        const { canvas, paintedRatio } = whiteToAlpha(image);
+        if (paintedRatio < 0.02) throw new StudioError('no_subject', T('We couldn’t separate your pet from the background. Please try again or use a different photo.'));
+        return canvas;
       }
       if (background === 'transparent') {
         const c = createCanvas(image.width, image.height);
@@ -1787,6 +1873,12 @@
         this.defaultLayout = s.artwork ? this.layoutKey() : null;
         return;
       }
+      if (this.paint() === 'watercolor' && !this.shape()) {
+        this.placeSignature();
+        this.clampAll();
+        this.defaultLayout = s.artwork ? this.layoutKey() : null;
+        return;
+      }
       if (this.config.nameBelow && !this.shape()) {
         this.placeNameBelow();
         this.clampAll();
@@ -1803,6 +1895,18 @@
       this.placePet();
       this.clampAll();
       this.defaultLayout = s.artwork ? this.layoutKey() : null;
+    }
+    /** Watercolor blankets: one large painting from near the top edge down, with the name signed across its lower
+     *  right like an artist's signature (low enough to stay visible on the hooded blanket when it is worn). */
+    placeSignature() {
+      const s = this.state, p = this.printSize(), wide = p.width > p.height;
+      delete s.name.cap; delete s.name.breaks;
+      Object.assign(s.name, { cx: wide ? 0.66 : 0.7, cy: wide ? 0.84 : 0.8, size: wide ? 0.1 : 0.14, rot: -10 });
+      if (!s.artwork) return;
+      const top = 0.04, bottom = 0.97;
+      const aspect = s.artwork.height / s.artwork.width;
+      const w = Math.min(((bottom - top) * p.height) / (p.width * aspect), 0.94);
+      s.pet = { cx: 0.5, cy: round4(top + this.petHeightFrac(w) / 2), w: round4(w), rot: 0 };
     }
     /** Blankets whose top edge is covered when worn (the hooded blanket): the pet from the top edge down and the
      *  name and text under it, near the bottom edge. */
@@ -2513,7 +2617,7 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'alphabetic';
         ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        ctx.lineWidth = NAME_STROKE * size;
+        ctx.lineWidth = strokeFor(n) * size;
         ctx.strokeStyle = n.stroke;
         ctx.strokeText(n.text, 0, NAME_BASELINE * size);
         ctx.fillStyle = n.fill;
@@ -2530,7 +2634,7 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'alphabetic';
         ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        ctx.lineWidth = NAME_STROKE * size;
+        ctx.lineWidth = strokeFor(c) * size;
         ctx.strokeStyle = c.stroke;
         ctx.fillStyle = c.fill;
         c.lines.forEach((line, i) => {
@@ -2725,7 +2829,7 @@
       const s = this.state;
       kv.set(`state:${this.config.productId}`, {
         at: Date.now(), photoHash: s.photo && s.photo.hash, pet: s.pet, name: s.name, extra: s.extra, style: s.style, addedId: s.addedId, isDefault: this.isDefaultLayout(),
-        artStyle: s.artStyle, scene: s.scene, approvedKey: s.approvedKey,
+        artStyle: s.artStyle, paint: s.paint, scene: s.scene, approvedKey: s.approvedKey,
         background: { id: s.background.id, color: s.background.color, name: s.background.name },
         variantId: s.variant && s.variant.id
       });
@@ -2743,6 +2847,7 @@
         const v = this.config.variants.find(x => x.id === saved.variantId);
         if (v) { this.selectedOptions = v.options.slice(); this.resolveVariant(-1, { silent: true }); }
       }
+      if (saved.paint && !urlBg) this.setPaint(saved.paint, { silent: true });
       Object.assign(this.state.name, saved.name || {});
       Object.assign(this.state.extra, saved.extra || {});
       if (saved.style) this.setStyle(saved.style, { silent: true });
@@ -2751,7 +2856,7 @@
       this.el.extras.forEach(i => { i.value = this.state.extra[i.dataset.extra] || ''; });
       this.el.suggestions.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.suggest === this.state.extra.message)));
       const photo = await kv.get(`photo:${this.config.productId}`);
-      const art = saved.photoHash ? await kv.get(this.isPortrait() && this.config.aiStyles ? `art:${saved.photoHash}:${this.state.artStyle}` : `art:${saved.photoHash}`) : null;
+      const art = saved.photoHash ? await kv.get(this.artKey(saved.photoHash)) : null;
       if (photo && photo.blob) {
         this.state.photo = { blob: photo.blob, hash: photo.hash, url: URL.createObjectURL(photo.blob) };
         this.setPhotoStatus(T('Your photo'));
@@ -3066,7 +3171,7 @@
   document.addEventListener('pet-studio:added', e => track('mpm_design_added', e.target, { design_id: e.detail.id }));
 
   window.MyPetMemoStudio = {
-    formatMoney, parseInches, removeFlatBackground, NAME_BASELINE, NAME_STROKE, CAPTION_LINE,
+    formatMoney, parseInches, removeFlatBackground, whiteToAlpha, NAME_BASELINE, NAME_STROKE, CAPTION_LINE,
     makeAddon, handoff: id => kv.get(`handoff:${id}`), loadImage, sha256Hex
   };
 })();
