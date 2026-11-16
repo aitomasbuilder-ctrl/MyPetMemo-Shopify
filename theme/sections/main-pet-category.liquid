@@ -71,12 +71,10 @@
             assign features = 'mpm.category.features_christmas_ornament' | t
           endif
         else
-          if is_christmas
-            assign features = 'mpm.category.features_christmas_blanket' | t
-          elsif is_memorial
-            assign features = 'mpm.category.features_memorial_blanket' | t
+          if request.locale.iso_code == 'lt'
+            assign features = 'Akvarelinis augintinio portretas|Ant balto, minkšto „sherpa“ pledo|Vardas, užrašytas dailyraščiu'
           else
-            assign features = 'mpm.category.features_blanket' | t
+            assign features = 'Watercolor portrait of your pet|On a soft white sherpa blanket|Name in handwritten script'
           endif
         endif
         if card.settings.features != blank
