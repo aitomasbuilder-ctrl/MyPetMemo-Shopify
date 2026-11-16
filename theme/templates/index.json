@@ -23,8 +23,8 @@
           "settings": {
             "product": "christmas-pet-portrait-blanket",
             "kind": "blanket",
-            "image": "shopify://shop_images/wc-xmas-frenchie-max.png",
-            "hover": "shopify://shop_images/wc-xmas-tabby-rudis.png",
+            "image": "shopify://shop_images/xmas-blanket-beagle-biscuit.png",
+            "hover": "shopify://shop_images/xmas-held-dachshund-oscar.png",
             "badge_en": "Christmas",
             "badge_lt": "Kalėdoms"
           }
@@ -76,8 +76,8 @@
           "settings": {
             "product": "pet-memorial-blanket",
             "kind": "blanket",
-            "image": "shopify://shop_images/wc-memorial-collie-charlie.png",
-            "hover": "shopify://shop_images/wc-memorial-cavalier-coco.png"
+            "image": "shopify://shop_images/moon-blanket-golden-sunny.png",
+            "hover": "shopify://shop_images/moon-held-husky-luka.png"
           }
         },
         "p7": {
@@ -140,7 +140,7 @@
           "settings": {
             "title_en": "Memorial gifts",
             "title_lt": "Atminimo dovanos",
-            "image": "shopify://shop_images/wc-memorial-collie-charlie.png",
+            "image": "shopify://shop_images/moon-blanket-golden-sunny.png",
             "kind": "blanket",
             "link": "shopify://collections/pet-memorial-gifts"
           }
@@ -310,8 +310,8 @@
             "group": "1",
             "product": "christmas-pet-portrait-blanket",
             "kind": "blanket",
-            "image": "shopify://shop_images/wc-xmas-tabby-rudis.png",
-            "hover": "shopify://shop_images/wc-xmas-frenchie-max.png"
+            "image": "shopify://shop_images/xmas-held-dachshund-oscar.png",
+            "hover": "shopify://shop_images/xmas-blanket-beagle-biscuit.png"
           }
         },
         "g1": {
@@ -360,8 +360,8 @@
             "group": "2",
             "product": "pet-memorial-blanket",
             "kind": "blanket",
-            "image": "shopify://shop_images/wc-memorial-cavalier-coco.png",
-            "hover": "shopify://shop_images/wc-memorial-collie-charlie.png"
+            "image": "shopify://shop_images/moon-held-husky-luka.png",
+            "hover": "shopify://shop_images/moon-blanket-golden-sunny.png"
           }
         },
         "g6": {
