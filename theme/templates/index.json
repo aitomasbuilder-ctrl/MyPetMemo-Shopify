@@ -164,7 +164,7 @@
         "r0": {
           "type": "row",
           "settings": {
-            "image": "shopify://shop_images/mpm-gallery-7.jpg",
+            "image": "shopify://shop_images/wc-gift-samoyed-snow.png",
             "eyebrow_en": "For Christmas",
             "eyebrow_lt": "Kalėdoms",
             "heading_en": "A gift they will keep for years",
@@ -179,7 +179,7 @@
         "r1": {
           "type": "row",
           "settings": {
-            "image": "shopify://shop_images/hf_20261012_133829_bf8653e8-a093-4677-8b9e-980d25e5bcd2.png",
+            "image": "shopify://shop_images/wc-memorial-jackrussell-lucky.png",
             "eyebrow_en": "In loving memory",
             "eyebrow_lt": "Atminimui",
             "heading_en": "When they are gone, the love stays",
@@ -201,7 +201,10 @@
     "transform": {
       "type": "transformation",
       "settings": {
-        "heading": "From your camera roll to your favorite keepsake."
+        "heading": "From your camera roll to your favorite keepsake.",
+        "image_1": "shopify://shop_images/wc-step1-corgi-photo.png",
+        "image_2": "shopify://shop_images/wc-step2-corgi-watercolor.png",
+        "image_3": "shopify://shop_images/wc-step3-corgi-blanket-bonnie.png"
       }
     },
     "rd_usp": {
