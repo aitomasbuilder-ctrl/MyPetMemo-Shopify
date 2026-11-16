@@ -1,0 +1,55 @@
+{% doc %}
+  Prints a variant option value (or a whole variant title such as "Heart / One Size") in the shopper's language.
+  Option values stay English in Shopify because the studio scripts read them; this only changes what is shown.
+  @param {string} value - Option value or variant title
+{% enddoc %}
+{%- liquid
+  assign parts = value | split: ' / '
+  for part in parts
+    assign key = ''
+    case part
+      when 'Star'
+        assign key = 'star'
+      when 'Circle'
+        assign key = 'circle'
+      when 'Heart'
+        assign key = 'heart'
+      when 'Snowflake'
+        assign key = 'snowflake'
+      when 'One Size'
+        assign key = 'one_size'
+      when '15oz'
+        assign key = 'mug_15oz'
+      when '50" × 60"'
+        assign key = 'blanket_small'
+      when '60" × 80"'
+        assign key = 'blanket_large'
+      when '8 × 10 in'
+        assign key = 'print_8x10'
+      when '12 × 16 in'
+        assign key = 'print_12x16'
+      when '16 × 20 in'
+        assign key = 'print_16x20'
+      when '24 × 36 in'
+        assign key = 'print_24x36'
+      when 'Digital file', 'Digital download'
+        assign key = 'digital'
+      when 'Black frame'
+        assign key = 'black_frame'
+      when 'White frame'
+        assign key = 'white_frame'
+      when 'Canvas, no frame'
+        assign key = 'canvas'
+    endcase
+    if key != blank
+      assign full_key = 'mpm.values.' | append: key
+      assign label = full_key | t
+    else
+      assign label = part
+    endif
+    unless forloop.first
+      echo ' / '
+    endunless
+    echo label | escape
+  endfor
+-%}

@@ -1,174 +1,43 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
     "hero": {
       "type": "hero",
-      "settings": {}
+      "settings": {
+        "eyebrow": "FOR THE PETS WHO ARE FAMILY",
+        "heading": "Turn your favorite pet photo into something forever.",
+        "text": "Soft sherpa blankets and pet portraits, digital or framed, made from your own pet photo. Upload a photo, see your design free and order only when you love it."
+      }
     },
     "transform": {
       "type": "transformation",
-      "settings": {}
+      "settings": {
+        "heading": "From your camera roll to your favorite keepsake."
+      }
     },
     "featured": {
       "type": "featured-products",
-      "settings": {}
-    },
-    "how": {
-      "type": "how-it-works",
-      "blocks": {
-        "0": {
-          "type": "step",
-          "settings": {
-            "heading": "Upload your pet",
-            "text": "A clear photo from your phone is all you need.",
-            "icon": "upload"
-          }
-        },
-        "1": {
-          "type": "step",
-          "settings": {
-            "heading": "Choose your style",
-            "text": "Choose a portrait style and add the personal details.",
-            "icon": "sparkles"
-          }
-        },
-        "2": {
-          "type": "step",
-          "settings": {
-            "heading": "We create your design",
-            "text": "Your favorite face becomes personalized artwork.",
-            "icon": "heart"
-          }
-        },
-        "3": {
-          "type": "step",
-          "settings": {
-            "heading": "Made for you",
-            "text": "Your physical keepsake is shipped; digital portraits arrive by email.",
-            "icon": "gift"
-          }
-        }
-      },
-      "block_order": [
-        "0",
-        "1",
-        "2",
-        "3"
-      ],
-      "settings": {}
+      "settings": {
+        "eyebrow": "MADE FOR YOUR KIND OF LOVE",
+        "heading": "Their face. Your favorite things.",
+        "addons_eyebrow": "COMPLETE THE GIFT",
+        "addons_heading": "Matching keepsakes, same pet.",
+        "addons_text": "Add an ornament or mug made from the same portrait. With a blanket or portrait in your cart, one add-on is 15% off, or two add-ons are 20% off each. The discount applies to the add-ons only."
+      }
     },
     "styles": {
       "type": "portrait-styles",
-      "settings": {}
-    },
-    "gifting": {
-      "type": "gifting",
-      "blocks": {
-        "0": {
-          "type": "occasion",
-          "settings": {
-            "title": "Dog moms"
-          }
-        },
-        "1": {
-          "type": "occasion",
-          "settings": {
-            "title": "Dog dads"
-          }
-        },
-        "2": {
-          "type": "occasion",
-          "settings": {
-            "title": "Christmas"
-          }
-        },
-        "3": {
-          "type": "occasion",
-          "settings": {
-            "title": "Birthdays"
-          }
-        },
-        "4": {
-          "type": "occasion",
-          "settings": {
-            "title": "New pet parents"
-          }
-        },
-        "5": {
-          "type": "occasion",
-          "settings": {
-            "title": "Pet memorials"
-          }
-        }
-      },
-      "block_order": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5"
-      ],
-      "settings": {}
-    },
-    "why": {
-      "type": "why-mypetmemo",
-      "blocks": {
-        "0": {
-          "type": "benefit",
-          "settings": {
-            "heading": "Made from your photo",
-            "text": "Their markings. Their expression. Their little personality.",
-            "icon": "heart"
-          }
-        },
-        "1": {
-          "type": "benefit",
-          "settings": {
-            "heading": "A style that feels like you",
-            "text": "Four portrait styles, from beautifully simple to softly painted.",
-            "icon": "sparkles"
-          }
-        },
-        "2": {
-          "type": "benefit",
-          "settings": {
-            "heading": "Meaning in every detail",
-            "text": "A name, a memory, a face that makes an ordinary day better.",
-            "icon": "gift"
-          }
-        },
-        "3": {
-          "type": "benefit",
-          "settings": {
-            "heading": "Here to help",
-            "text": "A real person to contact when you need a hand with your keepsake.",
-            "icon": "shield"
-          }
-        }
-      },
-      "block_order": [
-        "0",
-        "1",
-        "2",
-        "3"
-      ],
-      "settings": {}
-    },
-    "lifestyle": {
-      "type": "lifestyle",
-      "settings": {}
-    },
-    "reviews": {
-      "type": "reviews-intro",
-      "settings": {}
-    },
-    "guarantee": {
-      "type": "guarantee",
-      "settings": {}
-    },
-    "photos": {
-      "type": "photo-guide",
-      "settings": {}
+      "settings": {
+        "heading": "Find your kind of forever."
+      }
     },
     "faq": {
       "type": "faq",
@@ -177,14 +46,14 @@
           "type": "question",
           "settings": {
             "question": "Which pets are welcome?",
-            "answer": "<p>Dogs, cats, and the other animals you call family. Start with a clear photo showing your pet’s full face.</p>"
+            "answer": "<p>Dogs and cats. Start with a clear photo of one pet with the full face visible.</p>"
           }
         },
         "1": {
           "type": "question",
           "settings": {
             "question": "How does personalization work?",
-            "answer": "<p>Choose your product and options, upload a pet photo, select a portrait style, and add a name. Your artwork is prepared separately before your personalized item is produced.</p>"
+            "answer": "<p>Upload a pet photo and we turn it into artwork in about a minute. Choose the style, background and name, check the preview, then add it to your cart. We print the exact design you approve.</p>"
           }
         },
         "2": {
@@ -204,15 +73,15 @@
         "4": {
           "type": "question",
           "settings": {
-            "question": "Will I see the finished artwork immediately?",
-            "answer": "<p>The on-page photo layout is a placement guide, not the final portrait. The four style examples illustrate the artwork direction. Your finished artwork is prepared separately.</p>"
+            "question": "Will I see the finished design before I pay?",
+            "answer": "<p>Yes. The preview on the product page is the design we print, with your pet, background, name and placement. Colors can look slightly different on fabric, paper or canvas than on a screen.</p>"
           }
         },
         "5": {
           "type": "question",
           "settings": {
             "question": "How long does delivery take?",
-            "answer": "<p>Please check the product description and shipping policy for the current production and delivery estimates. Contact us before ordering if you need a gift by a particular date.</p>"
+            "answer": "<p>Each item is made to order: production takes 2–5 business days and delivery usually 3–10 business days, with tracking. The shipping cost is shown at checkout. Digital portraits are emailed after payment. Contact us before ordering if you need a gift by a particular date.</p>"
           }
         },
         "6": {
@@ -248,21 +117,79 @@
         "7",
         "8"
       ],
+      "settings": {
+        "heading": "Good questions. Honest answers."
+      }
+    },
+    "proof": {
+      "type": "mpm-proof",
       "settings": {}
+    },
+    "delivery": {
+      "type": "mpm-delivery",
+      "settings": {}
+    },
+    "lt_steps": {
+      "type": "how-it-works",
+      "blocks": {
+        "s1": {
+          "type": "step",
+          "settings": {
+            "heading": "1. Įkelk nuotrauką",
+            "text": "Užtenka aiškios nuotraukos iš telefono, kurioje matosi visas augintinio snukutis.",
+            "icon": "upload"
+          }
+        },
+        "s2": {
+          "type": "step",
+          "settings": {
+            "heading": "2. Sukurk savo dizainą",
+            "text": "Pasirink stilių, pridėk vardą, jei nori, ir nemokamai peržiūrėk rezultatą.",
+            "icon": "sparkles"
+          }
+        },
+        "s3": {
+          "type": "step",
+          "settings": {
+            "heading": "3. Užsisakyk ypatingą dovaną",
+            "text": "Patvirtink dizainą ir įsidėk į krepšelį. Kiekvienas gaminys gaminamas pagal užsakymą.",
+            "icon": "gift"
+          }
+        }
+      },
+      "block_order": [
+        "s1",
+        "s2",
+        "s3"
+      ],
+      "settings": {
+        "heading": "Kaip sukurti dovaną",
+        "only_locale": "lt"
+      }
+    },
+    "lt_christmas": {
+      "type": "mpm-christmas",
+      "settings": {
+        "only_locale": "lt",
+        "eyebrow": "KALĖDINĖS DOVANOS",
+        "heading": "Kalėdinė dovana, kuri turi prasmę.",
+        "text": "Nustebink artimą žmogų asmenine dovana su jo mylimo augintinio nuotrauka.",
+        "blanket_handle": "christmas-pet-portrait-blanket",
+        "blanket_label": "Kalėdinis pledas",
+        "ornament_handle": "custom-pet-christmas-ornament",
+        "ornament_label": "Kalėdinis žaisliukas"
+      }
     }
   },
   "order": [
     "hero",
-    "transform",
+    "lt_steps",
     "featured",
-    "how",
+    "lt_christmas",
+    "transform",
     "styles",
-    "gifting",
-    "why",
-    "lifestyle",
-    "reviews",
-    "guarantee",
-    "photos",
+    "proof",
+    "delivery",
     "faq"
   ]
 }

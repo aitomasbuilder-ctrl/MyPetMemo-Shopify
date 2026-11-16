@@ -19,6 +19,9 @@ const { textPath } = require('./text-path');
 
 const NAME_BASELINE = 0.35;
 const NAME_STROKE = 0.16;
+// An outline in the fill colour is no visible outline, only a slightly heavier pen line (same rule as the storefront).
+const NAME_PEN = 0.03;
+const strokeFor = t => (String(t.stroke).toLowerCase() === String(t.fill).toLowerCase() ? NAME_PEN : NAME_STROKE);
 const CAPTION_LINE = 1.25;
 
 sharp.cache(false);
@@ -75,7 +78,7 @@ function textLayer(t, lines, W, H) {
   const d = lines.map(l => textPath(l.text, t.font, size, cx, l.y + NAME_BASELINE * size).d).join('');
   const rot = t.rot ? ` transform="rotate(${t.rot} ${cx} ${cy})"` : '';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><g${rot}>` +
-    `<path d="${esc(d)}" fill="none" stroke="${t.stroke}" stroke-width="${(NAME_STROKE * size).toFixed(2)}" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `<path d="${esc(d)}" fill="none" stroke="${t.stroke}" stroke-width="${(strokeFor(t) * size).toFixed(2)}" stroke-linejoin="round" stroke-linecap="round"/>` +
     `<path d="${esc(d)}" fill="${t.fill}"/></g></svg>`;
   return { input: Buffer.from(svg), left: 0, top: 0 };
 }

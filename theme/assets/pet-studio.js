@@ -18,6 +18,8 @@
   const TAU = Math.PI * 2;
   const NAME_BASELINE = 0.35;          // baseline offset from the name centre, in font sizes
   const NAME_STROKE = 0.16;            // outline width, in font sizes
+  const NAME_PEN = 0.03;               // outline in the fill colour (no visible outline): only a slightly heavier pen line
+  const strokeFor = n => (String(n.stroke).toLowerCase() === String(n.fill).toLowerCase() ? NAME_PEN : NAME_STROKE);
   const CAPTION_LINE = 1.25;           // caption line spacing, in caption font sizes
   const CAPTION_RATIO = 0.5;           // caption size relative to the name
   const MAX_SOURCE_EDGE = 1536;
@@ -30,7 +32,9 @@
     fredoka: { family: 'Fredoka', weight: 600, fallback: 'Nunito' },   // Fredoka lacks ą č ę ė į ų ū: Nunito draws those
     pacifico: { family: 'Pacifico', weight: 400 },
     montserrat: { family: 'Montserrat', weight: 800 },
-    playfair: { family: 'Playfair Display', weight: 700 }
+    playfair: { family: 'Playfair Display', weight: 700 },
+    greatvibes: { family: 'Great Vibes', weight: 400 },
+    msmadi: { family: 'Ms Madi', weight: 400 }         // signature-style name for the watercolor style
   };
   // Mug drawing: handle width and rim depth as fractions of the body width.
   const MUG_HANDLE = 0.26;
@@ -385,6 +389,29 @@
     const out = createCanvas(maxX - minX + 1, maxY - minY + 1);
     out.getContext('2d').drawImage(canvas, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
     return out;
+  }
+
+  /** Watercolor art comes on white paper. White becomes transparent and every other colour is kept as it looks on
+   *  white ("colour to alpha"), so soft edges, splashes and drips sit on the blanket with no halo or cut-out edge. */
+  function whiteToAlpha(image) {
+    const w = image.width, h = image.height, canvas = createCanvas(w, h);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0);
+    const data = ctx.getImageData(0, 0, w, h), px = data.data;
+    let painted = 0;
+    for (let i = 0; i < px.length; i += 4) {
+      const r = px[i], g = px[i + 1], b = px[i + 2];
+      const a0 = Math.max(255 - r, 255 - g, 255 - b) / 255;
+      const a = clamp((a0 - 0.04) / 0.96, 0, 1);   // near-white paper and JPEG noise count as white
+      if (a <= 0) { px[i + 3] = 0; continue; }
+      px[i] = clamp(Math.round(255 - (255 - r) / a0), 0, 255);
+      px[i + 1] = clamp(Math.round(255 - (255 - g) / a0), 0, 255);
+      px[i + 2] = clamp(Math.round(255 - (255 - b) / a0), 0, 255);
+      px[i + 3] = Math.round(a * 255);
+      if (a > 0.1) painted++;
+    }
+    ctx.putImageData(data, 0, 0);
+    return { canvas: trimTransparent(canvas), paintedRatio: painted / (w * h) };
   }
 
   /* ---------- views (main stage and full editor share one design) ---------- */
@@ -766,9 +793,11 @@
         gallery: q('[data-gallery]'), galleryMain: q('[data-gallery-main]'), galleryThumbs: q('[data-gallery-thumbs]'),
         thumbs: q('[data-thumbs]'), thumbDesign: q('[data-thumb-design]'), email: q('[data-email-input]'), consent: q('[data-marketing-consent]'),
         extras: qa('[data-extra]'), suggestions: qa('[data-suggest]'), styles: qa('[data-style]'),
-        artStyles: qa('[data-art-style]'), scenes: qa('[data-scene]'), roomNav: q('[data-room-nav]'), roomName: q('[data-room-name]'),
+        artStyles: qa('[data-art-style]'), paints: qa('[data-paint]'), paintHide: qa('[data-paint-hide]'), scenes: qa('[data-scene]'), roomNav: q('[data-room-nav]'), roomName: q('[data-room-name]'),
         zoomDialog: q('[data-zoom-dialog]'), zoomImg: q('[data-zoom-img]'), memorialOnly: qa('[data-memorial-only]'),
-        approvedBadge: q('[data-approved]'), frameHint: q('[data-frame-hint]'), digitalNote: q('[data-digital-note]')
+        approvedBadge: q('[data-approved]'), frameHint: q('[data-frame-hint]'), digitalNote: q('[data-digital-note]'),
+        formatGroup: q('[data-format-group]'), variantSummary: q('[data-price-inline-note]'),
+        example: q('[data-example]'), delivery: q('[data-delivery]')
       };
       this.P = window.MyPetMemoPortrait || null;
       this.state = {
@@ -783,6 +812,7 @@
         extra: { year: '', dates: '', message: '' },   // optional lines under the name (see captionLines)
         style: 'below',            // mug layout (see placeMug)
         artStyle: 'modern',        // portrait artwork style (pet-portrait.js STYLES)
+        paint: 'vector',           // blankets: vector | watercolor (the AI paints each; see setPaint)
         baseArt: null,             // portraits: { img, art } the unstyled AI portrait; styles are derived from it
         scene: 'design',           // portraits: design | close | room | compare
         roomIndex: 0,
@@ -807,6 +837,10 @@
       this.initVariants();
       this.bindUI();
       this.setStyle(this.state.style, { silent: true });
+      if (this.config.watercolor && !this.isPortrait()) {
+        const wanted = new URLSearchParams(window.location.search).get('style');
+        this.setPaint(wanted === 'watercolor' || wanted === 'vector' ? wanted : (this.config.defaultPaint || 'vector'), { silent: true });
+      }
       this.initGallery();
       this.initReviews();
       this.initSticky();
@@ -862,6 +896,10 @@
         onExtra('message', this.state.extra.message === b.dataset.suggest ? '' : b.dataset.suggest);
       }));
       if (el.editorName) el.editorName.addEventListener('input', () => onName(el.editorName));
+      el.paints.forEach(b => {
+        b.addEventListener('click', () => this.setPaint(b.dataset.paint));
+        b.addEventListener('keydown', e => this.radioKeys(e, b.parentElement, '[data-paint]'));
+      });
       el.styles.forEach(b => {
         b.addEventListener('click', () => this.setStyle(b.dataset.style));
         b.addEventListener('keydown', e => this.radioKeys(e, b.parentElement, '[data-style]'));
@@ -903,6 +941,48 @@
       });
     }
 
+    /** Blankets: which painting the AI makes. */
+    paint() {
+      return this.config.watercolor && !this.isPortrait() && this.state.paint === 'watercolor' ? 'watercolor' : 'vector';
+    }
+    artKey(hash) {
+      if (this.isPortrait()) return this.config.aiStyles ? `art:${hash}:${this.state.artStyle}` : `art:${hash}`;
+      return this.paint() === 'watercolor' ? `art:${hash}:watercolor` : `art:${hash}`;
+    }
+    /** Watercolor is painted on a white blanket with a handwritten name; switching back restores the earlier
+     *  background and lettering. Each painting is its own (cached) AI portrait. */
+    setPaint(paint, opts = {}) {
+      const s = this.state;
+      if (!this.config.watercolor || this.isPortrait()) return;
+      paint = paint === 'watercolor' ? 'watercolor' : 'vector';
+      const prev = s.paint, wasDefault = this.isDefaultLayout();
+      s.paint = paint;
+      this.el.paints.forEach(b => { const on = b.dataset.paint === paint; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+      this.el.paintHide.forEach(n => { n.hidden = paint === 'watercolor'; });
+      if (prev === paint) return;
+      if (paint === 'watercolor') {
+        this.beforePaint = { background: { ...s.background }, name: { font: s.name.font, fill: s.name.fill, stroke: s.name.stroke } };
+        const white = this.backgrounds.find(b => b.id === 'white') || { id: 'white', kind: 'solid', name: 'White', color: '#ffffff' };
+        this.selectBackground(white, { silent: true });
+        // No outline: the stroke in the fill colour only thickens the pen line a little, so it reads like a signature.
+        Object.assign(s.name, { font: 'msmadi', fill: '#1f1b1a', stroke: '#1f1b1a' });
+      } else if (this.beforePaint) {
+        const bg = this.beforePaint.background;
+        this.selectBackground(bg.id === 'custom' ? bg : (this.backgrounds.find(b => b.id === bg.id) || bg), { silent: true });
+        Object.assign(s.name, this.beforePaint.name);
+        this.beforePaint = null;
+      } else {
+        Object.assign(s.name, { font: 'fredoka', fill: '#ffffff', stroke: '#2a2230' });
+      }
+      if (this.el.font) { this.el.font.value = s.name.font; this.el.fill.value = s.name.fill; this.el.stroke.value = s.name.stroke; }
+      if (opts.silent) return;
+      if (s.photo && s.artwork) {
+        this.generate().then(() => { if (wasDefault && s.artwork) { this.placeDefault(); this.changed({ design: true }); } });
+      } else {
+        if (wasDefault && s.artwork) this.placeDefault();
+        this.changed({ design: true });
+      }
+    }
     /** Mug style: re-places the pet and name (an adjusted layout is replaced, like Reset). */
     setStyle(style, opts = {}) {
       this.state.style = style;
@@ -1066,7 +1146,60 @@
           button.addEventListener('keydown', e => this.radioKeys(e, group, '[data-option-value]'));
         });
       });
+      if (this.isPortrait() && this.el.formatGroup) this.initFormats();
       this.resolveVariant(-1, { silent: true });
+    }
+    /** Portrait: digital file, framed print or canvas. Chosen first; the size and frame groups then only show what that format offers. */
+    formatOf(variant = this.state.variant) {
+      const k = this.frameKind(variant);
+      return k === 'digital' || k === 'canvas' ? k : 'framed';
+    }
+    initFormats() {
+      const { config, el } = this;
+      const money = c => formatMoney(c, config.moneyFormat);
+      const labels = { digital: 'Digital file', framed: 'Framed print', canvas: 'Canvas' };
+      ['digital', 'framed', 'canvas'].forEach(f => {
+        const variants = config.variants.filter(v => v.available && this.formatOf(v) === f);
+        if (!variants.length) return;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'mps__option mpp__format';
+        b.setAttribute('role', 'radio');
+        b.dataset.format = f;
+        const main = document.createElement('span'), sub = document.createElement('span');
+        main.className = 'mps__option-main'; sub.className = 'mps__option-sub';
+        main.textContent = T(labels[f]);
+        sub.textContent = T('from {price}', { price: money(Math.min(...variants.map(v => v.price))) });
+        b.append(main, sub);
+        b.addEventListener('click', () => this.chooseFormat(f));
+        b.addEventListener('keydown', e => this.radioKeys(e, el.formatGroup, '[data-format]'));
+        el.formatGroup.append(b);
+      });
+      const wrap = el.formatGroup.closest('[data-format-wrap]');
+      if (wrap) wrap.hidden = el.formatGroup.children.length < 2;
+    }
+    chooseFormat(format) {
+      const { config } = this, names = config.optionNames || [];
+      const si = names.findIndex(n => /size/i.test(n)), fi = names.findIndex(n => /frame|finish|format/i.test(n));
+      const cur = this.state.variant;
+      if (cur && this.formatOf(cur) === format) return;
+      const variants = config.variants.filter(v => v.available && this.formatOf(v) === format);
+      if (!variants.length) return;
+      const sameSize = v => cur && si >= 0 && v.options[si] === cur.options[si];
+      const lastFrame = v => !this.lastFrame || fi < 0 || v.options[fi] === this.lastFrame;
+      const pick = variants.find(v => sameSize(v) && lastFrame(v)) || variants.find(sameSize)
+        || variants.filter(lastFrame).sort((a, b) => a.price - b.price)[0] || variants.slice().sort((a, b) => a.price - b.price)[0];
+      this.selectedOptions = pick.options.slice();
+      this.resolveVariant(-1);
+    }
+    /** "20 × 25 cm (8 × 10 in) · Black frame", or the digital delivery line. */
+    variantSummary(variant = this.state.variant) {
+      if (!variant) return '';
+      if (this.isDigital(variant)) return T('Digital file · delivered by email');
+      const i = this.sizeInches(variant);
+      const size = i ? (METRIC ? `${Math.round(i.w * 2.54)} × ${Math.round(i.h * 2.54)} cm (${i.w} × ${i.h} in)` : `${i.w} × ${i.h} in (${Math.round(i.w * 2.54)} × ${Math.round(i.h * 2.54)} cm)`) : '';
+      const frame = this.P && this.P.FRAMES[this.frameKind(variant)];
+      return [size, frame ? T(frame.label) : ''].filter(Boolean).join(' · ');
     }
     resolveVariant(changedIndex, opts = {}) {
       const { config } = this;
@@ -1257,6 +1390,7 @@
     }
     async handleFile(file) {
       this.clearError();
+      this.emit('pet-studio:upload-started', { type: (file.type || '').toLowerCase() || 'unknown' });
       if (this.state.galleryOpen) this.toggleGallery(false);
       const maxMb = this.config.maxUploadMb || 20;
       const type = (file.type || '').toLowerCase();
@@ -1282,8 +1416,9 @@
       }
       const minSide = this.config.minPhotoSide || 500;
       if (Math.min(bitmap.width, bitmap.height) < minSide) {
+        const { width: w, height: h } = bitmap;
         if (bitmap.close) bitmap.close();
-        return this.showError(new StudioError('small', T('This photo is too small to print well ({w} × {h} px). Please use one at least {min} px on its shortest side.', { w: bitmap.width, h: bitmap.height, min: minSide }), false));
+        return this.showError(new StudioError('small', T('This photo is too small to print well ({w} × {h} px). Please use one at least {min} px on its shortest side.', { w, h, min: minSide }), false));
       }
       let blob;
       try { blob = await normalizePhoto(bitmap); }
@@ -1292,6 +1427,7 @@
       if (this.state.photo && this.state.photo.url) URL.revokeObjectURL(this.state.photo.url);
       this.state.photo = { blob, hash, url: URL.createObjectURL(blob) };
       kv.set(`photo:${this.config.productId}`, { blob, hash, at: Date.now() });
+      this.emit('pet-studio:upload-succeeded');
       this.generate();
     }
     retry() {
@@ -1322,7 +1458,7 @@
       const started = performance.now();
       try {
         // With an AI service that paints each style itself, every style is its own (cached) portrait.
-        const artKey = this.isPortrait() && this.config.aiStyles ? `art:${photo.hash}:${this.state.artStyle}` : `art:${photo.hash}`;
+        const artKey = this.artKey(photo.hash);
         let art = force ? null : await kv.get(artKey);
         let fromCache = !!(art && art.blob);
         if (!fromCache) {
@@ -1330,7 +1466,7 @@
           if (used.length >= (this.config.generationLimit || 8)) {
             throw new StudioError('limit', T('You’ve reached today’s limit for new portraits. Your earlier photos still work, or come back tomorrow.'), false);
           }
-          if (!this.config.aiEndpoint) throw new StudioError('not_configured', T('Our portrait service isn’t connected yet. Please try again later.'), false);
+          if (!this.config.aiEndpoint && !(this.paint() === 'watercolor' && this.config.watercolorEndpoint)) throw new StudioError('not_configured', T('Our portrait service isn’t connected yet. Please try again later.'), false);
           const canvas = await this.requestPortrait(controller.signal);
           try { localStorage.setItem('mps-generations', JSON.stringify(used.concat(Date.now()))); } catch (e) { /* private mode */ }
           const blob = await canvasToBlob(canvas, 'image/png');
@@ -1379,8 +1515,11 @@
       form.append('product', String(this.config.productId));
       form.append('shape', 'blanket');
       if (this.isPortrait() && this.config.aiStyles) form.append('style', this.state.artStyle);
+      else if (this.paint() === 'watercolor') form.append('style', 'watercolor');
       this.setProgress(0.06, T('Uploading your photo and creating your portrait…'));
-      const res = await fetch(this.config.aiEndpoint, { method: 'POST', body: form, signal, headers: { Accept: 'application/json, image/png' } });
+      // Watercolor comes from our own portrait service even where the illustrated style uses another one.
+      const endpoint = this.paint() === 'watercolor' ? (this.config.watercolorEndpoint || this.config.aiEndpoint) : this.config.aiEndpoint;
+      const res = await fetch(endpoint, { method: 'POST', body: form, signal, headers: { Accept: 'application/json, image/png' } });
       if (!res.ok) {
         let info = {};
         try { info = await res.json(); } catch (e) { /* ignore */ }
@@ -1404,6 +1543,11 @@
         background = res.headers.get('x-background') || 'chroma';
         image = await loadImage(URL.createObjectURL(await res.blob()));
       }
+      if (background === 'white') {
+        const { canvas, paintedRatio } = whiteToAlpha(image);
+        if (paintedRatio < 0.02) throw new StudioError('no_subject', T('We couldn’t separate your pet from the background. Please try again or use a different photo.'));
+        return canvas;
+      }
       if (background === 'transparent') {
         const c = createCanvas(image.width, image.height);
         c.getContext('2d').drawImage(image, 0, 0);
@@ -1420,7 +1564,7 @@
       const { el } = this;
       const start = performance.now();
       const expected = this.config.progressSeconds || 60;
-      const steps = [[0, T('Uploading your photo and creating your portrait…')]];
+      const steps = [[0, T('Uploading your photo and creating your portrait…')], [0.25, T('Finding your pet in the photo…')], [0.5, T('Painting the artwork…')], [0.75, T('Adding the final details…')]];
       this.progressFloor = 0;
       this.progressLocked = false;
       el.gen.hidden = false;
@@ -1729,6 +1873,18 @@
         this.defaultLayout = s.artwork ? this.layoutKey() : null;
         return;
       }
+      if (this.paint() === 'watercolor' && !this.shape()) {
+        this.placeSignature();
+        this.clampAll();
+        this.defaultLayout = s.artwork ? this.layoutKey() : null;
+        return;
+      }
+      if (this.config.nameBelow && !this.shape()) {
+        this.placeNameBelow();
+        this.clampAll();
+        this.defaultLayout = s.artwork ? this.layoutKey() : null;
+        return;
+      }
       delete s.name.cap; delete s.name.breaks;
       const L = this.layout();
       Object.assign(s.name, L ? { cx: 0.5, cy: L.name[0], size: L.name[1], rot: 0 } : { cx: 0.5, cy: 0.115, size: 0.13, rot: 0 });
@@ -1739,6 +1895,34 @@
       this.placePet();
       this.clampAll();
       this.defaultLayout = s.artwork ? this.layoutKey() : null;
+    }
+    /** Watercolor blankets: one large painting from near the top edge down, with the name signed across its lower
+     *  right like an artist's signature (low enough to stay visible on the hooded blanket when it is worn). */
+    placeSignature() {
+      const s = this.state, p = this.printSize(), wide = p.width > p.height;
+      delete s.name.cap; delete s.name.breaks;
+      Object.assign(s.name, { cx: wide ? 0.66 : 0.7, cy: wide ? 0.84 : 0.8, size: wide ? 0.1 : 0.14, rot: -10 });
+      if (!s.artwork) return;
+      const top = 0.04, bottom = 0.97;
+      const aspect = s.artwork.height / s.artwork.width;
+      const w = Math.min(((bottom - top) * p.height) / (p.width * aspect), 0.94);
+      s.pet = { cx: 0.5, cy: round4(top + this.petHeightFrac(w) / 2), w: round4(w), rot: 0 };
+    }
+    /** Blankets whose top edge is covered when worn (the hooded blanket): the pet from the top edge down and the
+     *  name and text under it, near the bottom edge. */
+    placeNameBelow() {
+      const s = this.state, p = this.printSize();
+      delete s.name.cap; delete s.name.breaks;
+      Object.assign(s.name, { cx: 0.5, cy: 0.86, size: 0.1, rot: 0 });
+      const block = () => { const g = this.geometry('name', { x: 0, y: 0, w: p.width, h: p.height }); return g ? { top: (g.y - g.h / 2) / p.height, bottom: (g.y + g.h / 2) / p.height } : null; };
+      let b = this.hasLabel() ? block() : null;
+      if (b) { s.name.cy = round4(s.name.cy + 0.95 - b.bottom); b = block(); }
+      if (!s.artwork) return;
+      // Without a name the pet stands on the bottom edge; above a name its chest fades out instead of a hard cut.
+      const top = 0.04, bottom = b ? b.top - 0.01 : 1;
+      const aspect = s.artwork.height / s.artwork.width;
+      const w = Math.min(((bottom - top) * p.height) / (p.width * aspect), 0.88);
+      s.pet = { cx: 0.5, cy: round4(bottom - this.petHeightFrac(w) / 2), w: round4(w), rot: 0, ...(b ? { fade: 0.2 } : {}) };
     }
     /** Mug styles (one side of the mug): "below" = pet with the name and text under it, "above" = name on top and the
      *  pet below, "big" = a large pet on the bottom edge with the name across its chest. */
@@ -2200,15 +2384,32 @@
       const si = names.findIndex(n => /size/i.test(n)), fi = names.findIndex(n => /frame|finish|format/i.test(n));
       const v = this.state.variant, digital = this.isDigital();
       const money = c => formatMoney(c, config.moneyFormat);
+      const format = this.formatOf(v), formats = !!el.formatGroup && el.formatGroup.children.length > 1;
+      if (format === 'framed' && fi >= 0) this.lastFrame = v.options[fi];
+      if (el.formatGroup) el.formatGroup.querySelectorAll('[data-format]').forEach(b => {
+        const on = b.dataset.format === format;
+        b.setAttribute('aria-checked', String(on));
+        b.tabIndex = on ? 0 : -1;
+      });
+      if (el.variantSummary) el.variantSummary.textContent = this.variantSummary(v);
       el.optionGroups.forEach(group => {
         const index = Number(group.dataset.optionGroup) - 1;
+        if (formats && index === fi) {
+          // Frame colour only matters for framed prints; digital and canvas are chosen in Format.
+          const wrap = group.closest('.mps__group');
+          const colours = Array.from(group.querySelectorAll('[data-option-value]'));
+          colours.forEach(btn => { btn.hidden = !['black', 'white', 'wood'].includes(this.P.frameKind(btn.dataset.optionValue)); });
+          if (wrap) wrap.hidden = format !== 'framed' || colours.filter(b => !b.hidden).length < 2;
+          return;
+        }
         if (index !== si) return;
         const wrap = group.closest('.mps__group');
         if (wrap) wrap.hidden = digital;
         group.querySelectorAll('[data-option-value]').forEach(btn => {
           const val = btn.dataset.optionValue;
           const all = config.variants.filter(x => x.options[si] === val);
-          btn.hidden = all.length > 0 && all.every(x => this.isDigital(x));
+          btn.hidden = (all.length > 0 && all.every(x => this.isDigital(x)))
+            || (formats && !all.some(x => x.available && this.formatOf(x) === format));
           const match = all.find(x => x.available && (fi < 0 || x.options[fi] === v.options[fi]));
           btn.disabled = !match && val !== v.options[si];
           const sub = btn.querySelector('[data-size-sub]');
@@ -2222,6 +2423,7 @@
         el.frameHint.hidden = !el.frameHint.textContent;
       }
       if (el.digitalNote) el.digitalNote.hidden = !digital;
+      if (el.delivery) el.delivery.classList.toggle('is-digital', digital);
       this.updateSceneButtons();
     }
     sceneMode() {
@@ -2415,7 +2617,7 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'alphabetic';
         ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        ctx.lineWidth = NAME_STROKE * size;
+        ctx.lineWidth = strokeFor(n) * size;
         ctx.strokeStyle = n.stroke;
         ctx.strokeText(n.text, 0, NAME_BASELINE * size);
         ctx.fillStyle = n.fill;
@@ -2432,7 +2634,7 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'alphabetic';
         ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        ctx.lineWidth = NAME_STROKE * size;
+        ctx.lineWidth = strokeFor(c) * size;
         ctx.strokeStyle = c.stroke;
         ctx.fillStyle = c.fill;
         c.lines.forEach((line, i) => {
@@ -2516,6 +2718,9 @@
       this.el.nameErrors.forEach(n => { n.textContent = msg; n.hidden = !msg; });
       return !msg;
     }
+    emit(name, detail = {}) {
+      if (!this.headless) this.root.dispatchEvent(new CustomEvent(name, { bubbles: true, detail }));
+    }
     setPhase(phase) {
       this.state.phase = phase;
       this.updateUI();
@@ -2575,6 +2780,8 @@
     updateUI() {
       const s = this.state, { el } = this;
       const has = !!s.artwork;
+      // The labelled example only fills the empty preview; it goes as soon as a photo is chosen.
+      if (el.example) el.example.hidden = !!s.photo || s.phase !== 'empty';
       const v = s.variant;
       const available = !!(v && v.available);
       let label;
@@ -2622,7 +2829,7 @@
       const s = this.state;
       kv.set(`state:${this.config.productId}`, {
         at: Date.now(), photoHash: s.photo && s.photo.hash, pet: s.pet, name: s.name, extra: s.extra, style: s.style, addedId: s.addedId, isDefault: this.isDefaultLayout(),
-        artStyle: s.artStyle, scene: s.scene, approvedKey: s.approvedKey,
+        artStyle: s.artStyle, paint: s.paint, scene: s.scene, approvedKey: s.approvedKey,
         background: { id: s.background.id, color: s.background.color, name: s.background.name },
         variantId: s.variant && s.variant.id
       });
@@ -2640,6 +2847,7 @@
         const v = this.config.variants.find(x => x.id === saved.variantId);
         if (v) { this.selectedOptions = v.options.slice(); this.resolveVariant(-1, { silent: true }); }
       }
+      if (saved.paint && !urlBg) this.setPaint(saved.paint, { silent: true });
       Object.assign(this.state.name, saved.name || {});
       Object.assign(this.state.extra, saved.extra || {});
       if (saved.style) this.setStyle(saved.style, { silent: true });
@@ -2648,7 +2856,7 @@
       this.el.extras.forEach(i => { i.value = this.state.extra[i.dataset.extra] || ''; });
       this.el.suggestions.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.suggest === this.state.extra.message)));
       const photo = await kv.get(`photo:${this.config.productId}`);
-      const art = saved.photoHash ? await kv.get(this.isPortrait() && this.config.aiStyles ? `art:${saved.photoHash}:${this.state.artStyle}` : `art:${saved.photoHash}`) : null;
+      const art = saved.photoHash ? await kv.get(this.artKey(saved.photoHash)) : null;
       if (photo && photo.blob) {
         this.state.photo = { blob: photo.blob, hash: photo.hash, url: URL.createObjectURL(photo.blob) };
         this.setPhotoStatus(T('Your photo'));
@@ -2781,6 +2989,7 @@
         this.clampAll();
         const design = this.designData();
         const approval = await this.approve(design);
+        this.emit('pet-studio:approved', { id: approval.id });
         if (await this.inCart(approval.id)) {
           s.addedId = approval.id;
           this.persist();
@@ -2944,7 +3153,7 @@
   else init();
   document.addEventListener('shopify:section:load', e => init(e.target));
 
-  // Customer events for analytics: a custom pixel can subscribe to mpm_preview_ready and mpm_design_added.
+  // Customer events for analytics: a custom pixel can subscribe to the mpm_* events below.
   const track = (name, root, data) => {
     const studio = root && root.__petStudio;
     const a = window.Shopify && window.Shopify.analytics;
@@ -2953,11 +3162,16 @@
       a.publish(name, Object.assign({ family: studio.familyKey(), locale: document.documentElement.lang || '' }, data));
     } catch (_) { /* analytics must never break the studio */ }
   };
+  // Funnel: upload started → upload succeeded → preview ready → design approved → design added.
+  // Add to cart, checkout started and purchase come from Shopify's standard events, so they are not sent again here.
+  document.addEventListener('pet-studio:upload-started', e => track('mpm_upload_started', e.target, { file_type: e.detail.type }));
+  document.addEventListener('pet-studio:upload-succeeded', e => track('mpm_upload_succeeded', e.target, {}));
   document.addEventListener('pet-studio:generated', e => track('mpm_preview_ready', e.target, { ms: e.detail.ms }));
+  document.addEventListener('pet-studio:approved', e => { if (e.detail && e.detail.id) track('mpm_design_approved', e.target, { design_id: e.detail.id }); });
   document.addEventListener('pet-studio:added', e => track('mpm_design_added', e.target, { design_id: e.detail.id }));
 
   window.MyPetMemoStudio = {
-    formatMoney, parseInches, removeFlatBackground, NAME_BASELINE, NAME_STROKE, CAPTION_LINE,
+    formatMoney, parseInches, removeFlatBackground, whiteToAlpha, NAME_BASELINE, NAME_STROKE, CAPTION_LINE,
     makeAddon, handoff: id => kv.get(`handoff:${id}`), loadImage, sha256Hex
   };
 })();

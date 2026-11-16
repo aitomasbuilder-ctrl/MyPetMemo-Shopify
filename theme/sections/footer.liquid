@@ -1,0 +1,27 @@
+<footer class="footer">
+  <div class="wrap footer-main">
+    <div class="footer-brand"><a class="wordmark" href="{{ routes.root_url }}">{{ settings.brand_name | escape }}{% render 'icon', name: 'heart', size: 16 %}</a><p>{{ 'footer.tagline' | t }}<br>{{ 'footer.personal' | t }}</p>{% if settings.support_email != blank %}<a href="mailto:{{ settings.support_email | escape }}">{{ settings.support_email | escape }}</a>{% endif %}</div>
+    <div><h3>{{ 'footer.shop' | t }}</h3>{% render 'navigation' %}</div>
+    <div><h3>{{ 'footer.help' | t }}</h3>{% if section.settings.help_menu.links.size > 0 %}{% for link in section.settings.help_menu.links %}<a href="{{ link.url }}">{{ link.title | escape }}</a>{% endfor %}{% else %}{% assign photo_guide_product = settings.blanket_product | default: all_products['custom-pet-portrait-blanket'] %}<a href="mailto:{{ settings.support_email | escape }}">{{ 'footer.contact' | t }}</a><a href="{{ routes.root_url }}#faq">{{ 'footer.faq' | t }}</a><a href="{{ routes.root_url }}#delivery">{{ 'delivery.title' | t }}</a><a href="{{ photo_guide_product.url }}#photo-guide">{{ 'footer.photo_guide' | t }}</a>{% for policy in shop.policies %}{% if policy.body != blank %}<a href="{{ policy.url }}">{{ policy.title | escape }}</a>{% endif %}{% endfor %}{% endif %}</div>
+    <div><h3>{{ 'footer.world' | t }}</h3>{% if section.settings.about_page != blank %}<a href="{{ section.settings.about_page.url }}">{{ 'footer.story' | t }}</a>{% endif %}<a href="{{ routes.root_url }}#how-it-works">{{ 'nav.how' | t }}</a>{% if settings.instagram_url != blank %}<a href="{{ settings.instagram_url }}" rel="noopener" target="_blank">{{ 'social.instagram' | t }}</a>{% endif %}{% if settings.tiktok_url != blank %}<a href="{{ settings.tiktok_url }}" rel="noopener" target="_blank">{{ 'social.tiktok' | t }}</a>{% endif %}{% if settings.facebook_url != blank %}<a href="{{ settings.facebook_url }}" rel="noopener" target="_blank">{{ 'social.facebook' | t }}</a>{% endif %}</div>
+  </div>
+  <div class="wrap footer-bottom"><span>© {{ 'now' | date: '%Y' }} {{ settings.brand_name | escape }}</span><div>{% for policy in shop.policies %}{% if policy.body != blank %}<a href="{{ policy.url }}">{{ policy.title | escape }}</a>{% endif %}{% endfor %}</div><span>{{ localization.country.name | escape }} · {{ cart.currency.iso_code }}</span></div>
+</footer>
+
+{% schema %}
+{
+  "name": "Footer",
+  "settings": [
+    {
+      "type": "link_list",
+      "id": "help_menu",
+      "label": "Help menu"
+    },
+    {
+      "type": "page",
+      "id": "about_page",
+      "label": "Our story page"
+    }
+  ]
+}
+{% endschema %}

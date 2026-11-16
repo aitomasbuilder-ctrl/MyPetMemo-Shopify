@@ -1,0 +1,71 @@
+<section class="section why-section wrap"><div><p class="eyebrow">{{ 'why.eyebrow' | t }}</p><h2>{{ section.settings.heading | escape }}</h2><p class="muted">{{ section.settings.text | escape }}</p></div><div class="benefit-grid">{% for block in section.blocks %}<div {{ block.shopify_attributes }}>{% render 'icon', name: block.settings.icon, size: 28 %}<h3>{{ block.settings.heading | escape }}</h3><p>{{ block.settings.text | escape }}</p></div>{% endfor %}</div></section>
+
+{% schema %}
+{
+  "name": "Why MyPetMemo",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Because they’re never “just a pet.”"
+    },
+    {
+      "type": "textarea",
+      "id": "text",
+      "label": "Text",
+      "default": "They’re the welcome home. The best part of an ordinary day. The memories worth keeping."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "benefit",
+      "name": "Benefit",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Made from your photo"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Text",
+          "default": "Their markings. Their expression. Their little personality."
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            {
+              "value": "heart",
+              "label": "Heart"
+            },
+            {
+              "value": "sparkles",
+              "label": "Sparkles"
+            },
+            {
+              "value": "gift",
+              "label": "Gift"
+            },
+            {
+              "value": "shield",
+              "label": "Shield"
+            }
+          ],
+          "default": "heart"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Why MyPetMemo"
+    }
+  ],
+  "max_blocks": 4
+}
+{% endschema %}

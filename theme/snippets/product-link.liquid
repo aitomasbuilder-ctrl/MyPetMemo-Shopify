@@ -1,5 +1,6 @@
 {% doc %}
-  Returns the page a product family links to: its category page when one exists, else the product, else the catalog.
+  Returns the page a product family links to. Blankets and portraits open their product (the editor) directly;
+  ornaments open their category page when it has products, else the product, else the catalog.
   @param {string} kind - Product family
 {% enddoc %}
 {%- liquid
@@ -11,7 +12,7 @@
       assign category = nil
       assign item = settings.portrait_product | default: all_products['personalized-pet-portrait'] | default: all_products['digital-pet-portrait']
     else
-      assign category = collections['pet-blankets']
+      assign category = nil
       assign item = settings.blanket_product | default: all_products['custom-pet-portrait-blanket']
   endcase
   if category != blank and category.products_count > 0

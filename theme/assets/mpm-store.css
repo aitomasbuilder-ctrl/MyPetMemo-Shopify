@@ -1,0 +1,103 @@
+/* MyPetMemo store fixes (Oct 2026): prices, delivery facts, examples, proof and homepage layout. Loaded after theme.css. */
+
+/* Hero: starting prices and the free-preview promise */
+.hero-copy > p.hero-prices { margin: -10px 0 10px; font-size: .9375rem; font-weight: 600; color: #292a25; line-height: 1.6; max-width: 460px; }
+.hero-copy > p.hero-preview { display: flex; gap: 8px; align-items: center; margin: 0 0 24px; font-size: .875rem; color: #5f574a; }
+.hero-preview svg { color: #4f6b3a; }
+
+/* Product cards: portrait shows digital and framed starting prices */
+.product-card-prices { margin-top: 7px; font-size: .875rem; font-weight: 600; color: #292a25; }
+.mpp__price-from { margin: -4px 0 12px; font-size: .875rem; color: #5f574a; }
+
+/* Style cards: three styles that exist in the editor */
+.styles-grid.styles-grid--3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 700px) {
+  .styles-grid.styles-grid--3 { grid-template-columns: 1fr; gap: 18px; }
+  .styles-grid--3 .style-card { display: grid; grid-template-columns: 38% 1fr; column-gap: 16px; align-items: center; }
+  .styles-grid--3 .style-card > .asset, .styles-grid--3 .style-card > img, .styles-grid--3 .style-card > :first-child { grid-row: 1 / span 3; }
+  .styles-grid--3 .style-card > div:not(.asset) { margin-top: 0; }
+  .styles-grid--3 .style-card .mpm-cta { min-height: 42px; padding: 9px 16px; margin-top: 10px; justify-self: start; }
+}
+
+/* Portrait format choice */
+.mpp__formats .mps__option { flex: 1 1 0; min-width: 0; }
+
+/* Delivery facts next to the buy button and on the homepage */
+.mpm-delivery { margin: 14px 0 6px; padding: 14px 16px; border: 1px solid #ded8cd; border-radius: 10px; background: #fffdf9; font-size: .875rem; line-height: 1.55; color: #3f3c34; }
+.mpm-delivery__title { margin: 0 0 6px; font-weight: 700; color: #292a25; }
+.mpm-delivery ul { margin: 0; padding: 0; list-style: none; }
+.mpm-delivery li { margin-top: 4px; }
+.mpm-delivery li strong { font-weight: 600; color: #292a25; }
+.mpm-delivery__link { display: inline-block; margin-top: 8px; text-decoration: underline; text-underline-offset: 3px; font-size: .8125rem; }
+.mpm-delivery [data-digital-delivery] { display: none; }
+.mpm-delivery.is-digital li { display: none; }
+.mpm-delivery.is-digital li[data-digital-delivery] { display: list-item; }
+
+/* Labelled example in the empty preview (not part of the print file) */
+.mps__example { position: absolute; inset: 0; margin: 0; z-index: 1; pointer-events: none; }
+.mps__example[hidden] { display: none; }
+.mps__example .asset { position: absolute !important; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; }
+.mps__example figcaption { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); max-width: calc(100% - 28px); padding: 6px 12px; border-radius: 999px; background: rgb(255 253 249 / .94); color: #292a25; font-size: 12px; font-weight: 600; text-align: center; box-shadow: 0 2px 8px rgb(41 42 37 / .12); }
+.mpp__stage .mps__example figcaption { bottom: 14px; }
+
+/* Examples under the generation timer */
+.mpm-gen-examples { margin-top: 14px; }
+.mpm-gen-examples__row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mpm-gen-examples figure { margin: 0; }
+.mpm-gen-examples .asset { border-radius: 8px; }
+.mpm-gen-examples figcaption { margin-top: 4px; font-size: 12px; text-align: center; color: #5f574a; }
+
+/* Homepage: what you can check before you pay (replaces "reviews coming soon") */
+.mpm-proof { padding-block: 64px; border-block: 1px solid #ded6c8; }
+.mpm-proof h2 { font-size: 2.4rem; }
+.mpm-proof__intro { margin-top: 14px; color: #5f574a; max-width: 620px; }
+.mpm-proof__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 34px; }
+.mpm-proof__item h3 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+.mpm-proof__item p { font-size: .9375rem; color: #5f574a; }
+.mpm-proof__item svg { color: #7d6c55; margin-bottom: 10px; }
+.mpm-proof__reviews { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 34px; }
+.mpm-proof__review { padding: 18px; border-radius: 10px; background: #fffdf9; border: 1px solid #ded8cd; }
+.mpm-proof__review p { color: #3f3c34; }
+.mpm-proof__review small { display: block; margin-top: 10px; color: #5f574a; }
+
+/* Homepage delivery block */
+.mpm-delivery-section { display: grid; grid-template-columns: 1fr 1.2fr; gap: 48px; align-items: start; }
+.mpm-delivery-section h2 { font-size: 2.4rem; }
+.mpm-delivery-section > div > p:not(.eyebrow) { margin-top: 14px; color: #5f574a; }
+.mpm-delivery-section .mpm-delivery { margin: 0; padding: 20px 22px; font-size: .9375rem; }
+
+@media (max-width: 1000px) {
+  .mpm-proof__grid { grid-template-columns: 1fr 1fr; }
+  .mpm-proof__reviews { grid-template-columns: 1fr; }
+  .mpm-delivery-section { grid-template-columns: 1fr; gap: 24px; }
+}
+@media (max-width: 700px) {
+  .mpm-proof { padding-block: 48px; }
+  .mpm-proof h2, .mpm-delivery-section h2 { font-size: 2rem; }
+  .mpm-proof__grid { grid-template-columns: 1fr; gap: 18px; }
+}
+@media (max-width: 1000px) {
+  .hero-copy > p.hero-prices { margin-inline: auto; }
+  .hero-copy > p.hero-preview { justify-content: center; text-align: left; }
+}
+
+/* Three-step strip and Christmas block (homepage) */
+.steps-grid.steps-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.mpm-xmas { background: #f4efe6; }
+.mpm-xmas__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+.mpm-xmas__text { margin-top: 16px; color: #665b4a; font-size: 1.0625rem; line-height: 1.7; max-width: 520px; }
+.mpm-xmas__buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.mpm-xmas__media { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.mpm-xmas__card { position: relative; display: block; border-radius: 8px; overflow: hidden; background: #fff; }
+.mpm-xmas__card img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; }
+@media (max-width: 700px) {
+  .steps-grid.steps-grid--3 { grid-template-columns: 1fr; gap: 22px; }
+  .steps-grid--3 p { max-width: none; }
+  .mpm-xmas__grid { grid-template-columns: 1fr; gap: 26px; }
+  .mpm-xmas__buttons .button { flex: 1 1 100%; }
+  .mpm-xmas__media { gap: 10px; }
+}
+
+/* Payment methods actually enabled in Shopify, under the checkout button */
+.cart-payments { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; list-style: none; margin: 12px 0 0; padding: 0; }
+.cart-payments svg { width: 38px; height: 24px; display: block; }

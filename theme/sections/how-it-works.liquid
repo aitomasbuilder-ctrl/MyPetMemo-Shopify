@@ -1,4 +1,4 @@
-<section class="how-section section" id="how-it-works"><div class="wrap"><div class="section-heading"><div><p class="eyebrow">{{ 'how.eyebrow' | t }}</p><h2>{{ section.settings.heading | escape }}</h2></div><a class="button mpm-cta" href="{% render 'product-link', kind: 'blanket' %}">{{ 'how.start' | t }}</a></div><div class="steps-grid">{% for block in section.blocks %}<div {{ block.shopify_attributes }}><div class="step-top">{% render 'icon', name: block.settings.icon, size: 28 %}<span>0{{ forloop.index }}</span></div><h3>{{ block.settings.heading | escape }}</h3><p>{{ block.settings.text | escape }}</p></div>{% endfor %}</div></div></section>
+{%- if section.settings.only_locale == blank or request.locale.iso_code == section.settings.only_locale -%}<section class="how-section section" id="how-it-works"><div class="wrap"><div class="section-heading"><div><p class="eyebrow">{{ 'how.eyebrow' | t }}</p><h2>{{ section.settings.heading | escape }}</h2></div><a class="button mpm-cta" href="{% render 'product-link', kind: 'blanket' %}">{{ 'how.start' | t }}</a></div><div class="steps-grid{% if section.blocks.size == 3 %} steps-grid--3{% endif %}">{% for block in section.blocks %}<div {{ block.shopify_attributes }}><div class="step-top">{% render 'icon', name: block.settings.icon, size: 28 %}<span>0{{ forloop.index }}</span></div><h3>{{ block.settings.heading | escape }}</h3><p>{{ block.settings.text | escape }}</p></div>{% endfor %}</div></div></section>{%- endif -%}
 
 {% schema %}
 {
@@ -9,6 +9,12 @@
       "id": "heading",
       "label": "Heading",
       "default": "A little personal goes a long way."
+    },
+    {
+      "type": "text",
+      "id": "only_locale",
+      "label": "Show only in language (ISO code, e.g. lt)",
+      "info": "Leave empty to show in every language."
     }
   ],
   "blocks": [

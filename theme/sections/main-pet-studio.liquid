@@ -150,7 +150,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Nunito:wght@600&family=Montserrat:wght@500;600;700;800&family=Pacifico&family=Playfair+Display:wght@700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Nunito:wght@600&family=Montserrat:wght@500;600;700;800&family=Pacifico&family=Playfair+Display:wght@700&family=Great+Vibes&family=Ms+Madi&display=swap">
 {{ 'pet-studio.css' | asset_url | stylesheet_tag }}
 
 <section class="mps{% if section.settings.look == 'soft' %} mps--soft{% endif %}" data-pet-studio data-section-id="{{ section.id }}">
@@ -159,6 +159,15 @@
       <div class="mps__stage" data-stage data-dropzone>
         <canvas class="mps__canvas" data-canvas tabindex="0" role="img"
           aria-label="{% if section.settings.family == 'ornament' %}Ornament{% elsif section.settings.family == 'mug' %}Mug{% else %}Blanket{% endif %} preview. Use Adjust to move, resize or rotate your pet and the name."></canvas>
+
+        {%- if section.settings.family != 'mug' -%}
+          {%- comment -%} Shown until a photo is chosen. An illustrative mockup, kept apart from the print file. {%- endcomment -%}
+          <figure class="mps__example" data-example>
+            {%- assign example_alt = 'mpm.example.alt_product' | t -%}
+            {% render 'pet-image', kind: section.settings.family, tile: 0, alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px' %}
+            <figcaption>{{ 'mpm.example.label_mockup' | t }}</figcaption>
+          </figure>
+        {%- endif -%}
 
         <div class="mps__gallery" data-gallery hidden>
           <div class="mps__gallery-main" data-gallery-main></div>
@@ -228,7 +237,7 @@
         <label class="mps__dropzone" for="PetPhoto-{{ section.id }}" data-dropzone>
           <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3l5 5h-3v6h-4V8H7l5-5zm-8 14h16v4H4v-4z"/></svg>
           <span><strong>{{ 'mpm.studio.choose_a_photo' | t }}</strong> {{ 'mpm.studio.or_drag_it_here' | t }}</span>
-          <small>JPG, PNG, WebP or HEIC · up to {{ section.settings.max_upload_mb }} MB</small>
+          <small>{{ 'mpm.upload.formats' | t: mb: section.settings.max_upload_mb }}</small>
         </label>
         <ul class="mps__tips">
           <li>{{ 'mpm.studio.one_pet_per_photo' | t }}</li>
@@ -268,6 +277,7 @@
             </div>
           </div>
         </div>
+        {%- if section.settings.family != 'mug' -%}{% render 'gen-examples', kind: section.settings.family %}{%- endif -%}
         <div class="mps__gen-info" data-gen-info{% if rv_json != '' or rv_sample %} hidden{% endif %}>
           <p class="mps__gen-kicker">{{ 'mpm.studio.how_your_photo_becomes_a_portrai' | t }}</p>
           <ol>
@@ -288,7 +298,25 @@
         </div>
       </div>
 
-      <div class="mps__group">
+      {%- if section.settings.watercolor -%}
+        <div class="mps__group">
+          <h2 class="mps__label">{{ 'mpm.studio.art_style' | t }}</h2>
+          <div class="mps__options mps__paints" role="radiogroup" aria-label="{{ 'mpm.studio.art_style' | t | escape }}">
+            <button type="button" class="mps__option mps__paint" role="radio" aria-checked="true" data-paint="vector">
+              <span class="mps__paint-dot mps__paint-dot--vector" aria-hidden="true"></span>
+              <span class="mps__option-main">{{ 'mpm.studio.paint_vector' | t }}</span>
+              <span class="mps__option-sub">{{ 'mpm.studio.paint_vector_sub' | t }}</span>
+            </button>
+            <button type="button" class="mps__option mps__paint" role="radio" aria-checked="false" tabindex="-1" data-paint="watercolor">
+              <span class="mps__paint-dot mps__paint-dot--watercolor" aria-hidden="true"></span>
+              <span class="mps__option-main">{{ 'mpm.studio.paint_watercolor' | t }}</span>
+              <span class="mps__option-sub">{{ 'mpm.studio.paint_watercolor_sub' | t }}</span>
+            </button>
+          </div>
+        </div>
+      {%- endif -%}
+
+      <div class="mps__group" data-paint-hide>
         <h2 class="mps__label">{{ 'mpm.studio.select_background' | t }} <span class="mps__label-value" data-bg-name></span></h2>
         <div class="mps__swatches" role="radiogroup" aria-label="{{ 'mpm.studio.background' | t | escape }}" data-swatches data-visible="{{ section.settings.swatches_visible }}"></div>
         <button type="button" class="mps__link mps__see-all" data-see-all aria-expanded="false">{{ 'mpm.studio.see_all_backgrounds' | t }}</button>
@@ -429,6 +457,9 @@
       </button>
       <p class="mps__hint mps__approve-note" data-approve-note hidden>{{ 'mpm.studio.adding_to_cart_approves_this_des' | t }}</p>
       <p class="mps__status" data-cart-status aria-live="polite"></p>
+      {%- capture delivery_kind -%}{% render 'product-kind', item: product %}{%- endcapture -%}
+      {%- assign delivery_kind = delivery_kind | strip -%}
+      {% render 'delivery-info', kind: delivery_kind %}
 
       {%- if section.settings.email_capture -%}
         <div class="mps__email">
@@ -522,6 +553,8 @@
                 <option value="pacifico">{{ 'mpm.studio.script' | t }}</option>
                 <option value="montserrat">{{ 'mpm.studio.bold' | t }}</option>
                 <option value="playfair">{{ 'mpm.studio.classic' | t }}</option>
+                <option value="greatvibes">{{ 'mpm.studio.handwritten' | t }}</option>
+                <option value="msmadi">{{ 'mpm.studio.signature' | t }}</option>
               </select>
             </label>
             <label>{{ 'mpm.studio.fill' | t }} <input type="color" data-fill value="#ffffff"></label>
@@ -543,6 +576,10 @@
       "productId": {{ product.id | json }},
       "productHandle": {{ product.handle | json }},
       "family": {{ section.settings.family | json }},
+      "nameBelow": {{ section.settings.name_below | json }},
+      "watercolor": {{ section.settings.watercolor | json }},
+      "defaultPaint": {{ section.settings.default_paint | json }},
+      "watercolorEndpoint": {{ section.settings.watercolor_endpoint | json }},
       "optionNames": {{ product.options | json }},
       "extraFields": {{ section.settings.extra_fields | json }},
       "fallbackPrint": {% assign fb = section.settings.fallback_print_size | downcase | split: 'x' %}{% if fb.size == 2 %}{"width": {{ fb[0] | strip | plus: 0 }}, "height": {{ fb[1] | strip | plus: 0 }}}{% else %}null{% endif %},
@@ -583,6 +620,10 @@
     { "type": "checkbox", "id": "gallery_large", "label": "Large photo gallery", "info": "Opens on the first product photo with thumbnails underneath, until the shopper has a design.", "default": false },
     { "type": "textarea", "id": "photo_files", "label": "Gallery photos from Files", "info": "Optional. File names from Content → Files, one per line, each optionally followed by | and the alt text. When filled, these replace the product photos in the gallery." },
     { "type": "select", "id": "family", "label": "Product type", "default": "blanket", "options": [{ "value": "blanket", "label": "Blanket" }, { "value": "ornament", "label": "Ornament (shape from the variant)" }, { "value": "mug", "label": "Mug (design printed on both sides)" }] },
+    { "type": "checkbox", "id": "watercolor", "label": "Offer the watercolor style (blankets)", "info": "Adds Illustrated / Watercolor buttons. Watercolor is painted by the AI on a white blanket with the name as a signature. Needs the Vercel portrait service.", "default": false },
+    { "type": "text", "id": "watercolor_endpoint", "label": "Watercolor generation URL", "default": "https://mypetmemo-shopify.vercel.app/api/portrait", "info": "The service that paints the watercolor style. Empty: the Portrait generation URL below." },
+    { "type": "select", "id": "default_paint", "label": "Style selected first", "options": [{ "value": "vector", "label": "Illustrated" }, { "value": "watercolor", "label": "Watercolor" }], "default": "vector" },
+    { "type": "checkbox", "id": "name_below", "label": "Name under the pet (blankets)", "info": "For blankets whose top edge is hidden when worn, like the hooded blanket.", "default": false },
     { "type": "select", "id": "look", "label": "Page look", "default": "soft", "options": [{ "value": "soft", "label": "Soft (cream, like the pet portrait page)" }, { "value": "classic", "label": "Classic (white and navy)" }] },
     { "type": "text", "id": "eyebrow", "label": "Small heading (soft look)", "info": "Leave empty for Personalized Pet Blanket / Ornament / Mug." },
     { "type": "text", "id": "heading", "label": "Heading", "info": "Leave empty to use the product title (the part before the dash)." },

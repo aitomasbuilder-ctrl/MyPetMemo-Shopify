@@ -1,0 +1,26 @@
+<section class="reviews-section wrap" id="reviews">{% render 'icon', name: 'heart', size: 27 %}<p class="eyebrow">{{ 'reviews.eyebrow' | t }}</p><h2>{{ section.settings.heading | escape }}</h2><p>{{ section.settings.text | escape | newline_to_br }}</p></section>
+
+{% schema %}
+{
+  "name": "Our first stories",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Yours might be our first love story."
+    },
+    {
+      "type": "textarea",
+      "id": "text",
+      "label": "Text",
+      "default": "Customer reviews coming soon.\nBe one of the first MyPetMemo pet parents."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Our first stories"
+    }
+  ]
+}
+{% endschema %}

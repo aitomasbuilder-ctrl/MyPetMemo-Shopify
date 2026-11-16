@@ -1,0 +1,20 @@
+<section class="section lifestyle-section"><div class="wrap section-heading"><div><p class="eyebrow">{{ 'lifestyle.eyebrow' | t }}</p><h2>{{ section.settings.heading | escape }}</h2></div><p class="muted">{{ 'lifestyle.text' | t }}</p></div><div class="lifestyle-grid">{% assign tile_list = '8,4,0,1,0,7,3,0' | split: ',' %}{% for index in (0..7) %}{% assign kind = 'blanket' %}{% if index == 2 or index == 3 %}{% assign kind = 'ornament' %}{% elsif index == 4 %}{% assign kind = 'portrait' %}{% endif %}{% assign tile = tile_list[index] | plus: 0 %}{% assign alt_key = 'lifestyle.alt_' | append: index %}{% assign alt = alt_key | t %}{% render 'pet-image', kind: kind, tile: tile, alt: alt %}{% endfor %}</div><p class="small sample-note center">{{ 'common.mockups' | t }}</p></section>
+
+{% schema %}
+{
+  "name": "Life with MyPetMemo",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Little reminders. Everywhere."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Life with MyPetMemo"
+    }
+  ]
+}
+{% endschema %}

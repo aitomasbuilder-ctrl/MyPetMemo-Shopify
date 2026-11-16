@@ -1,0 +1,11 @@
+<section class="section wrap mpm-delivery-section" id="delivery">
+  <div><p class="eyebrow">{{ 'delivery.eyebrow' | t }}</p><h2>{{ 'delivery.heading' | t }}</h2><p>{{ 'delivery.intro' | t }}</p></div>
+  {% render 'delivery-info', kind: 'home' %}
+</section>
+
+{% schema %}
+{
+  "name": "Delivery",
+  "presets": [{ "name": "Delivery" }]
+}
+{% endschema %}
