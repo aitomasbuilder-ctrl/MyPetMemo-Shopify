@@ -20,7 +20,7 @@
    *  default name placement (fractions of the print) in the corner the prompt keeps calm. */
   const SCENES = {
     moonlight: { label: 'Moonlight night', color: '#141a2b', ink: '#ffffff', name: { cx: 0.7, cy: 0.87, size: 0.11, rot: -8 } },
-    christmas: { label: 'Cozy Christmas', color: '#5b1a1c', ink: '#fff6e6', name: { cx: 0.5, cy: 0.9, size: 0.11, rot: -4 } }
+    christmas: { label: 'Cozy Christmas', color: '#5b1a1c', ink: '#fff6e6', name: { cx: 0.5, cy: 0.89, size: 0.15, rot: -4 } }
   };
   const NAME_BASELINE = 0.35;          // baseline offset from the name centre, in font sizes
   const NAME_STROKE = 0.16;            // outline width, in font sizes
