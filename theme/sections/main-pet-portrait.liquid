@@ -161,8 +161,14 @@
         {%- comment -%} Shown until a photo is chosen. An illustration of the style, kept apart from the print file. {%- endcomment -%}
         <figure class="mps__example" data-example>
           {%- assign example_alt = 'mpm.example.alt_portrait' | t -%}
-          {% render 'pet-image', kind: 'portrait', style_index: 0, alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px' %}
-          <figcaption>{{ 'mpm.example.label' | t }}</figcaption>
+          {%- assign example_file = product.metafields.mypetmemo.example_file.value | default: '' | strip -%}
+          {%- if example_file != blank -%}
+            <img class="mps__example-img" src="{{ example_file | file_img_url: '1200x1200' }}" srcset="{{ example_file | file_img_url: '600x600' }} 600w, {{ example_file | file_img_url: '900x900' }} 900w, {{ example_file | file_img_url: '1200x1200' }} 1200w" sizes="(max-width: 899px) 92vw, 600px" alt="{{ example_alt | escape }}" width="1200" height="1200" loading="eager" fetchpriority="high">
+            <figcaption>{{ 'mpm.example.label_mockup' | t }}</figcaption>
+          {%- else -%}
+            {% render 'pet-image', kind: 'portrait', style_index: 0, alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px' %}
+            <figcaption>{{ 'mpm.example.label' | t }}</figcaption>
+          {%- endif -%}
         </figure>
 
         <div class="mpp__scene-bar" role="group" aria-label="{{ 'mpm.portrait.preview_view' | t | escape }}">
