@@ -839,7 +839,7 @@
       this.setStyle(this.state.style, { silent: true });
       if (this.config.watercolor && !this.isPortrait()) {
         const wanted = new URLSearchParams(window.location.search).get('style');
-        this.setPaint(wanted === 'watercolor' || wanted === 'vector' ? wanted : (this.config.defaultPaint || 'vector'), { silent: true });
+        this.setPaint(this.config.watercolorOnly ? 'watercolor' : (wanted === 'watercolor' || wanted === 'vector' ? wanted : (this.config.defaultPaint || 'vector')), { silent: true });
       }
       this.initGallery();
       this.initReviews();
@@ -2839,7 +2839,7 @@
       if (!saved || Date.now() - saved.at > STORE_TTL_MS) return;
       const urlBg = new URLSearchParams(window.location.search).get('bg');
       const urlVariant = new URLSearchParams(window.location.search).get('variant');
-      if (!urlBg && saved.background) {
+      if (!urlBg && saved.background && !this.config.watercolorOnly) {
         const bg = saved.background.id === 'custom' ? { id: 'custom', kind: 'solid', name: saved.background.name, color: saved.background.color } : this.backgrounds.find(b => b.id === saved.background.id);
         if (bg) this.selectBackground(bg, { silent: true });
       }
@@ -2847,8 +2847,9 @@
         const v = this.config.variants.find(x => x.id === saved.variantId);
         if (v) { this.selectedOptions = v.options.slice(); this.resolveVariant(-1, { silent: true }); }
       }
-      if (saved.paint && !urlBg) this.setPaint(saved.paint, { silent: true });
+      if (saved.paint && !urlBg && !this.config.watercolorOnly) this.setPaint(saved.paint, { silent: true });
       Object.assign(this.state.name, saved.name || {});
+      if (this.config.watercolorOnly) Object.assign(this.state.name, { font: 'msmadi', fill: '#1f1b1a', stroke: '#1f1b1a' });
       Object.assign(this.state.extra, saved.extra || {});
       if (saved.style) this.setStyle(saved.style, { silent: true });
       if (this.isPortrait() && saved.artStyle) { await this.setArtStyle(saved.artStyle, { silent: true }); this.state.scene = saved.scene || this.state.scene; }

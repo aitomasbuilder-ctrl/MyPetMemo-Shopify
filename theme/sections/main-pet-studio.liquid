@@ -298,7 +298,7 @@
         </div>
       </div>
 
-      {%- if section.settings.watercolor -%}
+      {%- if section.settings.watercolor and section.settings.watercolor_only != true -%}
         <div class="mps__group">
           <h2 class="mps__label">{{ 'mpm.studio.art_style' | t }}</h2>
           <div class="mps__options mps__paints" role="radiogroup" aria-label="{{ 'mpm.studio.art_style' | t | escape }}">
@@ -540,8 +540,8 @@
             <div class="mps__row"><button type="button" data-nudge="ccw" aria-label="{{ 'mpm.studio.rotate_left' | t | escape }}">⟲</button><button type="button" data-nudge="cw" aria-label="{{ 'mpm.studio.rotate_right' | t | escape }}">⟳</button></div>
           </div>
 
-          <h3 class="mps__label mps__label--small">{{ 'mpm.studio.background' | t }} <span class="mps__label-value" data-bg-name></span></h3>
-          <div class="mps__swatches mps__swatches--small" role="radiogroup" aria-label="{{ 'mpm.studio.background' | t | escape }}" data-editor-swatches></div>
+          <h3 class="mps__label mps__label--small" data-paint-hide>{{ 'mpm.studio.background' | t }} <span class="mps__label-value" data-bg-name></span></h3>
+          <div data-paint-hide class="mps__swatches mps__swatches--small" role="radiogroup" aria-label="{{ 'mpm.studio.background' | t | escape }}" data-editor-swatches></div>
 
           <h3 class="mps__label mps__label--small">{{ 'mpm.studio.name' | t }}</h3>
           <input class="mps__input mps__input--small" type="text" maxlength="{{ section.settings.name_max }}" autocomplete="off" spellcheck="false" data-editor-name aria-label="{{ 'mpm.studio.pet_s_name' | t | escape }}" placeholder="{{ section.settings.name_placeholder | escape }}">
@@ -579,6 +579,7 @@
       "nameBelow": {{ section.settings.name_below | json }},
       "watercolor": {{ section.settings.watercolor | json }},
       "defaultPaint": {{ section.settings.default_paint | json }},
+      "watercolorOnly": {{ section.settings.watercolor_only | json }},
       "watercolorEndpoint": {{ section.settings.watercolor_endpoint | json }},
       "optionNames": {{ product.options | json }},
       "extraFields": {{ section.settings.extra_fields | json }},
@@ -622,6 +623,7 @@
     { "type": "select", "id": "family", "label": "Product type", "default": "blanket", "options": [{ "value": "blanket", "label": "Blanket" }, { "value": "ornament", "label": "Ornament (shape from the variant)" }, { "value": "mug", "label": "Mug (design printed on both sides)" }] },
     { "type": "checkbox", "id": "watercolor", "label": "Offer the watercolor style (blankets)", "info": "Adds Illustrated / Watercolor buttons. Watercolor is painted by the AI on a white blanket with the name as a signature. Needs the Vercel portrait service.", "default": false },
     { "type": "text", "id": "watercolor_endpoint", "label": "Watercolor generation URL", "default": "https://mypetmemo-shopify.vercel.app/api/portrait", "info": "The service that paints the watercolor style. Empty: the Portrait generation URL below." },
+    { "type": "checkbox", "id": "watercolor_only", "label": "Watercolor only (hide the style choice and backgrounds)", "default": false },
     { "type": "select", "id": "default_paint", "label": "Style selected first", "options": [{ "value": "vector", "label": "Illustrated" }, { "value": "watercolor", "label": "Watercolor" }], "default": "vector" },
     { "type": "checkbox", "id": "name_below", "label": "Name under the pet (blankets)", "info": "For blankets whose top edge is hidden when worn, like the hooded blanket.", "default": false },
     { "type": "select", "id": "look", "label": "Page look", "default": "soft", "options": [{ "value": "soft", "label": "Soft (cream, like the pet portrait page)" }, { "value": "classic", "label": "Classic (white and navy)" }] },
