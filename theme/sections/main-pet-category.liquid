@@ -65,10 +65,20 @@
           assign item_family = 'blanket'
         endif
         if item_family == 'ornament'
-          if is_memorial
-            assign features = 'mpm.category.features_memorial_ornament' | t
+          if request.locale.iso_code == 'lt'
+            assign features = 'Akvarelinis augintinio portretas|Baltas keramikinis žaisliukas|Vardas, užrašytas dailyraščiu'
+            if is_memorial
+              assign features = features | append: '|Datos ir užrašas (neprivaloma)'
+            else
+              assign features = features | append: '|Metai (neprivaloma)'
+            endif
           else
-            assign features = 'mpm.category.features_christmas_ornament' | t
+            assign features = 'Watercolor portrait of your pet|White ceramic ornament|Name in handwritten script'
+            if is_memorial
+              assign features = features | append: '|Optional dates and a message'
+            else
+              assign features = features | append: '|Optional year'
+            endif
           endif
         else
           if request.locale.iso_code == 'lt'

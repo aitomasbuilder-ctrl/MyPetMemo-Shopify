@@ -201,7 +201,11 @@
         "message_suggestions": "Forever in my heart,Always by my side,Forever loved,Until we meet again,Run free",
         "line_label": "Add your own text (optional)",
         "line_placeholder": "Write your own or pick one above",
-        "line_suggestions": "Best Dog Mom Ever,Best Cat Dad Ever,Dog Mom,Cat Mom,Fur Mama,My Best Friend"
+        "line_suggestions": "Best Dog Mom Ever,Best Cat Dad Ever,Dog Mom,Cat Mom,Fur Mama,My Best Friend",
+        "watercolor": true,
+        "watercolor_only": true,
+        "default_paint": "watercolor",
+        "watercolor_endpoint": "https://mypetmemo-shopify.vercel.app/api/portrait"
       }
     },
     "steps": {

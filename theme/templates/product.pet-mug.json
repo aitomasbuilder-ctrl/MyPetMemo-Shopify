@@ -193,7 +193,7 @@
         "line_suggestions": "Best Dog Mom Ever,Best Cat Dad Ever,Dog Mom,Cat Mom,Fur Mama,My Best Friend",
         "mug_note": "",
         "gallery_large": true,
-        "photo_files": "mug-white-1-golden-retriever-hand.png | Hand holding a personalized pet mug with a golden retriever portrait on blush pink\nmug-white-2-corgi-table.png | Personalized corgi portrait mug on sage green, on a wooden breakfast table\nmug-white-3-golden-retriever-with-mug.png | Golden retriever lying beside its matching portrait mug\nmug-white-4-tabby-cat-closeup.png | Close-up of a tabby cat portrait mug on lavender, on a cream knit blanket\nmug-white-5-french-bulldog-hands.png | Hands in a knit sweater holding a French bulldog portrait mug with paw prints\nmug-white-6-black-labrador.png | Black labrador portrait mug on beige with coffee and cookies\nmug-white-7-beagle-gift.png | Beagle portrait mug with pink hearts next to a gift box\nmug-white-8-border-collie-both-sides.png | Two border collie portrait mugs showing the design printed on both sides",
+        "photo_files": "wc-mug-pug-ollie.png | Watercolor pug mug (illustrative mockup)\nwc-mug-mainecoon-simba.png | Watercolor Maine Coon mug (illustrative mockup)\nwc-mug-aussie-rocky.png | Watercolor Australian Shepherd mug (illustrative mockup)",
         "promise_1": "Preview before you buy",
         "promise_2": "Made from your actual pet photo",
         "promise_3": "No payment required to preview",
@@ -205,7 +205,11 @@
         "dates_placeholder": "e.g. 2012 – 2026",
         "message_label": "Add a message (optional)",
         "message_placeholder": "Write your own or pick one above",
-        "message_suggestions": "Forever in my heart,Always by my side,Forever loved,Until we meet again,Run free"
+        "message_suggestions": "Forever in my heart,Always by my side,Forever loved,Until we meet again,Run free",
+        "watercolor": true,
+        "watercolor_only": true,
+        "default_paint": "watercolor",
+        "watercolor_endpoint": "https://mypetmemo-shopify.vercel.app/api/portrait"
       }
     },
     "steps": {

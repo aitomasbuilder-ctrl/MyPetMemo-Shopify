@@ -56,8 +56,8 @@
           "settings": {
             "product": "custom-pet-christmas-ornament",
             "kind": "ornament",
-            "image": "shopify://shop_images/hf_20261012_133726_5358539c-5c6e-4a13-aba1-3f621be52b8d.png",
-            "hover": "shopify://shop_images/hf_20261012_133727_e541975b-5a37-48f1-93b0-7ada2737da93.png",
+            "image": "shopify://shop_images/wc-ornament-shiba-kira.png",
+            "hover": "shopify://shop_images/wc-ornament-yorkie-bobo.png",
             "badge_en": "Christmas",
             "badge_lt": "Kalėdoms"
           }
@@ -67,8 +67,8 @@
           "settings": {
             "product": "pet-memorial-ornament",
             "kind": "ornament",
-            "image": "shopify://shop_images/hf_20261012_133917_325a1351-c5aa-4de5-a9dc-6d014c4bdaae.png",
-            "hover": "shopify://shop_images/hf_20261012_133829_bf8653e8-a093-4677-8b9e-980d25e5bcd2.png"
+            "image": "shopify://shop_images/wc-ornament-british-mia.png",
+            "hover": "shopify://shop_images/wc-ornament-poodle-teddy.png"
           }
         },
         "p6": {
@@ -84,7 +84,9 @@
           "type": "product",
           "settings": {
             "product": "personalized-pet-coffee-mug",
-            "kind": "blanket"
+            "kind": "blanket",
+            "image": "shopify://shop_images/wc-mug-pug-ollie.png",
+            "hover": "shopify://shop_images/wc-mug-mainecoon-simba.png"
           }
         }
       },
@@ -128,7 +130,7 @@
           "settings": {
             "title_en": "Christmas ornaments",
             "title_lt": "Kalėdiniai žaisliukai",
-            "image": "shopify://shop_images/mpm-ornament-french-bulldog-0.jpg",
+            "image": "shopify://shop_images/wc-ornament-shiba-kira.png",
             "kind": "ornament",
             "product": "custom-pet-christmas-ornament"
           }
@@ -315,8 +317,8 @@
             "group": "1",
             "product": "custom-pet-christmas-ornament",
             "kind": "ornament",
-            "image": "shopify://shop_images/hf_20261012_133727_58a564f8-16dd-4cee-b7b5-bef5bb097f03.png",
-            "hover": "shopify://shop_images/hf_20261012_133726_5358539c-5c6e-4a13-aba1-3f621be52b8d.png"
+            "image": "shopify://shop_images/wc-ornament-yorkie-bobo.png",
+            "hover": "shopify://shop_images/wc-ornament-shiba-kira.png"
           }
         },
         "g2": {
@@ -345,8 +347,8 @@
             "group": "2",
             "product": "pet-memorial-ornament",
             "kind": "ornament",
-            "image": "shopify://shop_images/hf_20261012_133829_bf8653e8-a093-4677-8b9e-980d25e5bcd2.png",
-            "hover": "shopify://shop_images/hf_20261012_133916_16604f39-ccde-4e40-967a-001fae04b325.png"
+            "image": "shopify://shop_images/wc-ornament-poodle-teddy.png",
+            "hover": "shopify://shop_images/wc-ornament-british-mia.png"
           }
         },
         "g5": {
@@ -404,7 +406,9 @@
           "settings": {
             "group": "3",
             "product": "personalized-pet-coffee-mug",
-            "kind": "blanket"
+            "kind": "blanket",
+            "image": "shopify://shop_images/wc-mug-mainecoon-simba.png",
+            "hover": "shopify://shop_images/wc-mug-aussie-rocky.png"
           }
         },
         "g11": {
