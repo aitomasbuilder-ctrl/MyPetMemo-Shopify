@@ -800,6 +800,8 @@
         example: q('[data-example]'), delivery: q('[data-delivery]')
       };
       this.P = window.MyPetMemoPortrait || null;
+      // Watercolor-only portraits: the AI paints the watercolor on white; no extra wash, a handwritten name.
+      if (this.P && this.config.watercolorOnly && this.config.family === 'portrait') Object.assign(this.P.STYLES.watercolor, { font: 'msmadi', ink: '#1f1b1a', decor: null });
       this.state = {
         phase: 'empty',            // empty | generating | ready | error
         photo: null,               // { blob, hash, url }
@@ -2259,7 +2261,7 @@
       this.root.querySelectorAll('[data-zoom-close]').forEach(b => b.addEventListener('click', () => el.zoomDialog && el.zoomDialog.close()));
       this.root.querySelectorAll('[data-zoom-level]').forEach(b => b.addEventListener('click', () => this.setZoom(Number(b.dataset.zoomLevel))));
       const wanted = new URLSearchParams(window.location.search).get('style');
-      this.setArtStyle(this.P.STYLES[wanted] ? wanted : (this.config.defaultStyle || 'modern'), { silent: true });
+      this.setArtStyle(this.config.watercolorOnly ? 'watercolor' : (this.P.STYLES[wanted] ? wanted : (this.config.defaultStyle || 'modern')), { silent: true });
       this.setScene(this.config.defaultScene || 'design', { silent: true });
     }
     /** Artwork style. Re-styles the cached AI portrait (or asks the AI for that style when it paints styles itself). */
@@ -2852,7 +2854,7 @@
       if (this.config.watercolorOnly) Object.assign(this.state.name, { font: 'msmadi', fill: '#1f1b1a', stroke: '#1f1b1a' });
       Object.assign(this.state.extra, saved.extra || {});
       if (saved.style) this.setStyle(saved.style, { silent: true });
-      if (this.isPortrait() && saved.artStyle) { await this.setArtStyle(saved.artStyle, { silent: true }); this.state.scene = saved.scene || this.state.scene; }
+      if (this.isPortrait() && saved.artStyle && !this.config.watercolorOnly) { await this.setArtStyle(saved.artStyle, { silent: true }); this.state.scene = saved.scene || this.state.scene; }
       this.el.nameInput.value = this.state.name.text || '';
       this.el.extras.forEach(i => { i.value = this.state.extra[i.dataset.extra] || ''; });
       this.el.suggestions.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.suggest === this.state.extra.message)));

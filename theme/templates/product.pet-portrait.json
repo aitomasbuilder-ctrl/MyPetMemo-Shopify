@@ -32,7 +32,11 @@
         "name_placeholder": "e.g. Maple",
         "text_suggestions": "Forever in my heart,Best friend,Good boy,Good girl,Forever loved",
         "digital_note": "High-resolution file (4800 × 6000 px, prints sharp up to 16 × 20 in). Emailed after payment. No shipping, no frame.",
-        "secure_text": "Secure checkout with Shopify Payments"
+        "secure_text": "Secure checkout with Shopify Payments",
+        "watercolor_only": true,
+        "ai_styles": true,
+        "default_style": "watercolor",
+        "default_background": "white"
       }
     },
     "steps": {
