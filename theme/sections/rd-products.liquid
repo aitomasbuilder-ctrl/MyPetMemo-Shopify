@@ -1,0 +1,45 @@
+{%- comment -%} Redesign 2026-11: product grid on a warm grey band, white cards. Products that are not sold in the visitor's market are skipped. {%- endcomment -%}
+<section class="rd-band rd-products" id="rd-products">
+  <div class="rd-wrap">
+    <header class="rd-heading">
+      <p class="rd-eyebrow">{% render 'rd-t', en: 'Christmas gift ideas 2026', lt: 'Kalėdų dovanų idėjos 2026' %}</p>
+      <h2>{% render 'rd-t', en: 'Gifts made from your photo', lt: 'Dovanos iš jūsų nuotraukos' %}</h2>
+      <p>{% render 'rd-t', en: 'Upload a photo, choose a style and see your design before you order.', lt: 'Įkelkite nuotrauką, pasirinkite stilių ir pamatykite dizainą prieš užsakydami.' %}</p>
+    </header>
+    <div class="rd-grid">
+      {%- for block in section.blocks -%}
+        {%- assign item = block.settings.product -%}
+        {%- if item != blank and item.available -%}
+          <div class="rd-grid__item" {{ block.shopify_attributes }}>{%- liquid
+            assign badge = block.settings.badge_en
+            if request.locale.iso_code == 'lt'
+              assign badge = block.settings.badge_lt
+            endif
+          -%}{% render 'rd-card', item: item, image: block.settings.image, hover: block.settings.hover, kind: block.settings.kind, badge: badge %}</div>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+    <div class="rd-center"><a class="rd-btn" href="{{ routes.all_products_collection_url }}">{% render 'rd-t', en: 'View all gifts', lt: 'Peržiūrėti visas dovanas' %}</a></div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Redesign products",
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Product",
+      "settings": [
+        { "type": "product", "id": "product", "label": "Product" },
+        { "type": "image_picker", "id": "image", "label": "Card image (optional)" },
+        { "type": "image_picker", "id": "hover", "label": "Hover image (optional)" },
+        { "type": "text", "id": "badge_en", "label": "Label (English)" },
+        { "type": "text", "id": "badge_lt", "label": "Label (Lithuanian)" },
+        { "type": "select", "id": "kind", "label": "Sample image when the product has no photo", "options": [ { "value": "blanket", "label": "Blanket" }, { "value": "ornament", "label": "Ornament" }, { "value": "portrait", "label": "Portrait" } ], "default": "blanket" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Redesign products" }]
+}
+{% endschema %}

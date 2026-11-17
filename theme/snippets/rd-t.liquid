@@ -1,0 +1,6 @@
+{% doc %}
+  Redesign copy: prints the Lithuanian text on the Lithuanian storefront and the English text everywhere else.
+  @param {string} en - English text
+  @param {string} lt - Lithuanian text
+{% enddoc %}
+{%- if request.locale.iso_code == 'lt' -%}{{ lt }}{%- else -%}{{ en }}{%- endif -%}

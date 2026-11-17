@@ -1,0 +1,35 @@
+{% doc %}
+  Redesign product card: image (second photo on hover), short title, "from" price. The whole card is one link.
+  @param {product} item - Product
+  @param {image} [image] - Image to show instead of the product photo
+  @param {string} [kind] - blanket, ornament or portrait: use a MyPetMemo sample illustration when the product has no photo
+  @param {string} [badge] - Small label on the image
+  @param {image} [hover] - Image shown on hover instead of the product photo
+{% enddoc %}
+{%- liquid
+  assign title = item.title | split: ' – ' | first | split: ' - ' | first
+  assign main_image = image | default: item.featured_image
+  assign hover_image = nil
+  if hover != blank
+    assign hover_image = hover
+  elsif image != blank
+    assign hover_image = item.featured_image
+  elsif item.images.size > 1
+    assign hover_image = item.images[1]
+  endif
+-%}
+<a class="rd-card" href="{{ item.url }}">
+  <span class="rd-card__media">
+    {%- if main_image != blank -%}
+      {{ main_image | image_url: width: 900 | image_tag: loading: 'lazy', widths: '300,450,600,900', sizes: '(max-width: 700px) 46vw, (max-width: 1100px) 31vw, 23vw', alt: title, class: 'rd-card__img' }}
+      {%- if hover_image != blank -%}{{ hover_image | image_url: width: 900 | image_tag: loading: 'lazy', widths: '300,450,600,900', sizes: '(max-width: 700px) 46vw, (max-width: 1100px) 31vw, 23vw', alt: '', class: 'rd-card__img rd-card__img--hover' }}{%- endif -%}
+    {%- else -%}
+      {% render 'pet-image', kind: kind, tile: 0, alt: title, sizes: '(max-width: 700px) 46vw, 23vw', class: 'rd-card__asset' %}
+    {%- endif -%}
+    {%- if badge != blank -%}<span class="rd-card__badge">{{ badge | escape }}</span>{%- endif -%}
+  </span>
+  <span class="rd-card__body">
+    <span class="rd-card__title">{{ title | escape }}</span>
+    <span class="rd-card__price">{% if item.price_varies %}{{ 'common.from' | t }} {% endif %}{{ item.price_min | money }}</span>
+  </span>
+</a>

@@ -16,6 +16,12 @@
 
   const DEG = Math.PI / 180;
   const TAU = Math.PI * 2;
+  /** Scene styles: the AI paints the whole blanket. `color` fills any edge the painting does not reach; `name` is the
+   *  default name placement (fractions of the print) in the corner the prompt keeps calm. */
+  const SCENES = {
+    moonlight: { label: 'Moonlight night', color: '#141a2b', ink: '#ffffff', name: { cx: 0.7, cy: 0.87, size: 0.11, rot: -8 } },
+    christmas: { label: 'Cozy Christmas', color: '#5b1a1c', ink: '#fff6e6', name: { cx: 0.5, cy: 0.89, size: 0.15, rot: -4 } }
+  };
   const NAME_BASELINE = 0.35;          // baseline offset from the name centre, in font sizes
   const NAME_STROKE = 0.16;            // outline width, in font sizes
   const NAME_PEN = 0.03;               // outline in the fill colour (no visible outline): only a slightly heavier pen line
@@ -800,6 +806,8 @@
         example: q('[data-example]'), delivery: q('[data-delivery]')
       };
       this.P = window.MyPetMemoPortrait || null;
+      // Watercolor-only portraits: the AI paints the watercolor on white; no extra wash, a handwritten name.
+      if (this.P && this.config.watercolorOnly && this.config.family === 'portrait') Object.assign(this.P.STYLES.watercolor, { font: 'msmadi', ink: '#1f1b1a', decor: null });
       this.state = {
         phase: 'empty',            // empty | generating | ready | error
         photo: null,               // { blob, hash, url }
@@ -839,7 +847,7 @@
       this.setStyle(this.state.style, { silent: true });
       if (this.config.watercolor && !this.isPortrait()) {
         const wanted = new URLSearchParams(window.location.search).get('style');
-        this.setPaint(wanted === 'watercolor' || wanted === 'vector' ? wanted : (this.config.defaultPaint || 'vector'), { silent: true });
+        this.setPaint(this.config.watercolorOnly ? 'watercolor' : (wanted === 'watercolor' || wanted === 'vector' ? wanted : (this.config.defaultPaint || 'vector')), { silent: true });
       }
       this.initGallery();
       this.initReviews();
@@ -943,11 +951,19 @@
 
     /** Blankets: which painting the AI makes. */
     paint() {
-      return this.config.watercolor && !this.isPortrait() && this.state.paint === 'watercolor' ? 'watercolor' : 'vector';
+      if (!this.config.watercolor || this.isPortrait() || this.state.paint !== 'watercolor') return 'vector';
+      // A scene product (e.g. the moonlight memorial blanket) paints a whole picture instead of a cut-out pet.
+      return SCENES[this.config.scene] ? this.config.scene : 'watercolor';
+    }
+    sceneStyle() { return SCENES[this.paint()] || null; }
+    /** Name lettering for the painted styles: a dark signature on white, or the scene's own colour. */
+    paintInk() {
+      const sc = SCENES[this.config.scene];
+      return sc ? sc.ink : '#1f1b1a';
     }
     artKey(hash) {
       if (this.isPortrait()) return this.config.aiStyles ? `art:${hash}:${this.state.artStyle}` : `art:${hash}`;
-      return this.paint() === 'watercolor' ? `art:${hash}:watercolor` : `art:${hash}`;
+      return this.paint() !== 'vector' ? `art:${hash}:${this.paint()}` : `art:${hash}`;
     }
     /** Watercolor is painted on a white blanket with a handwritten name; switching back restores the earlier
      *  background and lettering. Each painting is its own (cached) AI portrait. */
@@ -962,10 +978,11 @@
       if (prev === paint) return;
       if (paint === 'watercolor') {
         this.beforePaint = { background: { ...s.background }, name: { font: s.name.font, fill: s.name.fill, stroke: s.name.stroke } };
-        const white = this.backgrounds.find(b => b.id === 'white') || { id: 'white', kind: 'solid', name: 'White', color: '#ffffff' };
+        const sc = SCENES[this.config.scene];
+        const white = sc ? { id: 'custom', kind: 'solid', name: sc.label, color: sc.color } : (this.backgrounds.find(b => b.id === 'white') || { id: 'white', kind: 'solid', name: 'White', color: '#ffffff' });
         this.selectBackground(white, { silent: true });
         // No outline: the stroke in the fill colour only thickens the pen line a little, so it reads like a signature.
-        Object.assign(s.name, { font: 'msmadi', fill: '#1f1b1a', stroke: '#1f1b1a' });
+        Object.assign(s.name, { font: 'msmadi', fill: this.paintInk(), stroke: this.paintInk() });
       } else if (this.beforePaint) {
         const bg = this.beforePaint.background;
         this.selectBackground(bg.id === 'custom' ? bg : (this.backgrounds.find(b => b.id === bg.id) || bg), { silent: true });
@@ -1466,7 +1483,7 @@
           if (used.length >= (this.config.generationLimit || 8)) {
             throw new StudioError('limit', T('You’ve reached today’s limit for new portraits. Your earlier photos still work, or come back tomorrow.'), false);
           }
-          if (!this.config.aiEndpoint && !(this.paint() === 'watercolor' && this.config.watercolorEndpoint)) throw new StudioError('not_configured', T('Our portrait service isn’t connected yet. Please try again later.'), false);
+          if (!this.config.aiEndpoint && !(this.paint() !== 'vector' && this.config.watercolorEndpoint)) throw new StudioError('not_configured', T('Our portrait service isn’t connected yet. Please try again later.'), false);
           const canvas = await this.requestPortrait(controller.signal);
           try { localStorage.setItem('mps-generations', JSON.stringify(used.concat(Date.now()))); } catch (e) { /* private mode */ }
           const blob = await canvasToBlob(canvas, 'image/png');
@@ -1515,10 +1532,10 @@
       form.append('product', String(this.config.productId));
       form.append('shape', 'blanket');
       if (this.isPortrait() && this.config.aiStyles) form.append('style', this.state.artStyle);
-      else if (this.paint() === 'watercolor') form.append('style', 'watercolor');
+      else if (this.paint() !== 'vector') form.append('style', this.paint());
       this.setProgress(0.06, T('Uploading your photo and creating your portrait…'));
       // Watercolor comes from our own portrait service even where the illustrated style uses another one.
-      const endpoint = this.paint() === 'watercolor' ? (this.config.watercolorEndpoint || this.config.aiEndpoint) : this.config.aiEndpoint;
+      const endpoint = this.paint() !== 'vector' ? (this.config.watercolorEndpoint || this.config.aiEndpoint) : this.config.aiEndpoint;
       const res = await fetch(endpoint, { method: 'POST', body: form, signal, headers: { Accept: 'application/json, image/png' } });
       if (!res.ok) {
         let info = {};
@@ -1542,6 +1559,12 @@
       } else {
         background = res.headers.get('x-background') || 'chroma';
         image = await loadImage(URL.createObjectURL(await res.blob()));
+      }
+      if (background === 'scene') {
+        // A whole painted picture (night sky, moon, the pet twice): nothing is cut out.
+        const c = createCanvas(image.width, image.height);
+        c.getContext('2d').drawImage(image, 0, 0);
+        return c;
       }
       if (background === 'white') {
         const { canvas, paintedRatio } = whiteToAlpha(image);
@@ -1823,7 +1846,7 @@
     clampAll() {
       const p = this.printSize();
       const r = this.safeRect();
-      const pet = this.state.pet, e = this.halfExtents('pet');
+      const pet = this.state.pet, e = this.sceneStyle() ? null : this.halfExtents('pet');
       if (e) {
         // A pet wider than the safe area may shift a little but never far off centre.
         pet.cx = e.hx * 2 <= r.x1 - r.x0 ? clamp(pet.cx, r.x0 + e.hx, r.x1 - e.hx) : clamp(pet.cx, 0.4, 0.6);
@@ -1873,6 +1896,11 @@
         this.defaultLayout = s.artwork ? this.layoutKey() : null;
         return;
       }
+      if (this.sceneStyle() && !this.shape()) {
+        this.placeScene();
+        this.defaultLayout = s.artwork ? this.layoutKey() : null;
+        return;
+      }
       if (this.paint() === 'watercolor' && !this.shape()) {
         this.placeSignature();
         this.clampAll();
@@ -1907,6 +1935,17 @@
       const aspect = s.artwork.height / s.artwork.width;
       const w = Math.min(((bottom - top) * p.height) / (p.width * aspect), 0.94);
       s.pet = { cx: 0.5, cy: round4(top + this.petHeightFrac(w) / 2), w: round4(w), rot: 0 };
+    }
+    /** Scene blankets: the painting covers the whole blanket (cropped, never letterboxed) and the name is written
+     *  in the calm lower-right corner the AI leaves free. */
+    placeScene() {
+      const s = this.state, p = this.printSize(), sc = this.sceneStyle();
+      delete s.name.cap; delete s.name.breaks;
+      Object.assign(s.name, { ...sc.name });
+      if (!s.artwork) return;
+      const aspect = s.artwork.height / s.artwork.width;
+      const w = Math.max(1, p.height / (p.width * aspect)) * 1.005;
+      s.pet = { cx: 0.5, cy: 0.5, w: round4(w), rot: 0 };
     }
     /** Blankets whose top edge is covered when worn (the hooded blanket): the pet from the top edge down and the
      *  name and text under it, near the bottom edge. */
@@ -2259,7 +2298,7 @@
       this.root.querySelectorAll('[data-zoom-close]').forEach(b => b.addEventListener('click', () => el.zoomDialog && el.zoomDialog.close()));
       this.root.querySelectorAll('[data-zoom-level]').forEach(b => b.addEventListener('click', () => this.setZoom(Number(b.dataset.zoomLevel))));
       const wanted = new URLSearchParams(window.location.search).get('style');
-      this.setArtStyle(this.P.STYLES[wanted] ? wanted : (this.config.defaultStyle || 'modern'), { silent: true });
+      this.setArtStyle(this.config.watercolorOnly ? 'watercolor' : (this.P.STYLES[wanted] ? wanted : (this.config.defaultStyle || 'modern')), { silent: true });
       this.setScene(this.config.defaultScene || 'design', { silent: true });
     }
     /** Artwork style. Re-styles the cached AI portrait (or asks the AI for that style when it paints styles itself). */
@@ -2839,7 +2878,7 @@
       if (!saved || Date.now() - saved.at > STORE_TTL_MS) return;
       const urlBg = new URLSearchParams(window.location.search).get('bg');
       const urlVariant = new URLSearchParams(window.location.search).get('variant');
-      if (!urlBg && saved.background) {
+      if (!urlBg && saved.background && !this.config.watercolorOnly) {
         const bg = saved.background.id === 'custom' ? { id: 'custom', kind: 'solid', name: saved.background.name, color: saved.background.color } : this.backgrounds.find(b => b.id === saved.background.id);
         if (bg) this.selectBackground(bg, { silent: true });
       }
@@ -2847,11 +2886,12 @@
         const v = this.config.variants.find(x => x.id === saved.variantId);
         if (v) { this.selectedOptions = v.options.slice(); this.resolveVariant(-1, { silent: true }); }
       }
-      if (saved.paint && !urlBg) this.setPaint(saved.paint, { silent: true });
+      if (saved.paint && !urlBg && !this.config.watercolorOnly) this.setPaint(saved.paint, { silent: true });
       Object.assign(this.state.name, saved.name || {});
+      if (this.config.watercolorOnly) Object.assign(this.state.name, { font: 'msmadi', fill: this.paintInk(), stroke: this.paintInk() });
       Object.assign(this.state.extra, saved.extra || {});
       if (saved.style) this.setStyle(saved.style, { silent: true });
-      if (this.isPortrait() && saved.artStyle) { await this.setArtStyle(saved.artStyle, { silent: true }); this.state.scene = saved.scene || this.state.scene; }
+      if (this.isPortrait() && saved.artStyle && !this.config.watercolorOnly) { await this.setArtStyle(saved.artStyle, { silent: true }); this.state.scene = saved.scene || this.state.scene; }
       this.el.nameInput.value = this.state.name.text || '';
       this.el.extras.forEach(i => { i.value = this.state.extra[i.dataset.extra] || ''; });
       this.el.suggestions.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.suggest === this.state.extra.message)));

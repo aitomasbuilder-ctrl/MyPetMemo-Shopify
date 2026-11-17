@@ -1,0 +1,48 @@
+{%- comment -%} Redesign 2026-11: two photo + text rows (Christmas, memorial). {%- endcomment -%}
+<section class="rd-section rd-story">
+  <div class="rd-wrap">
+    {%- for block in section.blocks -%}
+      {%- liquid
+        assign url = block.settings.link | default: routes.all_products_collection_url
+        assign row_class = 'rd-story__row'
+        if forloop.index0 == 1 or forloop.index0 == 3
+          assign row_class = 'rd-story__row rd-story__row--flip'
+        endif
+      -%}
+      <div class="{{ row_class }}" {{ block.shopify_attributes }}>
+        <div class="rd-story__media">{% if block.settings.image != blank %}{{ block.settings.image | image_url: width: 1400 | image_tag: loading: 'lazy', widths: '450,700,1000,1400', sizes: '(max-width: 800px) 100vw, 50vw', alt: '' }}{% endif %}</div>
+        <div class="rd-story__copy">
+          <p class="rd-eyebrow">{% render 'rd-t', en: block.settings.eyebrow_en, lt: block.settings.eyebrow_lt %}</p>
+          <h2>{% render 'rd-t', en: block.settings.heading_en, lt: block.settings.heading_lt %}</h2>
+          <p>{% render 'rd-t', en: block.settings.text_en, lt: block.settings.text_lt %}</p>
+          <a class="rd-btn" href="{{ url }}">{% render 'rd-t', en: block.settings.button_en, lt: block.settings.button_lt %}</a>
+        </div>
+      </div>
+    {%- endfor -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Redesign story rows",
+  "blocks": [
+    {
+      "type": "row",
+      "name": "Row",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "text", "id": "eyebrow_en", "label": "Eyebrow (English)" },
+        { "type": "text", "id": "eyebrow_lt", "label": "Eyebrow (Lithuanian)" },
+        { "type": "text", "id": "heading_en", "label": "Heading (English)" },
+        { "type": "text", "id": "heading_lt", "label": "Heading (Lithuanian)" },
+        { "type": "textarea", "id": "text_en", "label": "Text (English)" },
+        { "type": "textarea", "id": "text_lt", "label": "Text (Lithuanian)" },
+        { "type": "text", "id": "button_en", "label": "Button (English)" },
+        { "type": "text", "id": "button_lt", "label": "Button (Lithuanian)" },
+        { "type": "url", "id": "link", "label": "Button link" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Redesign story rows" }]
+}
+{% endschema %}

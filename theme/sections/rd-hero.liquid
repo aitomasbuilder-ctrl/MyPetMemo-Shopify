@@ -1,0 +1,28 @@
+{%- comment -%} Redesign 2026-11: full-width lifestyle hero with the offer on the left. {%- endcomment -%}
+<section class="rd-hero" aria-labelledby="rd-hero-{{ section.id }}">
+  <div class="rd-hero__media">
+    {%- if section.settings.image != blank -%}
+      {{ section.settings.image | image_url: width: 2400 | image_tag: widths: '750,1100,1500,1920,2400', sizes: '100vw', loading: 'eager', fetchpriority: 'high', alt: '', style: section.settings.image.presentation.focal_point }}
+    {%- else -%}
+      <img src="{{ 'hero-1280.webp' | asset_url }}" srcset="{{ 'hero-640.webp' | asset_url }} 640w, {{ 'hero-960.webp' | asset_url }} 960w, {{ 'hero-1280.webp' | asset_url }} 1280w, {{ 'hero.webp' | asset_url }} 1536w" sizes="100vw" width="1536" height="1024" alt="" loading="eager" fetchpriority="high">
+    {%- endif -%}
+  </div>
+  <div class="rd-wrap rd-hero__inner">
+    <div class="rd-hero__copy">
+      <p class="rd-eyebrow">{% render 'rd-t', en: 'Personalized pet gifts', lt: 'Asmeninės dovanos augintinių mylėtojams' %}</p>
+      <h1 id="rd-hero-{{ section.id }}">{% render 'rd-t', en: 'Your pet, on a gift that lasts a lifetime', lt: 'Mylimas augintinis – dovanoje visam gyvenimui' %}</h1>
+      <p class="rd-hero__text">{% render 'rd-t', en: 'Blankets, portraits and Christmas ornaments made from your own pet photo. See your design for free before you pay.', lt: 'Pledai, portretai ir kalėdiniai žaisliukai iš jūsų augintinio nuotraukos. Dizainą pamatysite nemokamai, dar prieš mokėdami.' %}</p>
+      <a class="rd-btn" href="#rd-products">{% render 'rd-t', en: 'Choose your gift', lt: 'Rinktis dovaną' %}</a>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Redesign hero",
+  "settings": [
+    { "type": "image_picker", "id": "image", "label": "Background image" }
+  ],
+  "presets": [{ "name": "Redesign hero" }]
+}
+{% endschema %}

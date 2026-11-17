@@ -1,0 +1,51 @@
+{%- comment -%} Redesign 2026-11: gift idea tiles with the name on the photo and a button under it. {%- endcomment -%}
+<section class="rd-section rd-categories">
+  <div class="rd-wrap">
+    <header class="rd-heading">
+      <p class="rd-eyebrow">{% render 'rd-t', en: 'Categories', lt: 'Kategorijos' %}</p>
+      <h2>{% render 'rd-t', en: 'Shop by category', lt: 'Naršykite pagal kategoriją' %}</h2>
+    </header>
+    <div class="rd-tiles">
+      {%- for block in section.blocks -%}
+        {%- liquid
+          assign url = block.settings.link | default: routes.all_products_collection_url
+          if block.settings.product != blank
+            assign url = block.settings.product.url
+          endif
+        -%}
+        <div class="rd-tile" {{ block.shopify_attributes }}>
+          <a class="rd-tile__media" href="{{ url }}">
+            {%- if block.settings.image != blank -%}
+              {{ block.settings.image | image_url: width: 900 | image_tag: loading: 'lazy', widths: '300,450,600,900', sizes: '(max-width: 700px) 80vw, 25vw', alt: '' }}
+            {%- else -%}
+              {% render 'pet-image', kind: block.settings.kind, tile: 0, alt: '', sizes: '(max-width: 700px) 80vw, 25vw' %}
+            {%- endif -%}
+            <span class="rd-tile__label">{% render 'rd-t', en: block.settings.title_en, lt: block.settings.title_lt %}</span>
+          </a>
+          <div class="rd-tile__foot"><a class="rd-btn rd-btn--block" href="{{ url }}">{% render 'rd-t', en: 'Personalize now', lt: 'Sukurti dabar' %}</a></div>
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Redesign gift ideas",
+  "blocks": [
+    {
+      "type": "tile",
+      "name": "Tile",
+      "settings": [
+        { "type": "text", "id": "title_en", "label": "Name (English)" },
+        { "type": "text", "id": "title_lt", "label": "Name (Lithuanian)" },
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "select", "id": "kind", "label": "Sample image when no image is set", "options": [ { "value": "blanket", "label": "Blanket" }, { "value": "ornament", "label": "Ornament" }, { "value": "portrait", "label": "Portrait" } ], "default": "blanket" },
+        { "type": "product", "id": "product", "label": "Opens product" },
+        { "type": "url", "id": "link", "label": "Or opens link" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Redesign gift ideas" }]
+}
+{% endschema %}

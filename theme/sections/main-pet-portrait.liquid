@@ -161,8 +161,14 @@
         {%- comment -%} Shown until a photo is chosen. An illustration of the style, kept apart from the print file. {%- endcomment -%}
         <figure class="mps__example" data-example>
           {%- assign example_alt = 'mpm.example.alt_portrait' | t -%}
-          {% render 'pet-image', kind: 'portrait', style_index: 0, alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px' %}
-          <figcaption>{{ 'mpm.example.label' | t }}</figcaption>
+          {%- assign example_file = product.metafields.mypetmemo.example_file.value | default: '' | strip -%}
+          {%- if example_file != blank -%}
+            <img class="mps__example-img" src="{{ example_file | file_img_url: '1200x1200' }}" srcset="{{ example_file | file_img_url: '600x600' }} 600w, {{ example_file | file_img_url: '900x900' }} 900w, {{ example_file | file_img_url: '1200x1200' }} 1200w" sizes="(max-width: 899px) 92vw, 600px" alt="{{ example_alt | escape }}" width="1200" height="1200" loading="eager" fetchpriority="high">
+            <figcaption>{{ 'mpm.example.label_mockup' | t }}</figcaption>
+          {%- else -%}
+            {% render 'pet-image', kind: 'portrait', style_index: 0, alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px' %}
+            <figcaption>{{ 'mpm.example.label' | t }}</figcaption>
+          {%- endif -%}
         </figure>
 
         <div class="mpp__scene-bar" role="group" aria-label="{{ 'mpm.portrait.preview_view' | t | escape }}">
@@ -309,6 +315,7 @@
         </div>
       </div>
 
+      <div{% if section.settings.watercolor_only %} hidden{% endif %}>
       <div class="mps__group">
         <h2 class="mps__label">{{ 'mpm.portrait.artwork_style' | t }}</h2>
         <div class="mpp__styles" role="radiogroup" aria-label="{{ 'mpm.portrait.artwork_style' | t | escape }}">
@@ -331,6 +338,7 @@
         <button type="button" class="mps__link mps__see-all" data-see-all aria-expanded="false" hidden>{{ 'mpm.portrait.see_all_colors' | t }}</button>
         <p class="mps__hint">{{ 'mpm.portrait.changing_the_color_keeps_your_pe' | t }}</p>
         <template data-image-backgrounds></template>
+      </div>
       </div>
 
       <div class="mps__group">
@@ -492,13 +500,15 @@
             <div class="mps__row"><button type="button" data-nudge="ccw" aria-label="{{ 'mpm.portrait.rotate_left' | t | escape }}">⟲</button><button type="button" data-nudge="cw" aria-label="{{ 'mpm.portrait.rotate_right' | t | escape }}">⟳</button></div>
           </div>
 
+          <div{% if section.settings.watercolor_only %} hidden{% endif %}>
           <h3 class="mps__label mps__label--small">{{ 'mpm.portrait.background' | t }} <span class="mps__label-value" data-bg-name></span></h3>
           <div class="mps__swatches mps__swatches--small" role="radiogroup" aria-label="{{ 'mpm.portrait.background' | t | escape }}" data-editor-swatches></div>
+          </div>
 
           <h3 class="mps__label mps__label--small">{{ 'mpm.portrait.name' | t }}</h3>
           <input class="mps__input mps__input--small" type="text" maxlength="{{ section.settings.name_max }}" autocomplete="off" spellcheck="false" data-editor-name aria-label="{{ 'mpm.portrait.pet_s_name' | t | escape }}" placeholder="{{ section.settings.name_placeholder | escape }}">
           <p class="mps__field-error" data-name-error hidden></p>
-          <div class="mps__field-row">
+          <div class="mps__field-row"{% if section.settings.watercolor_only %} hidden{% endif %}>
             <label>{{ 'mpm.portrait.font' | t }}
               <select data-font>
                 <option value="fredoka">{{ 'mpm.portrait.rounded' | t }}</option>
@@ -543,6 +553,7 @@
       "fallbackPrint": null,
       "digitalPrint": {"width": {{ section.settings.digital_width }}, "height": {{ section.settings.digital_height }}},
       "aiStyles": {{ section.settings.ai_styles }},
+      "watercolorOnly": {{ section.settings.watercolor_only | json }},
       "defaultStyle": {{ section.settings.default_style | json }},
       "defaultScene": "design",
       "moneyFormat": {{ shop.money_format | json }},
@@ -589,6 +600,7 @@
     { "type": "text", "id": "review_noun", "label": "Reviews label", "default": "reviews" },
     { "type": "text", "id": "reviews_heading", "label": "Reviews heading", "default": "What customers say", "info": "Only genuine reviews from Content → Metaobjects → MyPetMemo review. Nothing shows until real reviews exist." },
     { "type": "header", "content": "Artwork styles" },
+    { "type": "checkbox", "id": "watercolor_only", "label": "Watercolor only (hide styles, colors and fonts)", "default": false, "info": "Turn on 'AI service paints each style' too, so the AI paints the watercolor." },
     { "type": "select", "id": "default_style", "label": "Default style", "default": "modern", "options": [{ "value": "modern", "label": "Modern Minimalist" }, { "value": "watercolor", "label": "Watercolor" }, { "value": "classic", "label": "Classic Portrait" }, { "value": "memorial", "label": "Memorial Portrait" }] },
     { "type": "text", "id": "style_modern_title", "label": "Style 1 name", "default": "Modern Minimalist" },
     { "type": "text", "id": "style_modern_text", "label": "Style 1 description", "default": "Clean portrait on a solid color" },

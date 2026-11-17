@@ -5,6 +5,11 @@
   built-in patterns in pet-backgrounds.js plus any image backgrounds added as blocks.
 {%- endcomment -%}
 {%- assign current_variant = product.selected_or_first_available_variant -%}
+{%- comment -%} Painted scene (e.g. moonlight memorial): the product metafield mypetmemo.scene wins over the section setting, so
+  one blanket template serves both. A scene page uses scene_example_file / scene_photo_files for its pictures. {%- endcomment -%}
+{%- assign mps_scene = section.settings.scene_style | default: '' -%}
+{%- if section.settings.watercolor_only and product.metafields.mypetmemo.scene != blank -%}{%- assign mps_scene = product.metafields.mypetmemo.scene.value | strip -%}{%- endif -%}
+{%- unless section.settings.watercolor_only -%}{%- assign mps_scene = '' -%}{%- endunless -%}
 {%- assign rating = product.metafields.reviews.rating.value -%}
 {%- assign rating_count = product.metafields.reviews.rating_count.value -%}
 {%- assign short_title = product.title | split: ' – ' | first | split: ' - ' | first -%}
@@ -164,7 +169,15 @@
           {%- comment -%} Shown until a photo is chosen. An illustrative mockup, kept apart from the print file. {%- endcomment -%}
           <figure class="mps__example" data-example>
             {%- assign example_alt = 'mpm.example.alt_product' | t -%}
-            {% render 'pet-image', kind: section.settings.family, tile: 0, alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px' %}
+            {%- assign example_file = product.metafields.mypetmemo.example_file.value | default: '' | strip -%}
+            {%- if mps_scene != blank and product.metafields.mypetmemo.scene_example_file != blank -%}{%- assign example_file = product.metafields.mypetmemo.scene_example_file.value | strip -%}{%- endif -%}
+            {%- if example_file != blank -%}
+              <img class="mps__example-img" src="{{ example_file | file_img_url: '1200x1200' }}" srcset="{{ example_file | file_img_url: '600x600' }} 600w, {{ example_file | file_img_url: '900x900' }} 900w, {{ example_file | file_img_url: '1200x1200' }} 1200w" sizes="(max-width: 899px) 92vw, 600px" alt="{{ example_alt | escape }}" width="1200" height="1200" loading="eager" fetchpriority="high">
+            {%- elsif section.settings.example_image != blank -%}
+              {{ section.settings.example_image | image_url: width: 1200 | image_tag: class: 'mps__example-img', alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px', widths: '600, 900, 1200', loading: 'eager', fetchpriority: 'high' }}
+            {%- else -%}
+              {% render 'pet-image', kind: section.settings.family, tile: 0, alt: example_alt, sizes: '(max-width: 899px) 92vw, 600px' %}
+            {%- endif -%}
             <figcaption>{{ 'mpm.example.label_mockup' | t }}</figcaption>
           </figure>
         {%- endif -%}
@@ -177,7 +190,10 @@
 
         <div class="mps__drop-hint" data-drop-hint hidden><span>{{ 'mpm.studio.drop_your_photo_here' | t }}</span></div>
       </div>
-      {%- assign photo_files = section.settings.photo_files | newline_to_br | split: '<br />' -%}
+      {%- assign photo_src = section.settings.photo_files -%}
+      {%- if product.metafields.mypetmemo.photo_files != blank -%}{%- assign photo_src = product.metafields.mypetmemo.photo_files.value -%}{%- endif -%}
+      {%- if mps_scene != blank and product.metafields.mypetmemo.scene_photo_files != blank -%}{%- assign photo_src = product.metafields.mypetmemo.scene_photo_files.value -%}{%- endif -%}
+      {%- assign photo_files = photo_src | newline_to_br | split: '<br />' -%}
       {%- assign has_photo_files = false -%}
       {%- for f in photo_files -%}{%- if f != blank -%}{%- assign has_photo_files = true -%}{%- endif -%}{%- endfor -%}
       {%- if product.media.size > 0 or has_photo_files -%}
@@ -298,7 +314,7 @@
         </div>
       </div>
 
-      {%- if section.settings.watercolor -%}
+      {%- if section.settings.watercolor and section.settings.watercolor_only != true -%}
         <div class="mps__group">
           <h2 class="mps__label">{{ 'mpm.studio.art_style' | t }}</h2>
           <div class="mps__options mps__paints" role="radiogroup" aria-label="{{ 'mpm.studio.art_style' | t | escape }}">
@@ -540,8 +556,8 @@
             <div class="mps__row"><button type="button" data-nudge="ccw" aria-label="{{ 'mpm.studio.rotate_left' | t | escape }}">⟲</button><button type="button" data-nudge="cw" aria-label="{{ 'mpm.studio.rotate_right' | t | escape }}">⟳</button></div>
           </div>
 
-          <h3 class="mps__label mps__label--small">{{ 'mpm.studio.background' | t }} <span class="mps__label-value" data-bg-name></span></h3>
-          <div class="mps__swatches mps__swatches--small" role="radiogroup" aria-label="{{ 'mpm.studio.background' | t | escape }}" data-editor-swatches></div>
+          <h3 class="mps__label mps__label--small" data-paint-hide>{{ 'mpm.studio.background' | t }} <span class="mps__label-value" data-bg-name></span></h3>
+          <div data-paint-hide class="mps__swatches mps__swatches--small" role="radiogroup" aria-label="{{ 'mpm.studio.background' | t | escape }}" data-editor-swatches></div>
 
           <h3 class="mps__label mps__label--small">{{ 'mpm.studio.name' | t }}</h3>
           <input class="mps__input mps__input--small" type="text" maxlength="{{ section.settings.name_max }}" autocomplete="off" spellcheck="false" data-editor-name aria-label="{{ 'mpm.studio.pet_s_name' | t | escape }}" placeholder="{{ section.settings.name_placeholder | escape }}">
@@ -579,6 +595,8 @@
       "nameBelow": {{ section.settings.name_below | json }},
       "watercolor": {{ section.settings.watercolor | json }},
       "defaultPaint": {{ section.settings.default_paint | json }},
+      "watercolorOnly": {{ section.settings.watercolor_only | json }},
+      "scene": {{ mps_scene | json }},
       "watercolorEndpoint": {{ section.settings.watercolor_endpoint | json }},
       "optionNames": {{ product.options | json }},
       "extraFields": {{ section.settings.extra_fields | json }},
@@ -622,6 +640,9 @@
     { "type": "select", "id": "family", "label": "Product type", "default": "blanket", "options": [{ "value": "blanket", "label": "Blanket" }, { "value": "ornament", "label": "Ornament (shape from the variant)" }, { "value": "mug", "label": "Mug (design printed on both sides)" }] },
     { "type": "checkbox", "id": "watercolor", "label": "Offer the watercolor style (blankets)", "info": "Adds Illustrated / Watercolor buttons. Watercolor is painted by the AI on a white blanket with the name as a signature. Needs the Vercel portrait service.", "default": false },
     { "type": "text", "id": "watercolor_endpoint", "label": "Watercolor generation URL", "default": "https://mypetmemo-shopify.vercel.app/api/portrait", "info": "The service that paints the watercolor style. Empty: the Portrait generation URL below." },
+    { "type": "image_picker", "id": "example_image", "label": "Example photo before upload", "info": "Optional. Shown with the illustrative mockup label until the shopper adds a photo." },
+    { "type": "checkbox", "id": "watercolor_only", "label": "Watercolor only (hide the style choice and backgrounds)", "default": false },
+    { "type": "select", "id": "scene_style", "label": "Painted scene", "info": "With Watercolor only on: the AI paints a whole picture for the blanket instead of a watercolor pet on white.", "options": [{ "value": "", "label": "None (watercolor pet on white)" }, { "value": "moonlight", "label": "Pet in the moonlight (memorial)" }, { "value": "christmas", "label": "Cozy Christmas Eve" }], "default": "" },
     { "type": "select", "id": "default_paint", "label": "Style selected first", "options": [{ "value": "vector", "label": "Illustrated" }, { "value": "watercolor", "label": "Watercolor" }], "default": "vector" },
     { "type": "checkbox", "id": "name_below", "label": "Name under the pet (blankets)", "info": "For blankets whose top edge is hidden when worn, like the hooded blanket.", "default": false },
     { "type": "select", "id": "look", "label": "Page look", "default": "soft", "options": [{ "value": "soft", "label": "Soft (cream, like the pet portrait page)" }, { "value": "classic", "label": "Classic (white and navy)" }] },

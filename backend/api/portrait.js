@@ -1,8 +1,9 @@
 'use strict';
 // POST /api/portrait — the pet studio's "Portrait generation URL".
-// Body: multipart form with `image` (the shopper's pet photo) and optional `style` (`watercolor`; anything else is
-// the vector style); `product` and `shape` are accepted and ignored.
-// Response: { image: data URL, background: 'chroma' (vector, on flat green) or 'white' (watercolor, on white paper) }.
+// Body: multipart form with `image` (the shopper's pet photo) and optional `style` (`watercolor`, `moonlight` or `christmas`;
+// anything else is the vector style); `product` and `shape` are accepted and ignored.
+// Response: { image: data URL, background: 'chroma' (vector, on flat green), 'white' (watercolor, on white paper)
+// or 'scene' (moonlight, christmas: a whole picture, nothing cut out) }.
 const sharp = require('sharp');
 const { generatePortrait, PortraitError, STYLES, styleFor } = require('../lib/portrait-ai');
 const { cors, send, limiter, clientIp } = require('../lib/http');

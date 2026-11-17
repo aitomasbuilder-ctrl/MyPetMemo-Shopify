@@ -32,7 +32,11 @@
         "name_placeholder": "e.g. Maple",
         "text_suggestions": "Forever in my heart,Best friend,Good boy,Good girl,Forever loved",
         "digital_note": "High-resolution file (4800 × 6000 px, prints sharp up to 16 × 20 in). Emailed after payment. No shipping, no frame.",
-        "secure_text": "Secure checkout with Shopify Payments"
+        "secure_text": "Secure checkout with Shopify Payments",
+        "watercolor_only": true,
+        "ai_styles": true,
+        "default_style": "watercolor",
+        "default_background": "white"
       }
     },
     "steps": {
@@ -56,7 +60,7 @@
           "type": "step",
           "settings": {
             "title": "Preview",
-            "text": "Pick the style, color, size and frame, see it on a wall, then approve. You pay only after you approve."
+            "text": "Add your pet’s name, pick the size and frame, see it on a wall, then approve. You pay only after you approve."
           }
         }
       },
@@ -90,7 +94,7 @@
           "type": "question",
           "settings": {
             "question": "How does the free preview work?",
-            "answer": "<p>Upload a photo of your pet. In about a minute we turn it into artwork and show it to you. Choose the style, background color, name, size and frame, then approve the design. You pay nothing until checkout, and only after you approve.</p>"
+            "answer": "<p>Upload a photo of your pet. In about a minute we turn it into artwork and show it to you. Add your pet’s name, choose the size and frame, then approve the design. You pay nothing until checkout, and only after you approve.</p>"
           }
         },
         "1": {
@@ -103,8 +107,8 @@
         "2": {
           "type": "question",
           "settings": {
-            "question": "Does changing the background color change my pet?",
-            "answer": "<p>No. The color changes instantly and your pet’s artwork stays exactly the same.</p>"
+            "question": "Can I change the name after the preview?",
+            "answer": "<p>Yes. The name updates instantly and your pet’s watercolor artwork stays exactly the same.</p>"
           }
         },
         "3": {

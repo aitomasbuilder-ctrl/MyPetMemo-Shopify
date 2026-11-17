@@ -1,0 +1,15 @@
+{%- comment -%} Redesign 2026-11: three promises in round icons. Only things the store really does. {%- endcomment -%}
+<section class="rd-band rd-usp">
+  <div class="rd-wrap">
+    <header class="rd-heading"><h2>{% render 'rd-t', en: 'Why MyPetMemo', lt: 'Kodėl MyPetMemo' %}</h2></header>
+    <ul class="rd-usp__list">
+      <li><span class="rd-usp__icon">{% render 'icon', name: 'sparkles', size: 30 %}</span><h3>{% render 'rd-t', en: 'Preview before you pay', lt: 'Peržiūra prieš mokant' %}</h3><p>{% render 'rd-t', en: 'You see the finished design on screen before checkout. Nothing is charged until you order.', lt: 'Galutinį dizainą matote ekrane dar prieš apmokėdami. Nieko nemokate, kol neužsakote.' %}</p></li>
+      <li><span class="rd-usp__icon">{% render 'icon', name: 'heart', size: 30 %}</span><h3>{% render 'rd-t', en: 'Made from your photo', lt: 'Sukurta iš jūsų nuotraukos' %}</h3><p>{% render 'rd-t', en: 'The artwork keeps your pet’s face, fur colors and markings.', lt: 'Piešinyje išlieka augintinio snukutis, kailio spalvos ir dėmelės.' %}</p></li>
+      <li><span class="rd-usp__icon">{% render 'icon', name: 'gift', size: 30 %}</span><h3>{% render 'rd-t', en: 'Made just for you', lt: 'Pagaminta tik jums' %}</h3><p>{% render 'rd-t', en: 'Every item is printed to order and shipped with tracking.', lt: 'Kiekviena prekė spausdinama pagal užsakymą ir siunčiama su sekimo nuoroda.' %}</p></li>
+    </ul>
+  </div>
+</section>
+
+{% schema %}
+{ "name": "Redesign promises", "presets": [{ "name": "Redesign promises" }] }
+{% endschema %}

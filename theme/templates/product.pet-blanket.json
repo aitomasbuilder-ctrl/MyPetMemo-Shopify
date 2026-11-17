@@ -200,8 +200,11 @@
         "line_placeholder": "Write your own or pick one above",
         "line_suggestions": "Best Dog Mom Ever,Best Cat Dad Ever,Dog Mom,Cat Mom,Fur Mama,My Best Friend",
         "watercolor": true,
-        "default_paint": "vector",
-        "watercolor_endpoint": "https://mypetmemo-shopify.vercel.app/api/portrait"
+        "default_paint": "watercolor",
+        "watercolor_only": true,
+        "watercolor_endpoint": "https://mypetmemo-shopify.vercel.app/api/portrait",
+        "example_image": "shopify://shop_images/wc-blanket-held-milo.png",
+        "photo_files": "wc-blanket-held-milo.png | Watercolor pet blanket example (illustrative mockup)\nwc-blanket-sofa-luna.png | Watercolor cat blanket example (illustrative mockup)\nwc-hooded-bella.png | Watercolor hooded blanket example (illustrative mockup)"
       }
     },
     "steps": {

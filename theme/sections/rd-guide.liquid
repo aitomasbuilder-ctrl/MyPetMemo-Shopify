@@ -1,0 +1,92 @@
+{%- comment -%} Redesign 2026-11: gift guide with tabs (occasion), each tab a row of product cards. Without JavaScript every group is shown. {%- endcomment -%}
+{%- liquid
+  assign lt = false
+  if request.locale.iso_code == 'lt'
+    assign lt = true
+  endif
+-%}
+<section class="rd-section rd-guide" id="rd-guide-{{ section.id }}" data-rd-guide>
+  <div class="rd-wrap">
+    <div class="rd-heading rd-center">
+      <p class="rd-eyebrow">{% render 'rd-t', en: 'Gift guide', lt: 'Dovanų gidas' %}</p>
+      <h2>{% render 'rd-t', en: 'Find the perfect gift', lt: 'Raskite tinkamą dovaną' %}</h2>
+    </div>
+    <div class="rd-guide__tabs" role="tablist" aria-label="{% render 'rd-t', en: 'Gift guide', lt: 'Dovanų gidas' %}">
+      {%- for n in (1..3) -%}
+        {%- capture en_key -%}tab{{ n }}_en{%- endcapture -%}
+        {%- capture lt_key -%}tab{{ n }}_lt{%- endcapture -%}
+        {%- assign label = section.settings[en_key] -%}
+        {%- if lt -%}{%- assign label = section.settings[lt_key] -%}{%- endif -%}
+        {%- if label != blank -%}
+          <button type="button" class="rd-guide__tab" role="tab" id="rd-guide-tab-{{ section.id }}-{{ n }}" aria-controls="rd-guide-panel-{{ section.id }}-{{ n }}" aria-selected="{% if n == 1 %}true{% else %}false{% endif %}" data-tab="{{ n }}">{{ label | escape }}</button>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+    {%- for n in (1..3) -%}
+      {%- assign group = n | append: '' -%}
+      <div class="rd-guide__panel rd-grid" role="tabpanel" id="rd-guide-panel-{{ section.id }}-{{ n }}" aria-labelledby="rd-guide-tab-{{ section.id }}-{{ n }}" data-panel="{{ n }}">
+        {%- for block in section.blocks -%}
+          {%- if block.settings.group == group -%}
+            {%- assign item = block.settings.product -%}
+            {%- if item != blank and item.available -%}
+              <div class="rd-grid__item" {{ block.shopify_attributes }}>{% render 'rd-card', item: item, image: block.settings.image, hover: block.settings.hover, kind: block.settings.kind %}</div>
+            {%- endif -%}
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    {%- endfor -%}
+  </div>
+</section>
+
+<script>
+  (function () {
+    var root = document.getElementById('rd-guide-{{ section.id }}');
+    if (!root) return;
+    var tabs = root.querySelectorAll('[data-tab]');
+    var panels = root.querySelectorAll('[data-panel]');
+    function show(n) {
+      tabs.forEach(function (t) { t.setAttribute('aria-selected', t.dataset.tab === n ? 'true' : 'false'); });
+      panels.forEach(function (p) { p.hidden = p.dataset.panel !== n; });
+    }
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () { show(t.dataset.tab); });
+      t.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        var list = Array.prototype.slice.call(tabs);
+        var i = list.indexOf(t) + (e.key === 'ArrowRight' ? 1 : -1);
+        var next = list[(i + list.length) % list.length];
+        next.focus(); show(next.dataset.tab);
+      });
+    });
+    root.classList.add('is-ready');
+    show('1');
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Redesign gift guide",
+  "settings": [
+    { "type": "text", "id": "tab1_en", "label": "Tab 1 (English)", "default": "For Christmas" },
+    { "type": "text", "id": "tab1_lt", "label": "Tab 1 (Lithuanian)", "default": "Kalėdoms" },
+    { "type": "text", "id": "tab2_en", "label": "Tab 2 (English)", "default": "In loving memory" },
+    { "type": "text", "id": "tab2_lt", "label": "Tab 2 (Lithuanian)", "default": "Atminimui" },
+    { "type": "text", "id": "tab3_en", "label": "Tab 3 (English)", "default": "For cosy days" },
+    { "type": "text", "id": "tab3_lt", "label": "Tab 3 (Lithuanian)", "default": "Jaukiems namams" }
+  ],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Product",
+      "settings": [
+        { "type": "select", "id": "group", "label": "Tab", "options": [ { "value": "1", "label": "Tab 1" }, { "value": "2", "label": "Tab 2" }, { "value": "3", "label": "Tab 3" } ], "default": "1" },
+        { "type": "product", "id": "product", "label": "Product" },
+        { "type": "image_picker", "id": "image", "label": "Card image (optional)" },
+        { "type": "image_picker", "id": "hover", "label": "Hover image (optional)" },
+        { "type": "select", "id": "kind", "label": "Sample image when the product has no photo", "options": [ { "value": "blanket", "label": "Blanket" }, { "value": "ornament", "label": "Ornament" }, { "value": "portrait", "label": "Portrait" } ], "default": "blanket" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Redesign gift guide" }]
+}
+{% endschema %}

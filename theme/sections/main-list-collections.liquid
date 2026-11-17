@@ -1,0 +1,8 @@
+<section class="section wrap"><div class="collection-heading"><p class="eyebrow">{{ 'catalog.eyebrow' | t }}</p><h1>{{ 'collection.heading' | t }}</h1></div>{% paginate collections by 12 %}<div class="product-grid collection-grid">{% for item in collections %}{% if item.handle == 'frontpage' or item.products_count == 0 %}{% continue %}{% endif %}<article class="product-card"><a class="product-image-link" href="{{ item.url }}">{% assign collection_image = item.featured_image | default: item.products.first.featured_image %}{% if collection_image %}{{ collection_image | image_url: width: 800 | image_tag: loading: 'lazy', class: 'card-image' }}{% elsif item.handle contains 'portrait' %}{% render 'pet-image', kind: 'portrait', tile: 0, class: 'card-image', alt: item.title %}{% else %}{{ 'collection-1' | placeholder_svg_tag: 'card-image placeholder' }}{% endif %}</a><h2 class="collection-card-title"><a href="{{ item.url }}">{{ item.title | escape }}</a></h2></article>{% endfor %}</div><nav class="pagination" aria-label="{{ 'common.pagination' | t }}">{{ paginate | default_pagination }}</nav>{% endpaginate %}</section>
+
+{% schema %}
+{
+  "name": "Collections",
+  "settings": []
+}
+{% endschema %}

@@ -6,7 +6,7 @@ const path = require('node:path');
 const { Readable } = require('node:stream');
 const sharp = require('sharp');
 const handler = require('../api/portrait');
-const { generatePortrait, PROMPT, WATERCOLOR_PROMPT } = require('../lib/portrait-ai');
+const { generatePortrait, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT } = require('../lib/portrait-ai');
 
 const photo = fs.readFileSync(path.join(__dirname, 'fixtures/style-corgi.jpg'));
 
@@ -89,4 +89,26 @@ test('watercolor: asks for the watercolor painting and says the background is wh
   assert.strictEqual(sent.contents[0].parts[0].text, WATERCOLOR_PROMPT);
   assert.strictEqual(sent.generationConfig.imageConfig.aspectRatio, '3:4');
   assert.match(WATERCOLOR_PROMPT, /watercolor/); assert.match(WATERCOLOR_PROMPT, /#FFFFFF/); assert.match(WATERCOLOR_PROMPT, /exact animal/); assert.match(WATERCOLOR_PROMPT, /No text/);
+});
+
+test('moonlight: paints a whole night scene and says nothing is cut out', async () => {
+  const night = await sharp({ create: { width: 48, height: 64, channels: 3, background: '#141a2b' } }).jpeg().toBuffer();
+  let opts;
+  const res = await call({ style: 'moonlight', generate: async (p, o) => { opts = o; return { image: night, mimeType: 'image/jpeg' }; } });
+  assert.strictEqual(res.statusCode, 200);
+  assert.strictEqual(opts.style, 'moonlight');
+  assert.strictEqual(res.body.background, 'scene');
+  let sent;
+  const fetchImpl = async (url, init) => { sent = JSON.parse(init.body); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { data: 'eA==' } }] } }] }), { status: 200 }); };
+  await generatePortrait({ image: Buffer.from('jpg'), mimeType: 'image/jpeg' }, { apiKey: 'k', fetchImpl, style: 'moonlight' });
+  assert.strictEqual(sent.contents[0].parts[0].text, MOONLIGHT_PROMPT);
+  assert.strictEqual(sent.generationConfig.imageConfig.aspectRatio, '3:4');
+  assert.match(MOONLIGHT_PROMPT, /moon/); assert.match(MOONLIGHT_PROMPT, /exact animal/); assert.match(MOONLIGHT_PROMPT, /No text/);
+});
+
+test('christmas: a whole cozy Christmas scene, nothing cut out', async () => {
+  const red = await sharp({ create: { width: 48, height: 64, channels: 3, background: '#7a1f1f' } }).jpeg().toBuffer();
+  const res = await call({ style: 'christmas', generate: async () => ({ image: red, mimeType: 'image/jpeg' }) });
+  assert.strictEqual(res.body.background, 'scene');
+  assert.match(CHRISTMAS_PROMPT, /Christmas/); assert.match(CHRISTMAS_PROMPT, /exact animal/); assert.match(CHRISTMAS_PROMPT, /No text/);
 });

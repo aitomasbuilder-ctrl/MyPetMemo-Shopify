@@ -43,11 +43,49 @@ const WATERCOLOR_PROMPT = [
   'If there are several animals, portray only the most prominent one. No text, no letters, no signature, no watermark.'
 ].join(' ');
 
+const MOONLIGHT_PROMPT = [
+  'Create a dreamy memorial painting of the pet in this photo, in the moonlight.',
+  'Keep this exact animal: the same species and breed, face shape, markings, fur colors and pattern, eye color, ear shape and',
+  'expression. Do not replace it with a different or generic animal, and keep it the same animal in both places below.',
+  'Scene, in a tall portrait format: a deep navy night sky with soft clouds. Upper left: a large, bright full moon with a warm golden glow.',
+  'Upper right and centre: the same pet painted very large in the sky, head and chest only, soft, luminous and slightly translucent,',
+  'looking gently toward the moon, as if watching over from the stars. Lower half: the same pet, full body, smaller, standing on',
+  'a rocky cliff ledge at the lower left, looking up at the sky. A swirling trail of tiny golden sparkles and stardust spirals up',
+  'from the pet on the cliff around the pet in the sky. Background below: misty mountains, dark pine forest silhouettes and a small',
+  'waterfall, with warm golden moonlight on the horizon. Keep the lower right quarter calm and fairly dark, with no important details,',
+  'because a name will be written there later.',
+  'Style: a rich, painterly digital painting with soft glow, fine fur detail and a deep navy and warm gold palette.',
+  'The painting fills the entire image edge to edge: no border, no frame, no white margin, no blanket or product mockup.',
+  'Show only animals of this pet: no people or hands. If there are several animals in the photo, use only the most prominent one.',
+  'No text, no letters, no signature, no watermark.'
+].join(' ');
+
+const CHRISTMAS_PROMPT = [
+  'Create a cozy, funny Christmas painting starring the pet in this photo.',
+  'Keep this exact animal: the same species and breed, face shape, markings, fur colors and pattern, eye color, ear shape and',
+  'expression. Do not replace it with a different or generic animal.',
+  'Scene, in a tall portrait format: a warm living room on Christmas Eve. The pet is the big star in the centre, seen from the',
+  'chest up to a full sitting pose, wearing a chunky hand-knitted Christmas sweater and a slightly too big Santa hat that flops over',
+  'one ear. It is cheekily caught in the act: tangled in a string of glowing warm fairy lights, with cookie crumbs on its whiskers,',
+  'next to a plate of Christmas cookies with one big bite missing and a mug of hot cocoa with marshmallows. Behind it: a decorated',
+  'Christmas tree with one ornament knocked over, a crackling fireplace with knitted stockings, wrapped presents, and a window with',
+  'gently falling snow. The look is joyful and funny, never scary.',
+  'The bottom fifth of the picture is a calm, dark red knitted rug with no objects on it, because a name will be written there later.',
+  'Style: a rich, painterly digital painting, soft warm candle and fairy-light glow, fine fur detail, a red, green, gold and cream palette.',
+  'The painting fills the entire image edge to edge: no border, no frame, no white margin, no blanket or product mockup.',
+  'Show only this pet: no people or hands. If there are several animals in the photo, use only the most prominent one.',
+  'No text, no letters, no signature, no watermark.'
+].join(' ');
+
 /** Art styles the service paints. `background` tells the storefront how to cut the pet out. */
 const STYLES = {
   vector: { prompt: PROMPT, background: 'chroma', aspectRatio: '1:1' },
   // Portrait format: head, chest and the loose washes below it, for a large painting on the blanket.
-  watercolor: { prompt: WATERCOLOR_PROMPT, background: 'white', aspectRatio: '3:4' }
+  watercolor: { prompt: WATERCOLOR_PROMPT, background: 'white', aspectRatio: '3:4' },
+  // A whole painted picture that covers the blanket (memorial "moonlight" design); nothing is cut out.
+  moonlight: { prompt: MOONLIGHT_PROMPT, background: 'scene', aspectRatio: '3:4' },
+  // A whole cozy Christmas Eve picture for the Christmas blanket.
+  christmas: { prompt: CHRISTMAS_PROMPT, background: 'scene', aspectRatio: '3:4' }
 };
 const styleFor = name => STYLES[name] || STYLES.vector;
 
@@ -94,4 +132,4 @@ async function generatePortrait(photo, opts = {}) {
   return { image: Buffer.from(out.data, 'base64'), mimeType: out.mimeType || out.mime_type || 'image/png' };
 }
 
-module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, STYLES, styleFor, CHROMA, DEFAULT_MODEL };
+module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, STYLES, styleFor, CHROMA, DEFAULT_MODEL };

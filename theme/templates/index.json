@@ -1,43 +1,219 @@
-/*
- * ------------------------------------------------------------
- * IMPORTANT: The contents of this file are auto-generated.
- *
- * This file may be updated by the Shopify admin theme editor
- * or related systems. Please exercise caution as any changes
- * made to this file may be overwritten.
- * ------------------------------------------------------------
- */
 {
   "sections": {
-    "hero": {
-      "type": "hero",
+    "rd_hero": {
+      "type": "rd-hero",
       "settings": {
-        "eyebrow": "FOR THE PETS WHO ARE FAMILY",
-        "heading": "Turn your favorite pet photo into something forever.",
-        "text": "Soft sherpa blankets and pet portraits, digital or framed, made from your own pet photo. Upload a photo, see your design free and order only when you love it."
+        "image": "shopify://shop_images/wc-hero-bernese-bruno.png"
       }
+    },
+    "rd_products": {
+      "type": "rd-products",
+      "blocks": {
+        "p0": {
+          "type": "product",
+          "settings": {
+            "product": "custom-pet-portrait-blanket",
+            "kind": "blanket",
+            "image": "shopify://shop_images/wc-blanket-held-milo.png",
+            "hover": "shopify://shop_images/wc-blanket-husky-luka.png"
+          }
+        },
+        "p1": {
+          "type": "product",
+          "settings": {
+            "product": "christmas-pet-portrait-blanket",
+            "kind": "blanket",
+            "image": "shopify://shop_images/xmas-blanket-beagle-biscuit.png",
+            "hover": "shopify://shop_images/xmas-held-dachshund-oscar.png",
+            "badge_en": "Christmas",
+            "badge_lt": "Kalėdoms"
+          }
+        },
+        "p2": {
+          "type": "product",
+          "settings": {
+            "product": "cozy-hooded-sherpa-fleece-blanket",
+            "kind": "blanket",
+            "hover": "shopify://shop_images/wc-hooded-lab-rex.png",
+            "badge_en": "New",
+            "badge_lt": "Naujiena",
+            "image": "shopify://shop_images/wc-hooded-bella.png"
+          }
+        },
+        "p3": {
+          "type": "product",
+          "settings": {
+            "product": "personalized-pet-portrait",
+            "kind": "portrait",
+            "image": "shopify://shop_images/wc-portrait-boston-archie.png",
+            "hover": "shopify://shop_images/wc-portrait-ragdoll-muza.png",
+            "badge_en": "Digital file too",
+            "badge_lt": "Ir skaitmeninis"
+          }
+        },
+        "p4": {
+          "type": "product",
+          "settings": {
+            "product": "custom-pet-christmas-ornament",
+            "kind": "ornament",
+            "image": "shopify://shop_images/wc-ornament-shiba-kira.png",
+            "hover": "shopify://shop_images/wc-ornament-yorkie-bobo.png",
+            "badge_en": "Christmas",
+            "badge_lt": "Kalėdoms"
+          }
+        },
+        "p5": {
+          "type": "product",
+          "settings": {
+            "product": "pet-memorial-ornament",
+            "kind": "ornament",
+            "image": "shopify://shop_images/wc-ornament-british-mia.png",
+            "hover": "shopify://shop_images/wc-ornament-poodle-teddy.png"
+          }
+        },
+        "p6": {
+          "type": "product",
+          "settings": {
+            "product": "pet-memorial-blanket",
+            "kind": "blanket",
+            "image": "shopify://shop_images/moon-blanket-golden-sunny.png",
+            "hover": "shopify://shop_images/moon-held-husky-luka.png"
+          }
+        },
+        "p7": {
+          "type": "product",
+          "settings": {
+            "product": "personalized-pet-coffee-mug",
+            "kind": "blanket",
+            "image": "shopify://shop_images/wc-mug-pug-ollie.png",
+            "hover": "shopify://shop_images/wc-mug-mainecoon-simba.png"
+          }
+        }
+      },
+      "block_order": [
+        "p0",
+        "p1",
+        "p2",
+        "p3",
+        "p4",
+        "p5",
+        "p6",
+        "p7"
+      ],
+      "settings": {}
+    },
+    "rd_categories": {
+      "type": "rd-categories",
+      "blocks": {
+        "t0": {
+          "type": "tile",
+          "settings": {
+            "title_en": "Blankets",
+            "title_lt": "Pledai",
+            "image": "shopify://shop_images/wc-blanket-held-milo.png",
+            "kind": "blanket",
+            "link": "shopify://collections/pet-blankets"
+          }
+        },
+        "t1": {
+          "type": "tile",
+          "settings": {
+            "title_en": "Pet portraits",
+            "title_lt": "Augintinių portretai",
+            "image": "shopify://shop_images/wc-portrait-ragdoll-muza.png",
+            "kind": "portrait",
+            "product": "personalized-pet-portrait"
+          }
+        },
+        "t2": {
+          "type": "tile",
+          "settings": {
+            "title_en": "Christmas ornaments",
+            "title_lt": "Kalėdiniai žaisliukai",
+            "image": "shopify://shop_images/wc-ornament-shiba-kira.png",
+            "kind": "ornament",
+            "product": "custom-pet-christmas-ornament"
+          }
+        },
+        "t3": {
+          "type": "tile",
+          "settings": {
+            "title_en": "Memorial gifts",
+            "title_lt": "Atminimo dovanos",
+            "image": "shopify://shop_images/moon-blanket-golden-sunny.png",
+            "kind": "blanket",
+            "link": "shopify://collections/pet-memorial-gifts"
+          }
+        }
+      },
+      "block_order": [
+        "t0",
+        "t1",
+        "t2",
+        "t3"
+      ],
+      "settings": {}
+    },
+    "rd_steps": {
+      "type": "rd-steps",
+      "settings": {}
+    },
+    "rd_story": {
+      "type": "rd-story",
+      "blocks": {
+        "r0": {
+          "type": "row",
+          "settings": {
+            "image": "shopify://shop_images/wc-gift-samoyed-snow.png",
+            "eyebrow_en": "For Christmas",
+            "eyebrow_lt": "Kalėdoms",
+            "heading_en": "A gift they will keep for years",
+            "heading_lt": "Dovana, kurią jie saugos ilgus metus",
+            "text_en": "A blanket or ornament with their beloved pet’s portrait is a personal gift for family, friends or yourself. You design it in a few minutes and see it before you pay.",
+            "text_lt": "Pledas ar žaisliukas su mylimo augintinio portretu – asmeniška dovana šeimai, draugams ar sau. Sukursite ją per kelias minutes ir pamatysite prieš mokėdami.",
+            "button_en": "Christmas gifts",
+            "button_lt": "Kalėdinės dovanos",
+            "link": "shopify://collections/christmas-gifts"
+          }
+        },
+        "r1": {
+          "type": "row",
+          "settings": {
+            "image": "shopify://shop_images/wc-memorial-jackrussell-lucky.png",
+            "eyebrow_en": "In loving memory",
+            "eyebrow_lt": "Atminimui",
+            "heading_en": "When they are gone, the love stays",
+            "heading_lt": "Kai jo nebėra šalia, meilė lieka",
+            "text_en": "A memorial ornament or blanket with your pet’s portrait, name and dates. A gentle way to keep them close every day.",
+            "text_lt": "Atminimo žaisliukas ar pledas su augintinio portretu, vardu ir datomis – švelnus būdas jį prisiminti kasdien.",
+            "button_en": "Memorial gifts",
+            "button_lt": "Atminimo dovanos",
+            "link": "shopify://collections/pet-memorial-gifts"
+          }
+        }
+      },
+      "block_order": [
+        "r0",
+        "r1"
+      ],
+      "settings": {}
     },
     "transform": {
       "type": "transformation",
       "settings": {
-        "heading": "From your camera roll to your favorite keepsake."
+        "heading": "From your camera roll to your favorite keepsake.",
+        "image_1": "shopify://shop_images/wc-step1-corgi-photo.png",
+        "image_2": "shopify://shop_images/wc-step2-corgi-watercolor.png",
+        "image_3": "shopify://shop_images/wc-step3-corgi-blanket-bonnie.png"
       }
     },
-    "featured": {
-      "type": "featured-products",
-      "settings": {
-        "eyebrow": "MADE FOR YOUR KIND OF LOVE",
-        "heading": "Their face. Your favorite things.",
-        "addons_eyebrow": "COMPLETE THE GIFT",
-        "addons_heading": "Matching keepsakes, same pet.",
-        "addons_text": "Add an ornament or mug made from the same portrait. With a blanket or portrait in your cart, one add-on is 15% off, or two add-ons are 20% off each. The discount applies to the add-ons only."
-      }
+    "rd_usp": {
+      "type": "rd-usp",
+      "settings": {}
     },
-    "styles": {
-      "type": "portrait-styles",
-      "settings": {
-        "heading": "Find your kind of forever."
-      }
+    "delivery": {
+      "type": "mpm-delivery",
+      "settings": {}
     },
     "faq": {
       "type": "faq",
@@ -121,74 +297,161 @@
         "heading": "Good questions. Honest answers."
       }
     },
-    "proof": {
-      "type": "mpm-proof",
+    "rd_trustbar": {
+      "type": "rd-trustbar",
       "settings": {}
     },
-    "delivery": {
-      "type": "mpm-delivery",
-      "settings": {}
-    },
-    "lt_steps": {
-      "type": "how-it-works",
+    "rd_guide": {
+      "type": "rd-guide",
       "blocks": {
-        "s1": {
-          "type": "step",
+        "g0": {
+          "type": "product",
           "settings": {
-            "heading": "1. Įkelk nuotrauką",
-            "text": "Užtenka aiškios nuotraukos iš telefono, kurioje matosi visas augintinio snukutis.",
-            "icon": "upload"
+            "group": "1",
+            "product": "christmas-pet-portrait-blanket",
+            "kind": "blanket",
+            "image": "shopify://shop_images/xmas-held-dachshund-oscar.png",
+            "hover": "shopify://shop_images/xmas-blanket-beagle-biscuit.png"
           }
         },
-        "s2": {
-          "type": "step",
+        "g1": {
+          "type": "product",
           "settings": {
-            "heading": "2. Sukurk savo dizainą",
-            "text": "Pasirink stilių, pridėk vardą, jei nori, ir nemokamai peržiūrėk rezultatą.",
-            "icon": "sparkles"
+            "group": "1",
+            "product": "custom-pet-christmas-ornament",
+            "kind": "ornament",
+            "image": "shopify://shop_images/wc-ornament-yorkie-bobo.png",
+            "hover": "shopify://shop_images/wc-ornament-shiba-kira.png"
           }
         },
-        "s3": {
-          "type": "step",
+        "g2": {
+          "type": "product",
           "settings": {
-            "heading": "3. Užsisakyk ypatingą dovaną",
-            "text": "Patvirtink dizainą ir įsidėk į krepšelį. Kiekvienas gaminys gaminamas pagal užsakymą.",
-            "icon": "gift"
+            "group": "1",
+            "product": "cozy-hooded-sherpa-fleece-blanket",
+            "kind": "blanket",
+            "hover": "shopify://shop_images/wc-hooded-bella.png",
+            "image": "shopify://shop_images/wc-hooded-lab-rex.png"
+          }
+        },
+        "g3": {
+          "type": "product",
+          "settings": {
+            "group": "1",
+            "product": "personalized-pet-portrait",
+            "kind": "portrait",
+            "image": "shopify://shop_images/wc-portrait-ragdoll-muza.png",
+            "hover": "shopify://shop_images/wc-portrait-boston-archie.png"
+          }
+        },
+        "g4": {
+          "type": "product",
+          "settings": {
+            "group": "2",
+            "product": "pet-memorial-ornament",
+            "kind": "ornament",
+            "image": "shopify://shop_images/wc-ornament-poodle-teddy.png",
+            "hover": "shopify://shop_images/wc-ornament-british-mia.png"
+          }
+        },
+        "g5": {
+          "type": "product",
+          "settings": {
+            "group": "2",
+            "product": "pet-memorial-blanket",
+            "kind": "blanket",
+            "image": "shopify://shop_images/moon-held-husky-luka.png",
+            "hover": "shopify://shop_images/moon-blanket-golden-sunny.png"
+          }
+        },
+        "g6": {
+          "type": "product",
+          "settings": {
+            "group": "2",
+            "product": "personalized-pet-portrait",
+            "kind": "portrait",
+            "image": "shopify://shop_images/wc-portrait-bernedoodle-print.png",
+            "hover": "shopify://shop_images/wc-portrait-ragdoll-muza.png"
+          }
+        },
+        "g7": {
+          "type": "product",
+          "settings": {
+            "group": "2",
+            "product": "custom-pet-portrait-blanket",
+            "kind": "blanket",
+            "image": "shopify://shop_images/wc-blanket-sofa-luna.png",
+            "hover": "shopify://shop_images/wc-blanket-held-milo.png"
+          }
+        },
+        "g8": {
+          "type": "product",
+          "settings": {
+            "group": "3",
+            "product": "custom-pet-portrait-blanket",
+            "kind": "blanket",
+            "image": "shopify://shop_images/wc-blanket-husky-luka.png",
+            "hover": "shopify://shop_images/wc-blanket-sofa-luna.png"
+          }
+        },
+        "g9": {
+          "type": "product",
+          "settings": {
+            "group": "3",
+            "product": "cozy-hooded-sherpa-fleece-blanket",
+            "kind": "blanket",
+            "hover": "shopify://shop_images/wc-hooded-lab-rex.png",
+            "image": "shopify://shop_images/wc-hooded-bella.png"
+          }
+        },
+        "g10": {
+          "type": "product",
+          "settings": {
+            "group": "3",
+            "product": "personalized-pet-coffee-mug",
+            "kind": "blanket",
+            "image": "shopify://shop_images/wc-mug-mainecoon-simba.png",
+            "hover": "shopify://shop_images/wc-mug-aussie-rocky.png"
+          }
+        },
+        "g11": {
+          "type": "product",
+          "settings": {
+            "group": "3",
+            "product": "personalized-pet-portrait",
+            "kind": "portrait",
+            "image": "shopify://shop_images/wc-portrait-boston-archie.png",
+            "hover": "shopify://shop_images/wc-portrait-bernedoodle-print.png"
           }
         }
       },
       "block_order": [
-        "s1",
-        "s2",
-        "s3"
+        "g0",
+        "g1",
+        "g2",
+        "g3",
+        "g4",
+        "g5",
+        "g6",
+        "g7",
+        "g8",
+        "g9",
+        "g10",
+        "g11"
       ],
-      "settings": {
-        "heading": "Kaip sukurti dovaną",
-        "only_locale": "lt"
-      }
-    },
-    "lt_christmas": {
-      "type": "mpm-christmas",
-      "settings": {
-        "only_locale": "lt",
-        "eyebrow": "KALĖDINĖS DOVANOS",
-        "heading": "Kalėdinė dovana, kuri turi prasmę.",
-        "text": "Nustebink artimą žmogų asmenine dovana su jo mylimo augintinio nuotrauka.",
-        "blanket_handle": "christmas-pet-portrait-blanket",
-        "blanket_label": "Kalėdinis pledas",
-        "ornament_handle": "custom-pet-christmas-ornament",
-        "ornament_label": "Kalėdinis žaisliukas"
-      }
+      "settings": {}
     }
   },
   "order": [
-    "hero",
-    "lt_steps",
-    "featured",
-    "lt_christmas",
+    "rd_hero",
+    "rd_trustbar",
+    "rd_products",
+    "rd_guide",
+    "rd_categories",
+    "rd_steps",
+    "rd_story",
     "transform",
-    "styles",
-    "proof",
+    "rd_usp",
     "delivery",
     "faq"
   ]

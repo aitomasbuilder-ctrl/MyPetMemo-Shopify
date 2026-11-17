@@ -1,0 +1,19 @@
+{%- comment -%} Redesign 2026-11: three numbered steps. {%- endcomment -%}
+<section class="rd-section rd-steps" id="how-it-works">
+  <div class="rd-wrap">
+    <header class="rd-heading">
+      <p class="rd-eyebrow">{% render 'rd-t', en: 'How it works', lt: 'Kaip tai veikia' %}</p>
+      <h2>{% render 'rd-t', en: 'Your gift in 3 simple steps', lt: 'Jūsų dovana – per 3 paprastus žingsnius' %}</h2>
+    </header>
+    <ol class="rd-steps__list">
+      <li><span class="rd-steps__num">1</span><h3>{% render 'rd-t', en: 'Upload a photo', lt: 'Įkelkite nuotrauką' %}</h3><p>{% render 'rd-t', en: 'A clear phone photo with your pet’s whole face is all you need.', lt: 'Užtenka aiškios nuotraukos iš telefono, kurioje matosi visas augintinio snukutis.' %}</p></li>
+      <li><span class="rd-steps__num">2</span><h3>{% render 'rd-t', en: 'Create your design', lt: 'Sukurkite dizainą' %}</h3><p>{% render 'rd-t', en: 'Pick a background, add a name and see the result for free.', lt: 'Pasirinkite foną, įrašykite vardą ir nemokamai pamatykite rezultatą.' %}</p></li>
+      <li><span class="rd-steps__num">3</span><h3>{% render 'rd-t', en: 'Order', lt: 'Užsakykite' %}</h3><p>{% render 'rd-t', en: 'Approve your design. We make exactly what you saw on screen.', lt: 'Patvirtinkite dizainą. Pagaminsime būtent tai, ką matėte ekrane.' %}</p></li>
+    </ol>
+    <div class="rd-center"><a class="rd-btn" href="{% render 'product-link', kind: 'blanket' %}">{% render 'rd-t', en: 'Start with a photo', lt: 'Pradėti nuo nuotraukos' %}</a></div>
+  </div>
+</section>
+
+{% schema %}
+{ "name": "Redesign steps", "presets": [{ "name": "Redesign steps" }] }
+{% endschema %}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="{{ settings.background }}">
+  <meta name="theme-color" content="#ebe9e4">
   <link rel="canonical" href="{{ canonical_url }}">
   <link rel="icon" href="{{ 'favicon.svg' | asset_url }}" type="image/svg+xml">
   {%- assign title_text = page_title -%}
@@ -30,7 +30,12 @@
   {{ 'shopify.css' | asset_url | stylesheet_tag }}
   {{ 'mpm-cta.css' | asset_url | stylesheet_tag }}
   {{ 'mpm-store.css' | asset_url | stylesheet_tag }}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap">
   {% style %}:root{--background:{{ settings.background }};--foreground:{{ settings.foreground }};--brand-accent:{{ settings.accent }}}{% endstyle %}
+  {{ 'mpm-redesign.css' | asset_url | stylesheet_tag }}
+  <script src="{{ 'mpm-redesign.js' | asset_url }}" defer></script>
   {%- if request.locale.iso_code == 'lt' -%}<script src="{{ 'pet-i18n-lt.js' | asset_url }}" defer="defer"></script>{%- endif -%}
   <script src="{{ 'theme.js' | asset_url }}" defer="defer"></script>
   {%- if request.page_type == 'product' -%}

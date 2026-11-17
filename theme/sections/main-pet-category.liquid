@@ -65,18 +65,26 @@
           assign item_family = 'blanket'
         endif
         if item_family == 'ornament'
-          if is_memorial
-            assign features = 'mpm.category.features_memorial_ornament' | t
+          if request.locale.iso_code == 'lt'
+            assign features = 'Akvarelinis augintinio portretas|Baltas keramikinis žaisliukas|Vardas, užrašytas dailyraščiu'
+            if is_memorial
+              assign features = features | append: '|Datos ir užrašas (neprivaloma)'
+            else
+              assign features = features | append: '|Metai (neprivaloma)'
+            endif
           else
-            assign features = 'mpm.category.features_christmas_ornament' | t
+            assign features = 'Watercolor portrait of your pet|White ceramic ornament|Name in handwritten script'
+            if is_memorial
+              assign features = features | append: '|Optional dates and a message'
+            else
+              assign features = features | append: '|Optional year'
+            endif
           endif
         else
-          if is_christmas
-            assign features = 'mpm.category.features_christmas_blanket' | t
-          elsif is_memorial
-            assign features = 'mpm.category.features_memorial_blanket' | t
+          if request.locale.iso_code == 'lt'
+            assign features = 'Akvarelinis augintinio portretas|Ant balto, minkšto „sherpa“ pledo|Vardas, užrašytas dailyraščiu'
           else
-            assign features = 'mpm.category.features_blanket' | t
+            assign features = 'Watercolor portrait of your pet|On a soft white sherpa blanket|Name in handwritten script'
           endif
         endif
         if card.settings.features != blank
@@ -105,7 +113,7 @@
         {%- assign values = item.options_with_values.first.values -%}
         {%- if item.has_only_default_variant == false and values.size > 1 -%}
           <div class="mpc-options">
-            <p class="mpc-label">{% if option_name contains 'size' or item_family == 'blanket' %}{{ 'mpm.category.sizes' | t }}{% elsif item_family == 'ornament' %}{{ 'mpm.category.shapes' | t }}{% else %}{{ item.options_with_values.first.name | escape }}{% endif %}</p>
+            <p class="mpc-label">{% if option_name contains 'size' or item_family == 'blanket' %}{% render 'rd-t', en: 'Sizes', lt: 'Dydžiai' %}{% elsif item_family == 'ornament' %}{% render 'rd-t', en: 'Shapes', lt: 'Formos' %}{% else %}{{ item.options_with_values.first.name | escape }}{% endif %}</p>
             <ul class="mpc-chips">
               {%- for value in values -%}
                 {%- assign vprice = nil -%}
@@ -116,7 +124,7 @@
                     {%- if variant.available -%}{%- assign vavailable = true -%}{%- endif -%}
                   {%- endif -%}
                 {%- endfor -%}
-                <li{% unless vavailable %} class="is-sold-out"{% endunless %}>{% render 'option-label', value: value %}{% if item.price_varies and vprice %} · {{ vprice | money }}{% endif %}{% unless vavailable %} · {{ 'product.sold_out' | t }}{% endunless %}</li>
+                <li{% unless vavailable %} class="is-sold-out"{% endunless %}>{% render 'option-label', value: value %}{% if item.price_varies and vprice %} · {{ vprice | money }}{% endif %}{% unless vavailable %} · {% render 'rd-t', en: 'Sold out', lt: 'Išparduota' %}{% endunless %}</li>
               {%- endfor -%}
             </ul>
           </div>
