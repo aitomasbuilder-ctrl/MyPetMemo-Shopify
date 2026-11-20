@@ -1,9 +1,27 @@
 {
   "functions": {
-    "api/orders-paid.js": { "maxDuration": 300, "memory": 2048, "includeFiles": "{fonts,shared}/**" },
-    "api/fulfillment-retry.js": { "maxDuration": 300, "memory": 2048, "includeFiles": "{fonts,shared}/**" },
-    "api/designs.js": { "maxDuration": 10, "includeFiles": "{fonts,shared}/**" },
-    "api/print-template.js": { "maxDuration": 20 },
-    "api/portrait.js": { "maxDuration": 60, "memory": 1024 }
+    "api/orders-paid.js": {
+      "maxDuration": 300,
+      "memory": 2048,
+      "includeFiles": "{fonts,shared,models}/**,node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.{wasm,mjs}",
+      "excludeFiles": "node_modules/onnxruntime-web/dist/*.{jsep,jspi,asyncify}.*,node_modules/onnxruntime-web/dist/ort.{all,webgl,webgpu}.*"
+    },
+    "api/fulfillment-retry.js": {
+      "maxDuration": 300,
+      "memory": 2048,
+      "includeFiles": "{fonts,shared,models}/**,node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.{wasm,mjs}",
+      "excludeFiles": "node_modules/onnxruntime-web/dist/*.{jsep,jspi,asyncify}.*,node_modules/onnxruntime-web/dist/ort.{all,webgl,webgpu}.*"
+    },
+    "api/designs.js": {
+      "maxDuration": 10,
+      "includeFiles": "{fonts,shared}/**"
+    },
+    "api/print-template.js": {
+      "maxDuration": 20
+    },
+    "api/portrait.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
   }
 }
