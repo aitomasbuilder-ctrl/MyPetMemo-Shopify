@@ -103,14 +103,14 @@ const NEON_NIGHTS_PROMPT = [
   'Scene, in a tall portrait format: the pet is large, front and center, head and chest filling most of the upper picture,',
   'recognisably this pet. It may wear cool sunglasses and a thin gold chain; keep the face, markings and eye color clear either way.',
   'Behind the pet: a purple, magenta and orange sunset sky, silhouetted palm trees, and a neon-lit city street at dusk.',
-  'The street is wet asphalt, reflecting the neon lights.',
+  'The street is wet asphalt, reflecting the neon lights. Neon signs are abstract shapes or symbols only.',
   'Style: clean inked outlines and cel-shaded comic poster rendering, with rich saturated colors.',
   'This must be an original artwork: no logos, no brand marks, no game-style title lettering, and no recognisable trademarked typography.',
-  'The painting fills the entire image edge to edge: no border, no frame, no white margin, no room, no furniture,',
-  'no blanket or product mockup. Keep the lower area calm and fairly open, with no important details,',
-  'because a name will be written there later.',
+  'The painting is full-bleed edge to edge: the artwork touches all four edges. No white margins, no white borders,',
+  'no letterboxing, no empty bars, no frame, no room, no furniture, no blanket or product mockup.',
+  'Keep the lower area calm and fairly open, with no important details, because a name will be written there later.',
   'Show only this pet: no people or hands. If there are several animals in the photo, use only the most prominent one.',
-  'No text, no letters, no signature, no watermark.'
+  'No letters, no words, and no numbers anywhere in the image. No text, no signature, no watermark.'
 ].join(' ');
 
 /** Art styles the service paints. `background` tells the storefront how to cut the pet out. */

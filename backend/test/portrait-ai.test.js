@@ -162,6 +162,10 @@ test('neon-nights: a whole neon poster scene, nothing cut out, other styles unch
   assert.match(NEON_NIGHTS_PROMPT, /no game-style title lettering/);
   assert.match(NEON_NIGHTS_PROMPT, /no recognisable trademarked typography/);
   assert.match(NEON_NIGHTS_PROMPT, /exact animal/);
+  assert.match(NEON_NIGHTS_PROMPT, /full-bleed edge to edge/);
+  assert.match(NEON_NIGHTS_PROMPT, /No white margins/);
+  assert.match(NEON_NIGHTS_PROMPT, /abstract shapes or symbols only/);
+  assert.match(NEON_NIGHTS_PROMPT, /No letters, no words, and no numbers/);
   assert.match(NEON_NIGHTS_PROMPT, /No text/);
   assert.match(NEON_NIGHTS_PROMPT, /name will be written there later/);
   const water = await call({ style: 'watercolor', generate: async (p, o) => { opts = o; return { image: dusk, mimeType: 'image/jpeg' }; } });
