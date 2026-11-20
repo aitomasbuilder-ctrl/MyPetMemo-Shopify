@@ -96,6 +96,23 @@ const NORTHERN_NIGHT_PROMPT = [
   'use only the most prominent one. No text, no letters, no signature, no watermark.'
 ].join(' ');
 
+const NEON_NIGHTS_PROMPT = [
+  'Create an original poster illustration of the pet in this photo, in a bold retro 1980s neon-noir, sunset-boulevard style.',
+  'Keep this exact animal: the same species and breed, face shape, markings, fur colors and pattern, eye color, ear shape and',
+  'expression. Do not replace it with a different or generic animal.',
+  'Scene, in a tall portrait format: the pet is large, front and center, head and chest filling most of the upper picture,',
+  'recognisably this pet. It may wear cool sunglasses and a thin gold chain; keep the face, markings and eye color clear either way.',
+  'Behind the pet: a purple, magenta and orange sunset sky, silhouetted palm trees, and a neon-lit city street at dusk.',
+  'The street is wet asphalt, reflecting the neon lights.',
+  'Style: clean inked outlines and cel-shaded comic poster rendering, with rich saturated colors.',
+  'This must be an original artwork: no logos, no brand marks, no game-style title lettering, and no recognisable trademarked typography.',
+  'The painting fills the entire image edge to edge: no border, no frame, no white margin, no room, no furniture,',
+  'no blanket or product mockup. Keep the lower area calm and fairly open, with no important details,',
+  'because a name will be written there later.',
+  'Show only this pet: no people or hands. If there are several animals in the photo, use only the most prominent one.',
+  'No text, no letters, no signature, no watermark.'
+].join(' ');
+
 /** Art styles the service paints. `background` tells the storefront how to cut the pet out. */
 const STYLES = {
   vector: { prompt: PROMPT, background: 'chroma', aspectRatio: '1:1' },
@@ -106,7 +123,9 @@ const STYLES = {
   // A whole cozy Christmas Eve picture for the Christmas blanket.
   christmas: { prompt: CHRISTMAS_PROMPT, background: 'scene', aspectRatio: '3:4' },
   // E23: premium night sky with crescent moon, northern lights and the pet twice (Northern Night blanket).
-  'northern-night': { prompt: NORTHERN_NIGHT_PROMPT, background: 'scene', aspectRatio: '3:4' }
+  'northern-night': { prompt: NORTHERN_NIGHT_PROMPT, background: 'scene', aspectRatio: '3:4' },
+  // Full-bleed neon-noir poster: sunset, palms and a wet neon street, the pet large in front.
+  'neon-nights': { prompt: NEON_NIGHTS_PROMPT, background: 'scene', aspectRatio: '3:4' }
 };
 const styleFor = name => STYLES[name] || STYLES.vector;
 
@@ -153,4 +172,4 @@ async function generatePortrait(photo, opts = {}) {
   return { image: Buffer.from(out.data, 'base64'), mimeType: out.mimeType || out.mime_type || 'image/png' };
 }
 
-module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, STYLES, styleFor, CHROMA, DEFAULT_MODEL };
+module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT, STYLES, styleFor, CHROMA, DEFAULT_MODEL };

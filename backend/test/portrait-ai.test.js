@@ -6,7 +6,7 @@ const path = require('node:path');
 const { Readable } = require('node:stream');
 const sharp = require('sharp');
 const handler = require('../api/portrait');
-const { generatePortrait, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT } = require('../lib/portrait-ai');
+const { generatePortrait, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT } = require('../lib/portrait-ai');
 
 const photo = fs.readFileSync(path.join(__dirname, 'fixtures/style-corgi.jpg'));
 
@@ -134,4 +134,49 @@ test('northern-night: a whole night-sky scene, nothing cut out', async () => {
   assert.match(NORTHERN_NIGHT_PROMPT, /exact animal/);
   assert.match(NORTHERN_NIGHT_PROMPT, /No text/);
   assert.match(NORTHERN_NIGHT_PROMPT, /no blanket or product mockup/);
+});
+
+test('neon-nights: a whole neon poster scene, nothing cut out, other styles unchanged', async () => {
+  let opts;
+  const dusk = await sharp({ create: { width: 30, height: 40, channels: 3, background: '#6b2d6b' } }).jpeg().toBuffer();
+  const res = await call({ style: 'neon-nights', generate: async (p, o) => { opts = o; return { image: dusk, mimeType: 'image/jpeg' }; } });
+  assert.strictEqual(res.statusCode, 200);
+  assert.strictEqual(opts.style, 'neon-nights');
+  assert.strictEqual(res.body.style, 'neon-nights');
+  assert.strictEqual(res.body.background, 'scene');
+  let sent;
+  const fetchImpl = async (url, init) => { sent = JSON.parse(init.body); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { data: 'eA==' } }] } }] }), { status: 200 }); };
+  await generatePortrait({ image: Buffer.from('jpg'), mimeType: 'image/jpeg' }, { apiKey: 'k', fetchImpl, style: 'neon-nights' });
+  assert.strictEqual(sent.contents[0].parts[0].text, NEON_NIGHTS_PROMPT);
+  assert.strictEqual(sent.generationConfig.imageConfig.aspectRatio, '3:4');
+  assert.match(NEON_NIGHTS_PROMPT, /neon-noir/);
+  assert.match(NEON_NIGHTS_PROMPT, /sunset-boulevard/);
+  assert.match(NEON_NIGHTS_PROMPT, /sunglasses/);
+  assert.match(NEON_NIGHTS_PROMPT, /gold chain/);
+  assert.match(NEON_NIGHTS_PROMPT, /palm trees/);
+  assert.match(NEON_NIGHTS_PROMPT, /wet asphalt/);
+  assert.match(NEON_NIGHTS_PROMPT, /inked outlines/);
+  assert.match(NEON_NIGHTS_PROMPT, /original artwork/);
+  assert.match(NEON_NIGHTS_PROMPT, /no logos/);
+  assert.match(NEON_NIGHTS_PROMPT, /no brand marks/);
+  assert.match(NEON_NIGHTS_PROMPT, /no game-style title lettering/);
+  assert.match(NEON_NIGHTS_PROMPT, /no recognisable trademarked typography/);
+  assert.match(NEON_NIGHTS_PROMPT, /exact animal/);
+  assert.match(NEON_NIGHTS_PROMPT, /No text/);
+  assert.match(NEON_NIGHTS_PROMPT, /name will be written there later/);
+  const water = await call({ style: 'watercolor', generate: async (p, o) => { opts = o; return { image: dusk, mimeType: 'image/jpeg' }; } });
+  assert.strictEqual(opts.style, 'watercolor');
+  assert.strictEqual(water.body.background, 'white');
+  const moon = await call({ style: 'moonlight', generate: async (p, o) => { opts = o; return { image: dusk, mimeType: 'image/jpeg' }; } });
+  assert.strictEqual(opts.style, 'moonlight');
+  assert.strictEqual(moon.body.background, 'scene');
+  await generatePortrait({ image: Buffer.from('jpg'), mimeType: 'image/jpeg' }, { apiKey: 'k', fetchImpl, style: 'watercolor' });
+  assert.strictEqual(sent.contents[0].parts[0].text, WATERCOLOR_PROMPT);
+  await generatePortrait({ image: Buffer.from('jpg'), mimeType: 'image/jpeg' }, { apiKey: 'k', fetchImpl, style: 'moonlight' });
+  assert.strictEqual(sent.contents[0].parts[0].text, MOONLIGHT_PROMPT);
+  await generatePortrait({ image: Buffer.from('jpg'), mimeType: 'image/jpeg' }, { apiKey: 'k', fetchImpl, style: 'northern-night' });
+  assert.strictEqual(sent.contents[0].parts[0].text, NORTHERN_NIGHT_PROMPT);
+  const vector = await call({ style: 'cubist', generate: async (p, o) => { opts = o; return { image: dusk, mimeType: 'image/jpeg' }; } });
+  assert.strictEqual(opts.style, 'vector');
+  assert.strictEqual(vector.body.background, 'chroma');
 });
