@@ -6,6 +6,7 @@
 const sharp = require('sharp');
 const { renderDesign, sha256 } = require('./render');
 const { allowedHost, defaultHosts } = require('./design');
+const { upscaleArtwork } = require('./upscale');
 
 const MAX_DOWNLOAD = 40 * 1024 * 1024;
 
@@ -26,7 +27,7 @@ async function checkArtwork(buf, expected) {
   throw new Error('artwork_does_not_match_approved_design');
 }
 
-async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetch, hosts = defaultHosts(), render = renderDesign, printfulRoute = null }) {
+async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetch, hosts = defaultHosts(), render = renderDesign, printfulRoute = null, upscale = upscaleArtwork }) {
   const out = [];
   for (const item of items) {
     if (item.kind !== 'design') { out.push(item); continue; }
@@ -46,7 +47,10 @@ async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetc
     const artworkCheck = await checkArtwork(artwork, item.design.artwork);
     const bg = item.design.background;
     const backgroundImage = bg.kind === 'image' ? await download(bg.image_url, { fetchImpl, hosts, label: 'background' }) : null;
-    let file = await render({ design: item.design, artwork, backgroundImage, width: printful ? printful.width : area.width, height: printful ? printful.height : area.height, ...(item.digital ? { dpi: 300 } : {}) });
+    const W = printful ? printful.width : area.width, H = printful ? printful.height : area.height;
+    // AI artwork is far smaller than a blanket print: enlarge it with the model first (checked artwork only).
+    const up = upscale && item.design.pet ? await upscale(artwork, { printedWidth: Math.round((item.design.pet.w || 0) * W) }) : null;
+    let file = await render({ design: item.design, artwork: up ? up.buffer : artwork, backgroundImage, width: W, height: H, ...(item.digital ? { dpi: 300 } : {}) });
     if (printful && printful.rotate) file = await rotated(file);
     const ext = file.format === 'png' ? 'png' : 'jpg';
     const folder = item.digital ? 'digital' : 'print-files';
@@ -59,7 +63,7 @@ async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetc
       ...(printful ? { fulfiller: 'printful', printful_variant_id: printful.printful_variant_id } : {}),
       ...(mapping ? { blueprint_id: mapping.blueprint_id, print_provider_id: mapping.print_provider_id, printify_variant_id: mapping.printify_variant_id, position: area.position } : {}),
       print_file_url: url,
-      production: { design_id: item.design_id, width: file.width, height: file.height, sha256: file.sha256, bytes: file.buffer.length, artwork_check: artworkCheck, url }
+      production: { design_id: item.design_id, width: file.width, height: file.height, sha256: file.sha256, bytes: file.buffer.length, artwork_check: artworkCheck, upscaled: !!(up && up.upscaled), url }
     });
   }
   return out;
