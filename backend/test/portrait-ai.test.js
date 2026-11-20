@@ -6,7 +6,7 @@ const path = require('node:path');
 const { Readable } = require('node:stream');
 const sharp = require('sharp');
 const handler = require('../api/portrait');
-const { generatePortrait, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT } = require('../lib/portrait-ai');
+const { generatePortrait, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT } = require('../lib/portrait-ai');
 
 const photo = fs.readFileSync(path.join(__dirname, 'fixtures/style-corgi.jpg'));
 
@@ -119,5 +119,19 @@ test('northern-night: a whole night-sky scene, nothing cut out', async () => {
   const res = await call({ style: 'northern-night', generate: async (p, o) => { opts = o; return { image: night, mimeType: 'image/jpeg' }; } });
   assert.strictEqual(res.statusCode, 200);
   assert.strictEqual(opts.style, 'northern-night');
+  assert.strictEqual(res.body.style, 'northern-night');
   assert.strictEqual(res.body.background, 'scene');
+  let sent;
+  const fetchImpl = async (url, init) => { sent = JSON.parse(init.body); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { data: 'eA==' } }] } }] }), { status: 200 }); };
+  await generatePortrait({ image: Buffer.from('jpg'), mimeType: 'image/jpeg' }, { apiKey: 'k', fetchImpl, style: 'northern-night' });
+  assert.strictEqual(sent.contents[0].parts[0].text, NORTHERN_NIGHT_PROMPT);
+  assert.strictEqual(sent.generationConfig.imageConfig.aspectRatio, '3:4');
+  assert.match(NORTHERN_NIGHT_PROMPT, /Northern Night/);
+  assert.match(NORTHERN_NIGHT_PROMPT, /crescent moon/);
+  assert.match(NORTHERN_NIGHT_PROMPT, /emerald green and violet/);
+  assert.match(NORTHERN_NIGHT_PROMPT, /gold stardust/);
+  assert.match(NORTHERN_NIGHT_PROMPT, /snowy cliff/);
+  assert.match(NORTHERN_NIGHT_PROMPT, /exact animal/);
+  assert.match(NORTHERN_NIGHT_PROMPT, /No text/);
+  assert.match(NORTHERN_NIGHT_PROMPT, /no blanket or product mockup/);
 });

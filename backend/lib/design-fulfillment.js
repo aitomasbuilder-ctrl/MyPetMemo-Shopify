@@ -9,6 +9,17 @@ const { allowedHost, defaultHosts } = require('./design');
 const { upscaleArtwork } = require('./upscale');
 
 const MAX_DOWNLOAD = 40 * 1024 * 1024;
+// Shared across every design in one order. One full scene is ~90s here; leave the rest of the 300s for render and upload.
+const UPSCALE_BUDGET_MS = () => {
+  const n = Number(process.env.UPSCALE_BUDGET_MS || 160000);
+  return Number.isFinite(n) && n > 0 ? n : 160000;
+};
+
+/** Pet width in print pixels. Mug positions are fractions of one side, not the whole wrap. */
+function petPrintWidth(design, printWidth) {
+  const span = design && design.sides === 2 ? Math.round(printWidth / 2) : printWidth;
+  return Math.round((((design && design.pet && design.pet.w) || 0) * span));
+}
 
 async function download(url, { fetchImpl, hosts, label }) {
   if (!allowedHost(url, hosts)) throw new Error(`${label}_host_not_allowed`);
@@ -29,6 +40,7 @@ async function checkArtwork(buf, expected) {
 
 async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetch, hosts = defaultHosts(), render = renderDesign, printfulRoute = null, upscale = upscaleArtwork }) {
   const out = [];
+  const deadline = Date.now() + UPSCALE_BUDGET_MS();
   for (const item of items) {
     if (item.kind !== 'design') { out.push(item); continue; }
     let mapping = null, area, printful = null;
@@ -48,8 +60,8 @@ async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetc
     const bg = item.design.background;
     const backgroundImage = bg.kind === 'image' ? await download(bg.image_url, { fetchImpl, hosts, label: 'background' }) : null;
     const W = printful ? printful.width : area.width, H = printful ? printful.height : area.height;
-    // AI artwork is far smaller than a blanket print: enlarge it with the model first (checked artwork only).
-    const up = upscale && item.design.pet ? await upscale(artwork, { printedWidth: Math.round((item.design.pet.w || 0) * W) }) : null;
+    // Checked artwork only. The upscaler itself stays off unless UPSCALE_ARTWORK=on.
+    const up = upscale && item.design.pet ? await upscale(artwork, { printedWidth: petPrintWidth(item.design, W), deadline }) : null;
     let file = await render({ design: item.design, artwork: up ? up.buffer : artwork, backgroundImage, width: W, height: H, ...(item.digital ? { dpi: 300 } : {}) });
     if (printful && printful.rotate) file = await rotated(file);
     const ext = file.format === 'png' ? 'png' : 'jpg';
@@ -76,4 +88,4 @@ async function rotated(file) {
   return { ...file, buffer, width: file.height, height: file.width, sha256: sha256(buffer) };
 }
 
-module.exports = { prepareDesignItems, checkArtwork };
+module.exports = { prepareDesignItems, checkArtwork, petPrintWidth };
