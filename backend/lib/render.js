@@ -15,7 +15,7 @@
 const crypto = require('node:crypto');
 const sharp = require('sharp');
 const backgrounds = require('../shared/pet-backgrounds');
-const { textPath } = require('./text-path');
+const { textPath, measure } = require('./text-path');
 
 const NAME_BASELINE = 0.35;
 const NAME_STROKE = 0.16;
@@ -128,4 +128,108 @@ async function renderDesign({ design, artwork, backgroundImage, width, height, f
   return { buffer, width: W, height: H, format, sha256: sha256(buffer) };
 }
 
-module.exports = { renderDesign, sha256, NAME_BASELINE, NAME_STROKE, CAPTION_LINE };
+// Heartbeat tee. Every distance is a fraction of the print width, measured from the top.
+const TEE_LINE = 0.42;
+const TEE_STROKE = 0.0062;
+const TEE_NAME_GAP = 0.035;
+const TEE_NAME_SIZE = 0.085;
+const TEE_NAME_WIDTH = 0.8;
+const TEE_INK = { dark: '#1c1a17', white: '#ffffff' };
+
+function teePoints(W, pairs) {
+  const y0 = TEE_LINE * W;
+  return pairs.map(([fx, dy]) => ({ x: fx * W, y: y0 + dy * W }));
+}
+
+/** Left trace (flat, P, QRS, T) and right trace (flat, heart loop, flat). The gap between them holds the pets. */
+function teeTraces(W) {
+  const left = teePoints(W, [
+    [0.045, 0], [0.09, 0],
+    [0.105, -0.004], [0.118, -0.016], [0.131, -0.004], [0.148, 0],
+    [0.168, 0], [0.176, 0.012], [0.188, -0.062], [0.200, 0.022], [0.214, 0],
+    [0.232, -0.003], [0.252, -0.022], [0.272, -0.003], [0.30, 0], [0.34, 0]
+  ]);
+  const right = teePoints(W, [
+    [0.66, 0], [0.755, 0],
+    [0.775, -0.012], [0.788, -0.030], [0.802, -0.040], [0.816, -0.026], [0.828, -0.006],
+    [0.840, -0.026], [0.854, -0.040], [0.868, -0.030], [0.882, -0.010],
+    [0.894, 0.014], [0.908, 0], [0.955, 0]
+  ]);
+  return { left, right, lineY: TEE_LINE * W };
+}
+
+/** Filled ribbon around a polyline. The outer ends taper to a point. */
+function taperedRibbon(points, width, { taperStart, taperEnd, taper }) {
+  const lens = [0];
+  for (let i = 1; i < points.length; i++) lens.push(lens[i - 1] + Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y));
+  const total = lens[lens.length - 1] || 1;
+  const left = [], right = [];
+  for (let i = 0; i < points.length; i++) {
+    const prev = points[Math.max(0, i - 1)], next = points[Math.min(points.length - 1, i + 1)];
+    let tx = next.x - prev.x, ty = next.y - prev.y;
+    const mag = Math.hypot(tx, ty) || 1;
+    tx /= mag; ty /= mag;
+    let scale = 1;
+    if (taperStart && lens[i] < taper) scale = Math.min(scale, lens[i] / taper);
+    if (taperEnd && total - lens[i] < taper) scale = Math.min(scale, (total - lens[i]) / taper);
+    const hw = (width / 2) * scale;
+    left.push([points[i].x + (-ty) * hw, points[i].y + tx * hw]);
+    right.push([points[i].x - (-ty) * hw, points[i].y - tx * hw]);
+  }
+  const poly = left.concat(right.reverse());
+  return poly.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join('') + 'Z';
+}
+
+function teeNameSize(text, font, W) {
+  let size = TEE_NAME_SIZE * W;
+  const width = measure(text, font, size);
+  const limit = TEE_NAME_WIDTH * W;
+  if (width > limit) size *= limit / width;
+  return size;
+}
+
+/**
+ * Transparent print file for the heartbeat tee. Pets sit in the gap in the line;
+ * the pet nearest the centre is drawn last, so it is in front.
+ */
+async function renderTee({ design, pets = [], width, height }) {
+  const W = Math.round(width), H = Math.round(height);
+  if (!(W > 0 && H > 0)) throw new Error('print_size_missing');
+  const ink = TEE_INK[design.ink] || TEE_INK.dark;
+  const { left, right, lineY } = teeTraces(W);
+  const stroke = TEE_STROKE * W;
+  const taper = 0.035 * W;
+  const ribbon = taperedRibbon(left, stroke, { taperStart: true, taperEnd: false, taper })
+    + taperedRibbon(right, stroke, { taperStart: false, taperEnd: true, taper });
+  const layers = [{ input: Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><path d="${ribbon}" fill="${ink}"/></svg>`), left: 0, top: 0 }];
+  const gap0 = 0.36 * W, gap1 = 0.64 * W;
+  const n = pets.length;
+  const placed = [];
+  for (let i = 0; i < n; i++) {
+    const meta = await sharp(pets[i]).metadata();
+    const slot = (gap1 - gap0) / n;
+    const pw = Math.max(1, Math.round(Math.min(slot * 1.2, 0.26 * W)));
+    const ph = Math.max(1, Math.round(pw * (meta.height || 1) / (meta.width || 1)));
+    const buf = await sharp(pets[i]).ensureAlpha().resize(pw, ph, { fit: 'fill' }).png().toBuffer();
+    const cx = gap0 + slot * (i + 0.5);
+    placed.push({ buf, cx, pw, ph, i });
+  }
+  const center = placed.reduce((best, p) => (Math.abs(p.cx - W / 2) < Math.abs(best.cx - W / 2) ? p : best), placed[0]);
+  for (const p of placed.filter(p => p !== center).concat(center || [])) {
+    layers.push({ input: p.buf, left: Math.round(p.cx - p.pw / 2), top: Math.round(lineY - p.ph) });
+  }
+  let nameSize = 0;
+  if (design.name && design.name.text) {
+    nameSize = teeNameSize(design.name.text, design.name.font || 'dancingscript', W);
+    const baseline = lineY + TEE_NAME_GAP * W + nameSize * 0.8;
+    const { d } = textPath(design.name.text, design.name.font || 'dancingscript', nameSize, W / 2, baseline);
+    layers.push({ input: Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><path d="${d}" fill="${ink}"/></svg>`), left: 0, top: 0 });
+  }
+  const base = await sharp({ create: { width: W, height: H, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).png().toBuffer();
+  const buffer = await sharp(base, { limitInputPixels: false }).composite(layers).withMetadata({ density: 300 }).png().toBuffer();
+  const meta = await sharp(buffer, { limitInputPixels: false }).metadata();
+  if (meta.width !== W || meta.height !== H) throw new Error(`render_size_mismatch:${meta.width}x${meta.height}`);
+  return { buffer, width: W, height: H, format: 'png', sha256: sha256(buffer), nameSize };
+}
+
+module.exports = { renderDesign, renderTee, sha256, NAME_BASELINE, NAME_STROKE, CAPTION_LINE, TEE_LINE, TEE_STROKE, TEE_NAME_GAP, TEE_NAME_SIZE, TEE_NAME_WIDTH };

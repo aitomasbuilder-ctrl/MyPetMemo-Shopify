@@ -12,7 +12,9 @@ const FONTS = {
   playfair: { family: 'Playfair Display', weight: 700, files: ['playfair-display-latin-700-normal.woff', 'playfair-display-latin-ext-700-normal.woff'] },
   // Handwritten lettering for the watercolor style.
   greatvibes: { family: 'Great Vibes', weight: 400, files: ['great-vibes-latin-400-normal.woff', 'great-vibes-latin-ext-400-normal.woff'] },
-  msmadi: { family: 'Ms Madi', weight: 400, files: ['ms-madi-latin-400-normal.woff', 'ms-madi-latin-ext-400-normal.woff'] }
+  msmadi: { family: 'Ms Madi', weight: 400, files: ['ms-madi-latin-400-normal.woff', 'ms-madi-latin-ext-400-normal.woff'] },
+  // SemiBold 600, latin then latin-ext, so Lithuanian letters resolve. SIL OFL 1.1 (fonts/dancing-script-OFL.txt).
+  dancingscript: { family: 'Dancing Script', weight: 600, files: ['dancing-script-latin-600-normal.woff', 'dancing-script-latin-ext-600-normal.woff'] }
 };
 const DEFAULT_FONT = 'fredoka';
 const fontFile = name => path.join(__dirname, '..', 'fonts', name);

@@ -15,7 +15,11 @@ const ID = /^\d{1,20}$/;
 const NAME_MAX = 24;
 const CAPTION_MAX = 32;   // per line (year, dates or a short message under the name)
 const CAPTION_LINES = 4;   // dates and message, each may wrap once on star and heart ornaments
-const FAMILIES = new Set(['blanket', 'ornament', 'mug', 'portrait']);
+const FAMILIES = new Set(['blanket', 'ornament', 'mug', 'portrait', 'tee']);
+const TEE_FONT = 'dancingscript';
+// White ink disappears on a light shirt, dark ink on a dark one. The variant colour decides.
+const TEE_WHITE_INK = new Set(['navy', 'brown', 'black', 'military green']);
+const TEE_DARK_INK = new Set(['white', 'athletic heather', 'light blue', 'tan', 'olive']);
 const STYLES = new Set(['modern', 'watercolor', 'classic', 'memorial']);          // portrait artwork styles
 const FRAMES = new Set(['black', 'white', 'wood', 'canvas', 'digital']);           // portrait finishes (preview + order info)
 const DECOR = new Set(['wash', 'vignette', 'halo']);
@@ -115,11 +119,54 @@ function normaliseDecor(d) {
   };
 }
 
+function colorKey(value) {
+  return String(value || '').toLowerCase().split('/')[0].replace(/\s+/g, ' ').trim();
+}
+
+/** Shirt colour name (or a "Navy / L" variant title) -> print ink. */
+function inkForColor(value) {
+  const key = colorKey(value);
+  if (TEE_WHITE_INK.has(key)) return 'white';
+  if (TEE_DARK_INK.has(key)) return 'dark';
+  throw new DesignError('ink_unknown', 'That shirt colour is not set up for printing yet.');
+}
+
+function normaliseTeeName(n) {
+  const text = cleanText(n && typeof n === 'object' ? n.text : n);
+  if (!text) throw new DesignError('name_missing', 'Please add a name.');
+  if (Array.from(text).length > NAME_MAX) throw new DesignError('name_too_long', `name is longer than ${NAME_MAX} characters`);
+  const missing = missingCharacters(text, TEE_FONT);
+  if (missing.length) throw new DesignError('name_characters', `These characters can't be printed in this font: ${missing.join(' ')}`);
+  return { text, font: TEE_FONT };
+}
+
+function normaliseTee(input, hosts) {
+  const list = Array.isArray(input.pets) ? input.pets : [];
+  if (list.length < 1 || list.length > 3) throw new DesignError('pets_count', 'Choose one, two or three pets.');
+  const pets = list.map((p, i) => {
+    if (!p || !allowedHost(p.url, hosts)) throw new DesignError('pet_host', 'pet artwork must come from the store');
+    return { url: String(p.url), sha256: str(String(p.sha256 || '').toLowerCase(), SHA, `pets.${i}.sha256`) };
+  });
+  const color = colorKey(input.color || input.colour || input.variant_color);
+  return {
+    v: VERSION,
+    family: 'tee',
+    product_id: str(input.product_id, ID, 'product_id'),
+    variant_id: str(input.variant_id, ID, 'variant_id'),
+    sku: String(input.sku || '').slice(0, 64),
+    color,
+    ink: inkForColor(color),
+    pets,
+    name: normaliseTeeName(input.name)
+  };
+}
+
 /** Validates client input and returns the canonical design (fixed key order, rounded numbers). */
 function normalise(input, { hosts = defaultHosts() } = {}) {
   if (!input || typeof input !== 'object') throw new DesignError('design_missing');
-  const a = input.artwork || {};
   const family = FAMILIES.has(input.family) ? input.family : 'blanket';
+  if (family === 'tee') return normaliseTee(input, hosts);
+  const a = input.artwork || {};
   const shape = family === 'ornament' ? (SHAPES.has(input.shape) ? input.shape : 'circle') : undefined;
   const caption = normaliseCaption(input.caption);
   const portrait = family === 'portrait' ? {
@@ -180,4 +227,4 @@ function verify(token, key = secret()) {
   return { design, id: designId(design) };
 }
 
-module.exports = { normalise, sign, verify, designId, allowedHost, defaultHosts, DesignError, VERSION };
+module.exports = { normalise, sign, verify, designId, allowedHost, defaultHosts, DesignError, VERSION, inkForColor, TEE_FONT };

@@ -4,7 +4,7 @@
 // rendered server side -> stored -> download re-checked. Throws on any failure so the order is held.
 // Digital portraits skip Printify: they are rendered at the approved file size (300 dpi) for download.
 const sharp = require('sharp');
-const { renderDesign, sha256 } = require('./render');
+const { renderDesign, renderTee, sha256 } = require('./render');
 const { allowedHost, defaultHosts } = require('./design');
 const { upscaleArtwork } = require('./upscale');
 
@@ -50,19 +50,31 @@ async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetc
     } else {
       mapping = await catalog.variantForSku(item.sku);
       if (!mapping.is_enabled) throw new Error(`printify_variant_disabled:${item.sku}`);
-      if (catalog.regionalVariant) mapping = await catalog.regionalVariant(mapping, order.shipping_address && order.shipping_address.country_code);
+      if (catalog.regionalVariant) mapping = await catalog.regionalVariant(mapping, order.shipping_address && order.shipping_address.country_code, { family: item.design.family });
       area = await catalog.printArea(mapping);
       // EU blankets go to Printful in Europe unless Printify already found an EU maker.
-      if (printfulRoute && !mapping.region) printful = await printfulRoute(mapping, area, order.shipping_address && order.shipping_address.country_code);
+      if (printfulRoute && item.design.family !== 'tee' && !mapping.region) printful = await printfulRoute(mapping, area, order.shipping_address && order.shipping_address.country_code);
     }
-    const artwork = await download(item.artwork_url, { fetchImpl, hosts, label: 'artwork' });
-    const artworkCheck = await checkArtwork(artwork, item.design.artwork);
-    const bg = item.design.background;
-    const backgroundImage = bg.kind === 'image' ? await download(bg.image_url, { fetchImpl, hosts, label: 'background' }) : null;
     const W = printful ? printful.width : area.width, H = printful ? printful.height : area.height;
-    // Checked artwork only. The upscaler itself stays off unless UPSCALE_ARTWORK=on.
-    const up = upscale && item.design.pet ? await upscale(artwork, { printedWidth: petPrintWidth(item.design, W), deadline }) : null;
-    let file = await render({ design: item.design, artwork: up ? up.buffer : artwork, backgroundImage, width: W, height: H, ...(item.digital ? { dpi: 300 } : {}) });
+    let file, artworkCheck, up = null;
+    if (item.design.family === 'tee') {
+      const pets = [];
+      for (const pet of item.design.pets) {
+        const buf = await download(pet.url, { fetchImpl, hosts, label: 'artwork' });
+        if (sha256(buf) !== pet.sha256) throw new Error('artwork_does_not_match_approved_design');
+        pets.push(buf);
+      }
+      file = await renderTee({ design: item.design, pets, width: W, height: H });
+      artworkCheck = 'sha256';
+    } else {
+      const artwork = await download(item.artwork_url, { fetchImpl, hosts, label: 'artwork' });
+      artworkCheck = await checkArtwork(artwork, item.design.artwork);
+      const bg = item.design.background;
+      const backgroundImage = bg.kind === 'image' ? await download(bg.image_url, { fetchImpl, hosts, label: 'background' }) : null;
+      // Checked artwork only. The upscaler itself stays off unless UPSCALE_ARTWORK=on.
+      up = upscale && item.design.pet ? await upscale(artwork, { printedWidth: petPrintWidth(item.design, W), deadline }) : null;
+      file = await render({ design: item.design, artwork: up ? up.buffer : artwork, backgroundImage, width: W, height: H, ...(item.digital ? { dpi: 300 } : {}) });
+    }
     if (printful && printful.rotate) file = await rotated(file);
     const ext = file.format === 'png' ? 'png' : 'jpg';
     const folder = item.digital ? 'digital' : 'print-files';
