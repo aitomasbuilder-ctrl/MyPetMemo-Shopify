@@ -3,44 +3,14 @@
     "api/orders-paid.js": {
       "maxDuration": 300,
       "memory": 2048,
-      "includeFiles": [
-        "fonts/**",
-        "shared/**",
-        "models/**",
-        "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
-        "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs"
-      ],
-      "excludeFiles": [
-        "node_modules/onnxruntime-web/dist/*.jsep.*",
-        "node_modules/onnxruntime-web/dist/*.jspi.*",
-        "node_modules/onnxruntime-web/dist/*.asyncify.*",
-        "node_modules/onnxruntime-web/dist/ort.all.*",
-        "node_modules/onnxruntime-web/dist/ort.js",
-        "node_modules/onnxruntime-web/dist/ort.mjs",
-        "node_modules/onnxruntime-web/dist/ort.webgl.*",
-        "node_modules/onnxruntime-web/dist/ort.webgpu.*"
-      ]
+      "includeFiles": "fonts/**,shared/**,models/**,node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm,node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs",
+      "excludeFiles": "node_modules/onnxruntime-web/dist/*.jsep.*,node_modules/onnxruntime-web/dist/*.jspi.*,node_modules/onnxruntime-web/dist/*.asyncify.*,node_modules/onnxruntime-web/dist/ort.all.*,node_modules/onnxruntime-web/dist/ort.webgl.*,node_modules/onnxruntime-web/dist/ort.webgpu.*"
     },
     "api/fulfillment-retry.js": {
       "maxDuration": 300,
       "memory": 2048,
-      "includeFiles": [
-        "fonts/**",
-        "shared/**",
-        "models/**",
-        "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
-        "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs"
-      ],
-      "excludeFiles": [
-        "node_modules/onnxruntime-web/dist/*.jsep.*",
-        "node_modules/onnxruntime-web/dist/*.jspi.*",
-        "node_modules/onnxruntime-web/dist/*.asyncify.*",
-        "node_modules/onnxruntime-web/dist/ort.all.*",
-        "node_modules/onnxruntime-web/dist/ort.js",
-        "node_modules/onnxruntime-web/dist/ort.mjs",
-        "node_modules/onnxruntime-web/dist/ort.webgl.*",
-        "node_modules/onnxruntime-web/dist/ort.webgpu.*"
-      ]
+      "includeFiles": "fonts/**,shared/**,models/**,node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm,node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs",
+      "excludeFiles": "node_modules/onnxruntime-web/dist/*.jsep.*,node_modules/onnxruntime-web/dist/*.jspi.*,node_modules/onnxruntime-web/dist/*.asyncify.*,node_modules/onnxruntime-web/dist/ort.all.*,node_modules/onnxruntime-web/dist/ort.webgl.*,node_modules/onnxruntime-web/dist/ort.webgpu.*"
     },
     "api/designs.js": {
       "maxDuration": 10,
