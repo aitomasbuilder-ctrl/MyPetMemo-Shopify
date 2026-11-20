@@ -112,3 +112,12 @@ test('christmas: a whole cozy Christmas scene, nothing cut out', async () => {
   assert.strictEqual(res.body.background, 'scene');
   assert.match(CHRISTMAS_PROMPT, /Christmas/); assert.match(CHRISTMAS_PROMPT, /exact animal/); assert.match(CHRISTMAS_PROMPT, /No text/);
 });
+
+test('northern-night: a whole night-sky scene, nothing cut out', async () => {
+  let opts;
+  const night = await sharp({ create: { width: 30, height: 40, channels: 3, background: '#0b1030' } }).jpeg().toBuffer();
+  const res = await call({ style: 'northern-night', generate: async (p, o) => { opts = o; return { image: night, mimeType: 'image/jpeg' }; } });
+  assert.strictEqual(res.statusCode, 200);
+  assert.strictEqual(opts.style, 'northern-night');
+  assert.strictEqual(res.body.background, 'scene');
+});
