@@ -102,18 +102,17 @@ const NORTHERN_NIGHT_PROMPT = [
 ].join(' ');
 
 const NEON_NIGHTS_PROMPT = [
-  'Create a premium, bold poster illustration of the pet in this photo.',
-  'The pet must stay a recognisable likeness of the uploaded photo: the same species and breed, the exact face, face shape,',
-  'fur colours and markings, eye colour, ear shape and expression. Do not replace it with a different or generic animal.',
-  'The customer\'s pet is the large hero: a chest-up portrait filling about 65 to 75 percent of the frame, slightly turned,',
-  'with a confident, happy expression.',
-  'Dress the pet in sleek mirrored aviator sunglasses that reflect the pink-orange sunset, and a thin polished gold rope chain.',
+  'Hand-drawn digital poster illustration in a premium graphic-novel / high-end print style.',
+  'The pet is a three-quarter view, chest-up, large and filling the frame, with a happy expression (for dogs, mouth open with tongue out if it suits the photo).',
+  'It wears black sunglasses with orange-to-magenta mirrored reflections of palms and sunset, and a heavy polished gold chain.',
+  'Fur is drawn as bold stylised clumps with confident hand-inked dark linework and hard-edged shadow shapes.',
+  'Not soft airbrushed fur, not photoreal, and it must not look AI-generated.',
+  'Keep the pet\'s true fur colours, but render them deep and rich, with warm burnt-orange or deep shadows and magenta-purple reflected light on the shaded side.',
+  'Very high contrast, deep saturated colours, inky dark purples in the shadows.',
+  'Background: a deep violet and electric magenta sky with streaky clouds, a blazing orange sunset glow low on the horizon, black palm tree silhouettes on both sides, and a neon city street with intense pink and violet glow and a dark wet reflective road.',
+  'Neon signs are pure abstract glowing shapes with no letters.',
+  'The pet must stay a recognisable likeness of the uploaded photo: the same species and breed, the exact face, face shape, fur colours and markings, eye colour, ear shape and expression. Do not replace it with a different or generic animal.',
   'Keep the pet\'s exact face, fur colours and markings clear.',
-  'Style: a bold, clean illustrated poster with crisp confident ink outlines, smooth 3-tone cel shading, glossy highlights and rich saturated colour.',
-  'No grain, no noise, no blur and no photo texture.',
-  'Background, in a tall portrait format: a huge setting sun with horizontal stripes in a magenta-to-tangerine sky,',
-  'palm silhouettes on both sides, and a wet reflective boulevard with cyan and hot-pink neon glow.',
-  'The neon signs are abstract shapes only.',
   'The scene fills the entire canvas edge to edge. No poster frame, no border, no mat, no white margin and no blank strip on any side.',
   'The bottom 15 percent stays a calm, darker street with no important details, because a name will be written there later.',
   'Show only this pet: no people or hands. If there are several animals in the photo, use only the most prominent one.',
@@ -133,7 +132,7 @@ const STYLES = {
   christmas: { prompt: CHRISTMAS_PROMPT, background: 'scene', aspectRatio: '3:4' },
   // E23: premium night sky with crescent moon, northern lights and the pet twice (Northern Night blanket).
   'northern-night': { prompt: NORTHERN_NIGHT_PROMPT, background: 'scene', aspectRatio: '3:4' },
-  // Premium full-bleed poster: the pet is the hero, with a striped sunset, palms and a wet boulevard.
+  // Hand-drawn full-bleed poster: graphic-novel pet, sunset, palms and a wet neon street.
   'neon-nights': { prompt: NEON_NIGHTS_PROMPT, background: 'scene', aspectRatio: '3:4' }
 };
 const styleFor = name => STYLES[name] || STYLES.vector;
