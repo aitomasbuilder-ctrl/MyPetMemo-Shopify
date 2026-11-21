@@ -22,6 +22,11 @@
     "api/portrait.js": {
       "maxDuration": 60,
       "memory": 1024
+    },
+    "api/cutout.js": {
+      "maxDuration": 60,
+      "memory": 2048,
+      "includeFiles": "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.{wasm,mjs}"
     }
   }
 }

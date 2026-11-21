@@ -69,11 +69,44 @@ function catalog({ token = process.env.PRINTIFY_TOKEN, shopId = process.env.PRIN
     return providerCountry.get(id);
   }
 
+  // Tees: US orders use blueprint 12 at SwiftPOD, then Monster Digital. EU orders stay
+  // on OPT OnDemand. The providers' print areas are not the same shape, so the 2% check
+  // used for blankets does not apply.
+  const TEE_BLUEPRINT = 12;
+  const TEE_US = [39, 29];
+  const TEE_EU = 30;
+  async function routeTee(mapping, dest) {
+    if (process.env.PRINTIFY_EU_ROUTING === 'off') return mapping;
+    const providers = dest === 'US' ? TEE_US : (EU.has(dest) ? [TEE_EU] : null);
+    if (!providers) return mapping;
+    try {
+      const want = normTitle(mapping.title);
+      const tag = dest === 'US' ? 'us' : 'eu';
+      for (const id of providers) {
+        const json = await get(`/catalog/blueprints/${TEE_BLUEPRINT}/print_providers/${id}/variants.json`);
+        const v = (json.variants || []).find(x => normTitle(x.title) === want);
+        if (!v) continue;
+        const list = v.placeholders || [];
+        const p = list.find(x => x.position === (mapping.position || 'front')) || list[0];
+        if (!p || !(p.width > 0 && p.height > 0)) continue;
+        placeholders.set(`${TEE_BLUEPRINT}/${id}`, new Map((json.variants || []).map(x => [x.id, x.placeholders || []])));
+        return {
+          ...mapping, blueprint_id: TEE_BLUEPRINT, print_provider_id: id, printify_variant_id: v.id,
+          position: p.position || mapping.position || 'front', region: `${tag}:${id}`
+        };
+      }
+    } catch (err) {
+      console.warn('tee_routing_skipped', err.message);
+    }
+    return mapping;
+  }
+
   // Orders shipping inside the EU go to an EU print provider on the same blueprint when one offers the
   // same variant with the same print-area shape; otherwise the shop's own provider is kept. EU-made
   // parcels avoid the EU import duty and VAT collection on delivery, and arrive sooner.
-  async function regionalVariant(mapping, countryCode) {
+  async function regionalVariant(mapping, countryCode, opts = {}) {
     const dest = String(countryCode || '').toUpperCase();
+    if (((opts && opts.family) || mapping.family) === 'tee') return routeTee(mapping, dest);
     if (!EU.has(dest) || process.env.PRINTIFY_EU_ROUTING === 'off') return mapping;
     try {
       const current = await countryOf(mapping.print_provider_id);
