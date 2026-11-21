@@ -102,19 +102,22 @@ const NORTHERN_NIGHT_PROMPT = [
 ].join(' ');
 
 const NEON_NIGHTS_PROMPT = [
-  'Create an original poster illustration of the pet in this photo, in a bold retro 1980s neon-noir, sunset-boulevard style.',
-  'Keep this exact animal: the same species and breed, face shape, markings, fur colors and pattern, eye color, ear shape and',
-  'expression. Do not replace it with a different or generic animal.',
-  'Scene, in a tall portrait format: the pet is large, front and center, head and chest filling most of the upper picture,',
-  'recognisably this pet. It may wear cool sunglasses and a thin gold chain; keep the face, markings and eye color clear either way.',
-  'Behind the pet: a purple, magenta and orange sunset sky, silhouetted palm trees, and a neon-lit city street at dusk.',
-  'The street is wet asphalt, reflecting the neon lights. Neon signs are abstract shapes or symbols only.',
-  'Style: clean inked outlines and cel-shaded comic poster rendering, with rich saturated colors.',
-  'This must be an original artwork: no logos, no brand marks, no game-style title lettering, and no recognisable trademarked typography.',
-  'The painting is full-bleed edge to edge: the artwork touches all four edges. No white margins, no white borders,',
-  'no letterboxing, no empty bars, no frame, no room, no furniture, no blanket or product mockup.',
-  'Keep the lower area calm and fairly open, with no important details, because a name will be written there later.',
+  'Create a premium, bold poster illustration of the pet in this photo.',
+  'The pet must stay a recognisable likeness of the uploaded photo: the same species and breed, the exact face, face shape,',
+  'fur colours and markings, eye colour, ear shape and expression. Do not replace it with a different or generic animal.',
+  'The customer\'s pet is the large hero: a chest-up portrait filling about 65 to 75 percent of the frame, slightly turned,',
+  'with a confident, happy expression.',
+  'Dress the pet in sleek mirrored aviator sunglasses that reflect the pink-orange sunset, and a thin polished gold rope chain.',
+  'Keep the pet\'s exact face, fur colours and markings clear.',
+  'Style: a bold, clean illustrated poster with crisp confident ink outlines, smooth 3-tone cel shading, glossy highlights and rich saturated colour.',
+  'No grain, no noise, no blur and no photo texture.',
+  'Background, in a tall portrait format: a huge setting sun with horizontal stripes in a magenta-to-tangerine sky,',
+  'palm silhouettes on both sides, and a wet reflective boulevard with cyan and hot-pink neon glow.',
+  'The neon signs are abstract shapes only.',
+  'The scene fills the entire canvas edge to edge. No poster frame, no border, no mat, no white margin and no blank strip on any side.',
+  'The bottom 15 percent stays a calm, darker street with no important details, because a name will be written there later.',
   'Show only this pet: no people or hands. If there are several animals in the photo, use only the most prominent one.',
+  'This must be an original artwork: no logos, no brand marks and no trademarked typography.',
   'No letters, no words, and no numbers anywhere in the image. No text, no signature, no watermark.',
   SCENE_NO_LETTERING
 ].join(' ');
@@ -130,7 +133,7 @@ const STYLES = {
   christmas: { prompt: CHRISTMAS_PROMPT, background: 'scene', aspectRatio: '3:4' },
   // E23: premium night sky with crescent moon, northern lights and the pet twice (Northern Night blanket).
   'northern-night': { prompt: NORTHERN_NIGHT_PROMPT, background: 'scene', aspectRatio: '3:4' },
-  // Full-bleed neon-noir poster: sunset, palms and a wet neon street, the pet large in front.
+  // Premium full-bleed poster: the pet is the hero, with a striped sunset, palms and a wet boulevard.
   'neon-nights': { prompt: NEON_NIGHTS_PROMPT, background: 'scene', aspectRatio: '3:4' }
 };
 const styleFor = name => STYLES[name] || STYLES.vector;
@@ -139,17 +142,28 @@ class PortraitError extends Error {
   constructor(code, message, status) { super(message); this.code = code; this.status = status; }
 }
 
+// PORTRAIT_MODEL_<STYLE> (hyphens become underscores, so PORTRAIT_MODEL_NEON_NIGHTS).
+// Unset, the style uses GEMINI_IMAGE_MODEL or gemini-2.5-flash-image. The default is unchanged.
+function modelFor(styleName, env = process.env) {
+  const key = `PORTRAIT_MODEL_${String(styleName || '').toUpperCase().replace(/-/g, '_')}`;
+  const specific = String(env[key] || '').trim();
+  if (specific) return specific;
+  return env.GEMINI_IMAGE_MODEL || DEFAULT_MODEL;
+}
+
 /**
  * @param {{ image: Buffer, mimeType: string }} photo
- * @param {{ style?: string, apiKey?: string, model?: string, fetchImpl?: typeof fetch, signal?: AbortSignal }} opts
+ * @param {{ style?: string, apiKey?: string, model?: string, env?: NodeJS.ProcessEnv, fetchImpl?: typeof fetch, signal?: AbortSignal }} opts
  * @returns {Promise<{ image: Buffer, mimeType: string }>}
  */
 async function generatePortrait(photo, opts = {}) {
-  const apiKey = opts.apiKey || process.env.GEMINI_API_KEY;
+  const env = opts.env || process.env;
+  const apiKey = opts.apiKey || env.GEMINI_API_KEY;
   if (!apiKey) throw new PortraitError('not_configured', 'Our portrait service isn’t connected yet. Please try again later.', 503);
-  const model = opts.model || process.env.GEMINI_IMAGE_MODEL || DEFAULT_MODEL;
+  const styleName = STYLES[opts.style] ? opts.style : 'vector';
+  const model = opts.model || modelFor(styleName, env);
   const doFetch = opts.fetchImpl || fetch;
-  const style = styleFor(opts.style);
+  const style = styleFor(styleName);
   const body = {
     contents: [{ role: 'user', parts: [{ text: style.prompt }, { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }] }],
     generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: style.aspectRatio } }
@@ -178,4 +192,4 @@ async function generatePortrait(photo, opts = {}) {
   return { image: Buffer.from(out.data, 'base64'), mimeType: out.mimeType || out.mime_type || 'image/png' };
 }
 
-module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT, SCENE_NO_LETTERING, STYLES, styleFor, CHROMA, DEFAULT_MODEL };
+module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT, SCENE_NO_LETTERING, STYLES, styleFor, modelFor, CHROMA, DEFAULT_MODEL };

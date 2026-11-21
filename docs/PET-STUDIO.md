@@ -183,7 +183,7 @@ default to christmas-trees, memorial products to clouds, unless the metafield `m
 
 Environment variables: see backend/.env.example. New ones: `DESIGN_SIGNING_SECRET`, `ADMIN_API_SECRET`,
 `BLOB_READ_WRITE_TOKEN` (connect a Vercel Blob store), optional `STOREFRONT_ORIGINS`, `ALLOWED_ASSET_HOSTS`,
-`GEMINI_API_KEY` (+ optional `GEMINI_IMAGE_MODEL`, `PORTRAITS_PER_HOUR`) for /api/portrait.
+`GEMINI_API_KEY` (+ optional `GEMINI_IMAGE_MODEL`, `PORTRAIT_MODEL_NEON_NIGHTS`, `PORTRAITS_PER_HOUR`) for /api/portrait. `PORTRAIT_MODEL_NEON_NIGHTS` selects the image model for that style only; unset, it stays on `gemini-2.5-flash-image`.
 
 ## Fulfillment states (order metafield `mypetmemo.fulfillment`)
 

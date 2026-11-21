@@ -6,11 +6,28 @@
 // or 'scene' (moonlight, christmas, northern-night, neon-nights: a whole picture, nothing cut out) }.
 const sharp = require('sharp');
 const { generatePortrait, PortraitError, STYLES, styleFor } = require('../lib/portrait-ai');
-const { trimSceneBorder } = require('../lib/scene-trim');
+const { trimSceneBorder, thickSceneBar, cropThickSceneBorder } = require('../lib/scene-trim');
 const { cors, send, limiter, clientIp } = require('../lib/http');
 
 const MAX_UPLOAD = 15 * 1024 * 1024;
 const allow = limiter({ max: Number(process.env.PORTRAITS_PER_HOUR || 20), windowMs: 3600e3 });
+// api/portrait maxDuration is 60s. One extra Gemini call is about 10s; leave a few seconds to trim and reply.
+const PORTRAIT_BUDGET_MS = 60000;
+const RETRY_CALL_MS = 10000;
+const RETRY_TAIL_MS = 8000;
+
+function barDetail(style, bar) {
+  return {
+    style,
+    sides: bar.sides,
+    left: bar.left,
+    right: bar.right,
+    top: bar.top,
+    bottom: bar.bottom,
+    width: bar.width,
+    height: bar.height
+  };
+}
 
 async function readPhoto(req) {
   const chunks = []; let size = 0;
@@ -30,14 +47,43 @@ async function readPhoto(req) {
 }
 
 async function handler(req, res, deps = {}) {
+  const started = Date.now();
+  const log = deps.log || ((event, detail) => console.warn(event, JSON.stringify(detail)));
   if (!cors(req, res, 'POST, OPTIONS')) return;
   if (req.method !== 'POST') return send(res, 405, { error: 'method_not_allowed' });
   if (!allow(clientIp(req))) return send(res, 429, { code: 'rate_limited', message: 'You’ve made a lot of portraits in a short time. Please wait a little and try again.' });
   try {
     const { style, ...photo } = await readPhoto(req);
-    const art = await (deps.generate || generatePortrait)(photo, { style });
-    // Scene styles are the whole blanket. Drop letterbox bars, then fill the same frame.
-    const source = styleFor(style).background === 'scene' ? (await trimSceneBorder(art.image)).buffer : art.image;
+    const generate = deps.generate || generatePortrait;
+    let art = await generate(photo, { style });
+    let source = art.image;
+    // Scene styles are the whole blanket. A thick blank edge is regenerated once, then trimmed.
+    if (styleFor(style).background === 'scene') {
+      const thick = await thickSceneBar(source);
+      if (thick) {
+        const elapsed = Number.isFinite(deps.elapsed) ? deps.elapsed : Date.now() - started;
+        const detail = barDetail(style, thick);
+        if (elapsed + RETRY_CALL_MS + RETRY_TAIL_MS <= PORTRAIT_BUDGET_MS) {
+          log('scene border retry', detail);
+          art = await generate(photo, { style });
+          source = art.image;
+        } else {
+          log('scene border retry skipped', { ...detail, elapsed, reason: 'budget' });
+        }
+      }
+      source = (await trimSceneBorder(source)).buffer;
+      const still = await thickSceneBar(source);
+      if (still) {
+        const cropped = await cropThickSceneBorder(source);
+        const detail = barDetail(style, still);
+        if (!cropped) {
+          log('scene border rejected', detail);
+          throw new PortraitError('border', 'The portrait came back with a blank strip along the edge. Please try again.', 502);
+        }
+        log('scene border crop', detail);
+        source = cropped.buffer;
+      }
+    }
     const png = await sharp(source).png().toBuffer();
     return send(res, 200, { image: `data:image/png;base64,${png.toString('base64')}`, background: styleFor(style).background, style });
   } catch (err) {
