@@ -1,4 +1,6 @@
 'use strict';
+const fs = require('fs');
+const path = require('path');
 // Turns a customer's pet photo into the MyPetMemo vector-style portrait with Google Gemini.
 // The pet comes back on a flat chroma-green background; the storefront keys that out and puts the
 // pet on whichever pastel background the shopper picks, so changing the background never re-generates.
@@ -101,7 +103,15 @@ const NORTHERN_NIGHT_PROMPT = [
   SCENE_NO_LETTERING
 ].join(' ');
 
+const NEON_NIGHTS_REFERENCE = path.join(__dirname, '..', 'assets', 'style', 'neon-nights-ref.jpg');
+let neonNightsReference;
+function neonNightsStyleImage() {
+  if (!neonNightsReference) neonNightsReference = fs.readFileSync(NEON_NIGHTS_REFERENCE);
+  return neonNightsReference;
+}
+
 const NEON_NIGHTS_PROMPT = [
+  'The first image is the customer\'s pet: copy its identity, breed, face, markings and fur colours exactly. The second image is a STYLE REFERENCE ONLY: match its rendering style, colour palette, lighting, linework, level of fur detail, composition (pet large, three-quarter view, body running off the bottom edge), sunglasses-and-gold-chain styling and background mood as closely as possible. Never copy the reference dog\'s identity, breed or fur colour onto the customer\'s pet. Do not copy any lettering from the reference signs.',
   'Hand-drawn digital poster illustration in a premium graphic-novel / high-end print style.',
   'The pet is a three-quarter view, chest-up, large and filling the frame, with a happy expression (for dogs, mouth open with tongue out if it suits the photo).',
   'The pet\'s body continues naturally down and out of the bottom edge of the frame. Shoulders and chest are cropped by the frame edge, never ending in a point, a cut-out shape, a sticker outline or a fade. The pet sits in the street scene, lit by the sunset and the neon, not pasted on top of it.',
@@ -164,8 +174,16 @@ async function generatePortrait(photo, opts = {}) {
   const model = opts.model || modelFor(styleName, env);
   const doFetch = opts.fetchImpl || fetch;
   const style = styleFor(styleName);
+  const requestParts = [
+    { text: style.prompt },
+    { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }
+  ];
+  // Neon Nights only: the customer's photo stays first, then our style reference.
+  if (styleName === 'neon-nights') {
+    requestParts.push({ inline_data: { mime_type: 'image/jpeg', data: neonNightsStyleImage().toString('base64') } });
+  }
   const body = {
-    contents: [{ role: 'user', parts: [{ text: style.prompt }, { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }] }],
+    contents: [{ role: 'user', parts: requestParts }],
     generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: style.aspectRatio } }
   };
   const res = await doFetch(`${GEMINI_URL}/${encodeURIComponent(model)}:generateContent`, {

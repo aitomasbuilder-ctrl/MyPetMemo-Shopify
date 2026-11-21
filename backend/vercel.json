@@ -21,7 +21,8 @@
     },
     "api/portrait.js": {
       "maxDuration": 60,
-      "memory": 1024
+      "memory": 1024,
+      "includeFiles": "assets/style/neon-nights-ref.jpg"
     },
     "api/cutout.js": {
       "maxDuration": 60,

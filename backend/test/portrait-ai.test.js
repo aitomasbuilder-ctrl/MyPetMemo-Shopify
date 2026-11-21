@@ -152,7 +152,9 @@ test('neon-nights: a whole neon poster scene, nothing cut out, other styles unch
   assert.strictEqual(sent.generationConfig.imageConfig.aspectRatio, '3:4');
   assert.match(requested, new RegExp(`${DEFAULT_MODEL}:generateContent$`));
   const style = 'Hand-drawn digital poster illustration in a premium graphic-novel / high-end print style. The pet is a three-quarter view, chest-up, large and filling the frame, with a happy expression (for dogs, mouth open with tongue out if it suits the photo). The pet\'s body continues naturally down and out of the bottom edge of the frame. Shoulders and chest are cropped by the frame edge, never ending in a point, a cut-out shape, a sticker outline or a fade. The pet sits in the street scene, lit by the sunset and the neon, not pasted on top of it. It wears black sunglasses with orange-to-magenta mirrored reflections of palms and sunset, and a heavy polished gold chain. Fur is drawn as bold stylised clumps with confident hand-inked dark linework and hard-edged shadow shapes. Not soft airbrushed fur, not photoreal, and it must not look AI-generated. Keep the pet\'s true fur colours, but render them deep and rich, with warm burnt-orange or deep shadows and magenta-purple reflected light on the shaded side. Very high contrast, deep saturated colours, inky dark purples in the shadows. Background: a deep violet and electric magenta sky with streaky clouds, a blazing orange sunset glow low on the horizon, black palm tree silhouettes on both sides, and a neon city street with intense pink and violet glow and a dark wet reflective road. Building signs are plain glowing neon tubes and rectangles with no characters or symbols.';
-  assert.ok(NEON_NIGHTS_PROMPT.startsWith(style), 'neon-nights style direction');
+  assert.ok(NEON_NIGHTS_PROMPT.includes(style), 'neon-nights style direction');
+  assert.match(NEON_NIGHTS_PROMPT, /The first image is the customer's pet: copy its identity, breed, face, markings and fur colours exactly\. The second image is a STYLE REFERENCE ONLY:/);
+  assert.match(NEON_NIGHTS_PROMPT, /Never copy the reference dog's identity, breed or fur colour onto the customer's pet\. Do not copy any lettering from the reference signs\./);
   assert.match(NEON_NIGHTS_PROMPT, /recognisable likeness of the uploaded photo: the same species and breed, the exact face, face shape, fur colours and markings, eye colour, ear shape and expression/);
   assert.match(NEON_NIGHTS_PROMPT, /Do not replace it with a different or generic animal/);
   assert.match(NEON_NIGHTS_PROMPT, /Keep the pet's exact face, fur colours and markings clear/);
@@ -216,4 +218,27 @@ test('portrait model: PORTRAIT_MODEL_NEON_NIGHTS selects neon-nights only, and t
   assert.match(await image(both, 'watercolor'), /\/models\/shop-default-model:generateContent$/);
   assert.match(await image({ PORTRAIT_MODEL_NEON_NIGHTS: '   ' }, 'neon-nights'), new RegExp(`/models/${DEFAULT_MODEL}:generateContent$`));
   assert.strictEqual(DEFAULT_MODEL, 'gemini-2.5-flash-image');
+});
+
+test('neon-nights sends the customer photo then the style reference; other styles send one image', async () => {
+  const pet = Buffer.from('customer-pet');
+  const ref = fs.readFileSync(path.join(__dirname, '../assets/style/neon-nights-ref.jpg'));
+  const ok = () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { data: 'eA==' } }] } }] }), { status: 200 });
+  async function imagesFor(style) {
+    let parts;
+    const fetchImpl = async (url, init) => { parts = JSON.parse(init.body).contents[0].parts; return ok(); };
+    await generatePortrait({ image: pet, mimeType: 'image/jpeg' }, { apiKey: 'k', fetchImpl, style });
+    return parts.filter(p => p.inline_data);
+  }
+  const neon = await imagesFor('neon-nights');
+  assert.strictEqual(neon.length, 2);
+  assert.strictEqual(neon[0].inline_data.mime_type, 'image/jpeg');
+  assert.strictEqual(neon[0].inline_data.data, pet.toString('base64'));
+  assert.strictEqual(neon[1].inline_data.mime_type, 'image/jpeg');
+  assert.strictEqual(neon[1].inline_data.data, ref.toString('base64'));
+  for (const style of ['vector', 'watercolor', 'moonlight', 'christmas', 'northern-night']) {
+    const images = await imagesFor(style);
+    assert.strictEqual(images.length, 1, style);
+    assert.strictEqual(images[0].inline_data.data, pet.toString('base64'), style);
+  }
 });
