@@ -6,6 +6,7 @@
 // or 'scene' (moonlight, christmas, northern-night, neon-nights: a whole picture, nothing cut out) }.
 const sharp = require('sharp');
 const { generatePortrait, PortraitError, STYLES, styleFor } = require('../lib/portrait-ai');
+const { trimSceneBorder } = require('../lib/scene-trim');
 const { cors, send, limiter, clientIp } = require('../lib/http');
 
 const MAX_UPLOAD = 15 * 1024 * 1024;
@@ -35,7 +36,9 @@ async function handler(req, res, deps = {}) {
   try {
     const { style, ...photo } = await readPhoto(req);
     const art = await (deps.generate || generatePortrait)(photo, { style });
-    const png = await sharp(art.image).png().toBuffer();
+    // Scene styles are the whole blanket. Drop letterbox bars, then fill the same frame.
+    const source = styleFor(style).background === 'scene' ? (await trimSceneBorder(art.image)).buffer : art.image;
+    const png = await sharp(source).png().toBuffer();
     return send(res, 200, { image: `data:image/png;base64,${png.toString('base64')}`, background: styleFor(style).background, style });
   } catch (err) {
     if (err instanceof PortraitError) return send(res, err.status, { code: err.code, message: err.message });

@@ -8,6 +8,8 @@
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_MODEL = 'gemini-2.5-flash-image';
 const CHROMA = '#00FF00';
+// Scene paintings must not invent lettering. The shopper's name is drawn afterwards by the print renderer.
+const SCENE_NO_LETTERING = 'No artist signatures, watermarks, monograms, logos, captions, or any text or letters anywhere in the image. The customer\'s name is added later by our renderer.';
 
 const PROMPT = [
   'Turn the pet in this photo into a modern illustrated pet portrait.',
@@ -57,7 +59,8 @@ const MOONLIGHT_PROMPT = [
   'Style: a rich, painterly digital painting with soft glow, fine fur detail and a deep navy and warm gold palette.',
   'The painting fills the entire image edge to edge: no border, no frame, no white margin, no blanket or product mockup.',
   'Show only animals of this pet: no people or hands. If there are several animals in the photo, use only the most prominent one.',
-  'No text, no letters, no signature, no watermark.'
+  'No text, no letters, no signature, no watermark.',
+  SCENE_NO_LETTERING
 ].join(' ');
 
 const CHRISTMAS_PROMPT = [
@@ -74,7 +77,8 @@ const CHRISTMAS_PROMPT = [
   'Style: a rich, painterly digital painting, soft warm candle and fairy-light glow, fine fur detail, a red, green, gold and cream palette.',
   'The painting fills the entire image edge to edge: no border, no frame, no white margin, no blanket or product mockup.',
   'Show only this pet: no people or hands. If there are several animals in the photo, use only the most prominent one.',
-  'No text, no letters, no signature, no watermark.'
+  'No text, no letters, no signature, no watermark.',
+  SCENE_NO_LETTERING
 ].join(' ');
 
 const NORTHERN_NIGHT_PROMPT = [
@@ -93,7 +97,8 @@ const NORTHERN_NIGHT_PROMPT = [
   'Style: a rich, premium, photorealistic digital painting with a soft glow; palette of deep navy, midnight blue, emerald, violet',
   'and warm gold. The painting fills the entire image edge to edge: no border, no frame, no white margin, no room, no furniture,',
   'no blanket or product mockup. Show only animals of this pet: no people or hands. If there are several animals in the photo,',
-  'use only the most prominent one. No text, no letters, no signature, no watermark.'
+  'use only the most prominent one. No text, no letters, no signature, no watermark.',
+  SCENE_NO_LETTERING
 ].join(' ');
 
 const NEON_NIGHTS_PROMPT = [
@@ -103,14 +108,15 @@ const NEON_NIGHTS_PROMPT = [
   'Scene, in a tall portrait format: the pet is large, front and center, head and chest filling most of the upper picture,',
   'recognisably this pet. It may wear cool sunglasses and a thin gold chain; keep the face, markings and eye color clear either way.',
   'Behind the pet: a purple, magenta and orange sunset sky, silhouetted palm trees, and a neon-lit city street at dusk.',
-  'The street is wet asphalt, reflecting the neon lights.',
+  'The street is wet asphalt, reflecting the neon lights. Neon signs are abstract shapes or symbols only.',
   'Style: clean inked outlines and cel-shaded comic poster rendering, with rich saturated colors.',
   'This must be an original artwork: no logos, no brand marks, no game-style title lettering, and no recognisable trademarked typography.',
-  'The painting fills the entire image edge to edge: no border, no frame, no white margin, no room, no furniture,',
-  'no blanket or product mockup. Keep the lower area calm and fairly open, with no important details,',
-  'because a name will be written there later.',
+  'The painting is full-bleed edge to edge: the artwork touches all four edges. No white margins, no white borders,',
+  'no letterboxing, no empty bars, no frame, no room, no furniture, no blanket or product mockup.',
+  'Keep the lower area calm and fairly open, with no important details, because a name will be written there later.',
   'Show only this pet: no people or hands. If there are several animals in the photo, use only the most prominent one.',
-  'No text, no letters, no signature, no watermark.'
+  'No letters, no words, and no numbers anywhere in the image. No text, no signature, no watermark.',
+  SCENE_NO_LETTERING
 ].join(' ');
 
 /** Art styles the service paints. `background` tells the storefront how to cut the pet out. */
@@ -172,4 +178,4 @@ async function generatePortrait(photo, opts = {}) {
   return { image: Buffer.from(out.data, 'base64'), mimeType: out.mimeType || out.mime_type || 'image/png' };
 }
 
-module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT, STYLES, styleFor, CHROMA, DEFAULT_MODEL };
+module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT, SCENE_NO_LETTERING, STYLES, styleFor, CHROMA, DEFAULT_MODEL };

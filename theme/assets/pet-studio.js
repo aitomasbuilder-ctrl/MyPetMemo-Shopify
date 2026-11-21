@@ -20,7 +20,10 @@
    *  default name placement (fractions of the print) in the corner the prompt keeps calm. */
   const SCENES = {
     moonlight: { label: 'Moonlight night', color: '#141a2b', ink: '#ffffff', name: { cx: 0.7, cy: 0.87, size: 0.11, rot: -8 } },
-    christmas: { label: 'Cozy Christmas', color: '#5b1a1c', ink: '#fff6e6', name: { cx: 0.5, cy: 0.89, size: 0.15, rot: -4 } }
+    christmas: { label: 'Cozy Christmas', color: '#5b1a1c', ink: '#fff6e6', name: { cx: 0.5, cy: 0.89, size: 0.15, rot: -4 } },
+    // Script names at 0.13 ran a little wide. 0.11, then nameSize() caps the width at 70% of the print (same as the renderer).
+    'northern-night': { label: 'Northern Night', color: '#0b1030', ink: '#f6dc8f', name: { cx: 0.7, cy: 0.84, size: 0.11, rot: -6 } },
+    'neon-nights': { label: 'Neon Nights', color: '#1b0b33', ink: '#ff5fd2', name: { cx: 0.5, cy: 0.9, size: 0.11, rot: -4 } }
   };
   const NAME_BASELINE = 0.35;          // baseline offset from the name centre, in font sizes
   const NAME_STROKE = 0.16;            // outline width, in font sizes
@@ -1751,15 +1754,22 @@
       const sx = this.safe(), sy = sx * (p.width * f.w) / (p.height * f.h);
       return { x0: f.x + sx * f.w, y0: f.y + sy * f.h, x1: f.x + f.w * (1 - sx), y1: f.y + f.h * (1 - sy) };
     }
-    /** Name font size (fraction of print width) after shrinking it to fit inside the safe area. */
+    /** Name font size (fraction of print width) after shrinking it to fit inside the safe area.
+     *  Scene blankets: a script name still stored at 0.13 is drawn at 0.11, and the name is kept
+     *  within 70% of the print width. backend/lib/render.js fittedNameSize() uses the same numbers. */
     nameSize() {
       const n = this.state.name;
       if (!n.text) return n.size;
       const ctx = this.measureCtx;
       ctx.font = this.font(100);
       const w = ctx.measureText(n.text).width / 100; // width per unit font size
-      const r = this.safeRect(), maxW = r.x1 - r.x0;
-      return Math.min(n.size, maxW / Math.max(w, 0.01) * 0.98);
+      const r = this.safeRect();
+      const scene = !!this.sceneStyle();
+      let size = n.size;
+      if (scene && n.font === 'msmadi' && Math.abs(size - 0.13) < 0.0005) size = 0.11;
+      const safeMax = (r.x1 - r.x0) / Math.max(w, 0.01) * 0.98;
+      const widthMax = scene ? 0.70 / Math.max(w, 0.01) : Infinity;
+      return Math.min(size, safeMax, widthMax);
     }
     /** Optional lines under the name, from the year / dates / message fields this product offers. */
     captionLines() {

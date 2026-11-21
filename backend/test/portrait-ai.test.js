@@ -6,7 +6,7 @@ const path = require('node:path');
 const { Readable } = require('node:stream');
 const sharp = require('sharp');
 const handler = require('../api/portrait');
-const { generatePortrait, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT } = require('../lib/portrait-ai');
+const { generatePortrait, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT, SCENE_NO_LETTERING } = require('../lib/portrait-ai');
 
 const photo = fs.readFileSync(path.join(__dirname, 'fixtures/style-corgi.jpg'));
 
@@ -162,6 +162,10 @@ test('neon-nights: a whole neon poster scene, nothing cut out, other styles unch
   assert.match(NEON_NIGHTS_PROMPT, /no game-style title lettering/);
   assert.match(NEON_NIGHTS_PROMPT, /no recognisable trademarked typography/);
   assert.match(NEON_NIGHTS_PROMPT, /exact animal/);
+  assert.match(NEON_NIGHTS_PROMPT, /full-bleed edge to edge/);
+  assert.match(NEON_NIGHTS_PROMPT, /No white margins/);
+  assert.match(NEON_NIGHTS_PROMPT, /abstract shapes or symbols only/);
+  assert.match(NEON_NIGHTS_PROMPT, /No letters, no words, and no numbers/);
   assert.match(NEON_NIGHTS_PROMPT, /No text/);
   assert.match(NEON_NIGHTS_PROMPT, /name will be written there later/);
   const water = await call({ style: 'watercolor', generate: async (p, o) => { opts = o; return { image: dusk, mimeType: 'image/jpeg' }; } });
@@ -179,4 +183,21 @@ test('neon-nights: a whole neon poster scene, nothing cut out, other styles unch
   const vector = await call({ style: 'cubist', generate: async (p, o) => { opts = o; return { image: dusk, mimeType: 'image/jpeg' }; } });
   assert.strictEqual(opts.style, 'vector');
   assert.strictEqual(vector.body.background, 'chroma');
+});
+
+test('scene prompts forbid any lettering; watercolor and vector stay as they were', () => {
+  const line = 'No artist signatures, watermarks, monograms, logos, captions, or any text or letters anywhere in the image. The customer\'s name is added later by our renderer.';
+  assert.strictEqual(SCENE_NO_LETTERING, line);
+  for (const prompt of [MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT]) {
+    assert.ok(prompt.endsWith(line), prompt.slice(-line.length));
+    assert.strictEqual(prompt.split(line).length, 2);
+  }
+  assert.match(MOONLIGHT_PROMPT, /No text, no letters, no signature, no watermark\./);
+  assert.match(CHRISTMAS_PROMPT, /No text, no letters, no signature, no watermark\./);
+  assert.match(NORTHERN_NIGHT_PROMPT, /No text, no letters, no signature, no watermark\./);
+  assert.match(NEON_NIGHTS_PROMPT, /No letters, no words, and no numbers anywhere in the image\./);
+  assert.doesNotMatch(WATERCOLOR_PROMPT, /monograms/);
+  assert.doesNotMatch(PROMPT, /monograms/);
+  assert.match(WATERCOLOR_PROMPT, /No text, no letters, no signature, no watermark\.$/);
+  assert.match(PROMPT, /No text, no border, no watermark\.$/);
 });
