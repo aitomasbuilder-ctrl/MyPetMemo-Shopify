@@ -1,4 +1,6 @@
 'use strict';
+const fs = require('fs');
+const path = require('path');
 // Turns a customer's pet photo into the MyPetMemo vector-style portrait with Google Gemini.
 // The pet comes back on a flat chroma-green background; the storefront keys that out and puts the
 // pet on whichever pastel background the shopper picks, so changing the background never re-generates.
@@ -101,20 +103,34 @@ const NORTHERN_NIGHT_PROMPT = [
   SCENE_NO_LETTERING
 ].join(' ');
 
+const NEON_NIGHTS_REFERENCE = path.join(__dirname, '..', 'assets', 'style', 'neon-nights-ref.jpg');
+let neonNightsReference;
+function neonNightsStyleImage() {
+  if (!neonNightsReference) neonNightsReference = fs.readFileSync(NEON_NIGHTS_REFERENCE);
+  return neonNightsReference;
+}
+
 const NEON_NIGHTS_PROMPT = [
-  'Create an original poster illustration of the pet in this photo, in a bold retro 1980s neon-noir, sunset-boulevard style.',
-  'Keep this exact animal: the same species and breed, face shape, markings, fur colors and pattern, eye color, ear shape and',
-  'expression. Do not replace it with a different or generic animal.',
-  'Scene, in a tall portrait format: the pet is large, front and center, head and chest filling most of the upper picture,',
-  'recognisably this pet. It may wear cool sunglasses and a thin gold chain; keep the face, markings and eye color clear either way.',
-  'Behind the pet: a purple, magenta and orange sunset sky, silhouetted palm trees, and a neon-lit city street at dusk.',
-  'The street is wet asphalt, reflecting the neon lights. Neon signs are abstract shapes or symbols only.',
-  'Style: clean inked outlines and cel-shaded comic poster rendering, with rich saturated colors.',
-  'This must be an original artwork: no logos, no brand marks, no game-style title lettering, and no recognisable trademarked typography.',
-  'The painting is full-bleed edge to edge: the artwork touches all four edges. No white margins, no white borders,',
-  'no letterboxing, no empty bars, no frame, no room, no furniture, no blanket or product mockup.',
-  'Keep the lower area calm and fairly open, with no important details, because a name will be written there later.',
+  'Identify the exact species and breed of the pet in the first image (e.g. Shiba Inu, tabby cat) and draw THAT breed: its own head shape, muzzle length, ear shape, coat length and texture, and markings. If the pet is short-coated, keep it short-coated. The second image only shows the drawing technique; its dog\'s breed, fluffy coat and face shape must NOT appear.',
+  'Correct anatomy: exactly one head, exactly two ears, two eyes, one nose, one mouth. No duplicated ears or features, no extra limbs. The sunglasses sit on the face; the ears stay above or behind them and are not repeated.',
+  'Render the pet\'s true fur colours with the same deep, saturated, high-contrast treatment as the reference: rich mid-tones, dark inky shadows, magenta-violet reflected light. Never pale or washed out.',
+  'The second image is a STYLE REFERENCE ONLY: match its rendering style, colour palette, lighting, linework, level of fur detail, composition (pet large, three-quarter view, body running off the bottom edge), sunglasses-and-gold-chain styling and background mood as closely as possible. Do not copy any lettering from the reference signs.',
+  'Hand-drawn digital poster illustration in a premium graphic-novel / high-end print style.',
+  'The pet is a three-quarter view, chest-up, large and filling the frame, with a happy expression (for dogs, mouth open with tongue out if it suits the photo).',
+  'The pet\'s body continues naturally down and out of the bottom edge of the frame. Shoulders and chest are cropped by the frame edge, never ending in a point, a cut-out shape, a sticker outline or a fade. The pet sits in the street scene, lit by the sunset and the neon, not pasted on top of it.',
+  'It wears black sunglasses with orange-to-magenta mirrored reflections of palms and sunset, and a heavy polished gold chain.',
+  'Fur is drawn as bold stylised clumps with confident hand-inked dark linework and hard-edged shadow shapes.',
+  'Not soft airbrushed fur, not photoreal, and it must not look AI-generated.',
+  'Keep the pet\'s true fur colours, but render them deep and rich, with warm burnt-orange or deep shadows and magenta-purple reflected light on the shaded side.',
+  'Very high contrast, deep saturated colours, inky dark purples in the shadows.',
+  'Background: a deep violet and electric magenta sky with streaky clouds, a blazing orange sunset glow low on the horizon, black palm tree silhouettes on both sides, and a neon city street with intense pink and violet glow and a dark wet reflective road.',
+  'Building signs are plain glowing neon tubes and rectangles with no characters or symbols.',
+  'The pet must stay a recognisable likeness of the uploaded photo: the same species and breed, the exact face, face shape, fur colours and markings, eye colour, ear shape and expression. Do not replace it with a different or generic animal.',
+  'Keep the pet\'s exact face, fur colours and markings clear.',
+  'The scene fills the entire canvas edge to edge. No poster frame, no border, no mat, no white margin and no blank strip on any side.',
+  'The bottom 15 percent stays a calm, darker street, because a name will be written there later. The pet\'s body may overlap it, as long as that area stays darker and calm.',
   'Show only this pet: no people or hands. If there are several animals in the photo, use only the most prominent one.',
+  'This must be an original artwork: no logos, no brand marks and no trademarked typography.',
   'No letters, no words, and no numbers anywhere in the image. No text, no signature, no watermark.',
   SCENE_NO_LETTERING
 ].join(' ');
@@ -130,7 +146,7 @@ const STYLES = {
   christmas: { prompt: CHRISTMAS_PROMPT, background: 'scene', aspectRatio: '3:4' },
   // E23: premium night sky with crescent moon, northern lights and the pet twice (Northern Night blanket).
   'northern-night': { prompt: NORTHERN_NIGHT_PROMPT, background: 'scene', aspectRatio: '3:4' },
-  // Full-bleed neon-noir poster: sunset, palms and a wet neon street, the pet large in front.
+  // Hand-drawn full-bleed poster: graphic-novel pet, sunset, palms and a wet neon street.
   'neon-nights': { prompt: NEON_NIGHTS_PROMPT, background: 'scene', aspectRatio: '3:4' }
 };
 const styleFor = name => STYLES[name] || STYLES.vector;
@@ -139,19 +155,42 @@ class PortraitError extends Error {
   constructor(code, message, status) { super(message); this.code = code; this.status = status; }
 }
 
+// PORTRAIT_MODEL_<STYLE> (hyphens become underscores, so PORTRAIT_MODEL_NEON_NIGHTS).
+// Unset, the style uses GEMINI_IMAGE_MODEL or gemini-2.5-flash-image. The default is unchanged.
+function modelFor(styleName, env = process.env) {
+  const key = `PORTRAIT_MODEL_${String(styleName || '').toUpperCase().replace(/-/g, '_')}`;
+  const specific = String(env[key] || '').trim();
+  if (specific) return specific;
+  return env.GEMINI_IMAGE_MODEL || DEFAULT_MODEL;
+}
+
 /**
  * @param {{ image: Buffer, mimeType: string }} photo
- * @param {{ style?: string, apiKey?: string, model?: string, fetchImpl?: typeof fetch, signal?: AbortSignal }} opts
+ * @param {{ style?: string, apiKey?: string, model?: string, env?: NodeJS.ProcessEnv, fetchImpl?: typeof fetch, signal?: AbortSignal }} opts
  * @returns {Promise<{ image: Buffer, mimeType: string }>}
  */
 async function generatePortrait(photo, opts = {}) {
-  const apiKey = opts.apiKey || process.env.GEMINI_API_KEY;
+  const env = opts.env || process.env;
+  const apiKey = opts.apiKey || env.GEMINI_API_KEY;
   if (!apiKey) throw new PortraitError('not_configured', 'Our portrait service isn’t connected yet. Please try again later.', 503);
-  const model = opts.model || process.env.GEMINI_IMAGE_MODEL || DEFAULT_MODEL;
+  const styleName = STYLES[opts.style] ? opts.style : 'vector';
+  const model = opts.model || modelFor(styleName, env);
   const doFetch = opts.fetchImpl || fetch;
-  const style = styleFor(opts.style);
+  const style = styleFor(styleName);
+  const requestParts = [
+    { text: style.prompt },
+    { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }
+  ];
+  // generateContent accepts text and images in one parts list. Neon Nights: prompt, pet photo,
+  // a technique-only label, then the style reference. Other styles stay prompt plus one photo.
+  if (styleName === 'neon-nights') {
+    requestParts.push(
+      { text: 'STYLE REFERENCE (technique only):' },
+      { inline_data: { mime_type: 'image/jpeg', data: neonNightsStyleImage().toString('base64') } }
+    );
+  }
   const body = {
-    contents: [{ role: 'user', parts: [{ text: style.prompt }, { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }] }],
+    contents: [{ role: 'user', parts: requestParts }],
     generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: style.aspectRatio } }
   };
   const res = await doFetch(`${GEMINI_URL}/${encodeURIComponent(model)}:generateContent`, {
@@ -178,4 +217,4 @@ async function generatePortrait(photo, opts = {}) {
   return { image: Buffer.from(out.data, 'base64'), mimeType: out.mimeType || out.mime_type || 'image/png' };
 }
 
-module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT, SCENE_NO_LETTERING, STYLES, styleFor, CHROMA, DEFAULT_MODEL };
+module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT, SCENE_NO_LETTERING, STYLES, styleFor, modelFor, CHROMA, DEFAULT_MODEL };
