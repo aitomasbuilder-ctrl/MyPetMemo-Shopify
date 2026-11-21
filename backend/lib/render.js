@@ -3,8 +3,10 @@
 // Geometry mirrors the storefront preview (theme/assets/pet-studio.js, drawDesign):
 //   pet:  width = pet.w * W, height from the artwork's aspect, centred on (cx*W, cy*H), rotated pet.rot degrees;
 //         with pet.fade the alpha falls linearly to 0 over the bottom pet.fade of the artwork height (before rotation)
-//   name: font size = name.size * W, centred on cx*W, alphabetic baseline at cy*H + 0.35 * font size,
-//         outline width 0.16 * font size drawn under the fill
+//   name: font size = fittedNameSize * W, centred on cx*W, alphabetic baseline at cy*H + 0.35 * font size,
+//         outline width 0.16 * font size drawn under the fill.
+//         Scene blankets (the solid colours below): a script name stored at size 0.13 is drawn at 0.11,
+//         and every scene name is shrunk so its width is at most 70% of the print width.
 //   caption (optional lines under the name): same rules per line, line i centred at
 //         cy*H + (i - (n-1)/2) * 1.25 * font size, all lines rotated caption.rot around (cx*W, cy*H)
 //   mugs (design.sides = 2): W above is one side, round(print width / 2); pet and text are drawn on the left
@@ -19,6 +21,13 @@ const { textPath, measure } = require('./text-path');
 
 const NAME_BASELINE = 0.35;
 const NAME_STROKE = 0.16;
+// Scene blankets fill the print with a painting and write the name on top. These are the solid colours
+// the storefront uses for moonlight, christmas, northern-night and neon-nights.
+const SCENE_NAME_COLORS = new Set(['#141a2b', '#5b1a1c', '#0b1030', '#1b0b33']);
+const SCENE_NAME_MAX_WIDTH = 0.70;
+// The northern-night and neon-nights layouts used to request the script face at 0.13, which runs a little wide.
+const SCENE_SCRIPT_SIZE = 0.11;
+const SCENE_SCRIPT_SIZE_FROM = 0.13;
 // An outline in the fill colour is no visible outline, only a slightly heavier pen line (same rule as the storefront).
 const NAME_PEN = 0.03;
 const strokeFor = t => (String(t.stroke).toLowerCase() === String(t.fill).toLowerCase() ? NAME_PEN : NAME_STROKE);
@@ -83,10 +92,27 @@ function textLayer(t, lines, W, H) {
   return { input: Buffer.from(svg), left: 0, top: 0 };
 }
 
+function isSceneDesign(design) {
+  const color = design && design.background && String(design.background.color || '').toLowerCase();
+  return SCENE_NAME_COLORS.has(color);
+}
+
+/** Font size (fraction of print width) actually drawn. Deterministic: same name, font and width, same size. */
+function fittedNameSize(name, printWidth, scene) {
+  let size = name.size;
+  if (scene && name.font === 'msmadi' && Math.abs(size - SCENE_SCRIPT_SIZE_FROM) < 0.0005) size = SCENE_SCRIPT_SIZE;
+  if (!scene) return size;
+  const natural = measure(name.text, name.font, size * printWidth);
+  const max = SCENE_NAME_MAX_WIDTH * printWidth;
+  if (natural > max && natural > 0) size *= max / natural;
+  return size;
+}
+
 function nameLayer(design, W, H) {
   const n = design.name;
   if (!n) return null;
-  return textLayer(n, [{ text: n.text, y: n.cy * H }], W, H);
+  const size = fittedNameSize(n, W, isSceneDesign(design));
+  return textLayer({ ...n, size }, [{ text: n.text, y: n.cy * H }], W, H);
 }
 
 function captionLayer(design, W, H) {
@@ -232,4 +258,4 @@ async function renderTee({ design, pets = [], width, height }) {
   return { buffer, width: W, height: H, format: 'png', sha256: sha256(buffer), nameSize };
 }
 
-module.exports = { renderDesign, renderTee, sha256, NAME_BASELINE, NAME_STROKE, CAPTION_LINE, TEE_LINE, TEE_STROKE, TEE_NAME_GAP, TEE_NAME_SIZE, TEE_NAME_WIDTH };
+module.exports = { renderDesign, renderTee, sha256, NAME_BASELINE, NAME_STROKE, CAPTION_LINE, fittedNameSize, isSceneDesign, SCENE_NAME_COLORS, SCENE_NAME_MAX_WIDTH, SCENE_SCRIPT_SIZE, SCENE_SCRIPT_SIZE_FROM, TEE_LINE, TEE_STROKE, TEE_NAME_GAP, TEE_NAME_SIZE, TEE_NAME_WIDTH };
