@@ -111,7 +111,9 @@ function neonNightsStyleImage() {
 }
 
 const NEON_NIGHTS_PROMPT = [
-  'The first image is the customer\'s pet: copy its identity, breed, face, markings and fur colours exactly. The second image is a STYLE REFERENCE ONLY: match its rendering style, colour palette, lighting, linework, level of fur detail, composition (pet large, three-quarter view, body running off the bottom edge), sunglasses-and-gold-chain styling and background mood as closely as possible. Never copy the reference dog\'s identity, breed or fur colour onto the customer\'s pet. Do not copy any lettering from the reference signs.',
+  'Identify the exact species and breed of the pet in the first image (e.g. Shiba Inu, tabby cat) and draw THAT breed: its own head shape, muzzle length, ear shape, coat length and texture, and markings. If the pet is short-coated, keep it short-coated. The second image only shows the drawing technique; its dog\'s breed, fluffy coat and face shape must NOT appear.',
+  'Render the pet\'s true fur colours with the same deep, saturated, high-contrast treatment as the reference: rich mid-tones, dark inky shadows, magenta-violet reflected light. Never pale or washed out.',
+  'The second image is a STYLE REFERENCE ONLY: match its rendering style, colour palette, lighting, linework, level of fur detail, composition (pet large, three-quarter view, body running off the bottom edge), sunglasses-and-gold-chain styling and background mood as closely as possible. Do not copy any lettering from the reference signs.',
   'Hand-drawn digital poster illustration in a premium graphic-novel / high-end print style.',
   'The pet is a three-quarter view, chest-up, large and filling the frame, with a happy expression (for dogs, mouth open with tongue out if it suits the photo).',
   'The pet\'s body continues naturally down and out of the bottom edge of the frame. Shoulders and chest are cropped by the frame edge, never ending in a point, a cut-out shape, a sticker outline or a fade. The pet sits in the street scene, lit by the sunset and the neon, not pasted on top of it.',
@@ -178,9 +180,13 @@ async function generatePortrait(photo, opts = {}) {
     { text: style.prompt },
     { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }
   ];
-  // Neon Nights only: the customer's photo stays first, then our style reference.
+  // generateContent accepts text and images in one parts list. Neon Nights: prompt, pet photo,
+  // a technique-only label, then the style reference. Other styles stay prompt plus one photo.
   if (styleName === 'neon-nights') {
-    requestParts.push({ inline_data: { mime_type: 'image/jpeg', data: neonNightsStyleImage().toString('base64') } });
+    requestParts.push(
+      { text: 'STYLE REFERENCE (technique only):' },
+      { inline_data: { mime_type: 'image/jpeg', data: neonNightsStyleImage().toString('base64') } }
+    );
   }
   const body = {
     contents: [{ role: 'user', parts: requestParts }],
