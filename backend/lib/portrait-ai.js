@@ -112,6 +112,7 @@ function neonNightsStyleImage() {
 
 const NEON_NIGHTS_PROMPT = [
   'Identify the exact species and breed of the pet in the first image (e.g. Shiba Inu, tabby cat) and draw THAT breed: its own head shape, muzzle length, ear shape, coat length and texture, and markings. If the pet is short-coated, keep it short-coated. The second image only shows the drawing technique; its dog\'s breed, fluffy coat and face shape must NOT appear.',
+  'Correct anatomy: exactly one head, exactly two ears, two eyes, one nose, one mouth. No duplicated ears or features, no extra limbs. The sunglasses sit on the face; the ears stay above or behind them and are not repeated.',
   'Render the pet\'s true fur colours with the same deep, saturated, high-contrast treatment as the reference: rich mid-tones, dark inky shadows, magenta-violet reflected light. Never pale or washed out.',
   'The second image is a STYLE REFERENCE ONLY: match its rendering style, colour palette, lighting, linework, level of fur detail, composition (pet large, three-quarter view, body running off the bottom edge), sunglasses-and-gold-chain styling and background mood as closely as possible. Do not copy any lettering from the reference signs.',
   'Hand-drawn digital poster illustration in a premium graphic-novel / high-end print style.',

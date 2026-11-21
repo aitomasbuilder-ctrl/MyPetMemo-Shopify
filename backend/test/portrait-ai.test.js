@@ -155,6 +155,7 @@ test('neon-nights: a whole neon poster scene, nothing cut out, other styles unch
   assert.ok(NEON_NIGHTS_PROMPT.startsWith('Identify the exact species and breed of the pet in the first image'), 'identity instructions come first');
   assert.ok(NEON_NIGHTS_PROMPT.includes(style), 'neon-nights style direction');
   assert.match(NEON_NIGHTS_PROMPT, /draw THAT breed: its own head shape, muzzle length, ear shape, coat length and texture, and markings\. If the pet is short-coated, keep it short-coated\. The second image only shows the drawing technique; its dog's breed, fluffy coat and face shape must NOT appear\./);
+  assert.match(NEON_NIGHTS_PROMPT, /Correct anatomy: exactly one head, exactly two ears, two eyes, one nose, one mouth\. No duplicated ears or features, no extra limbs\. The sunglasses sit on the face; the ears stay above or behind them and are not repeated\./);
   assert.match(NEON_NIGHTS_PROMPT, /Render the pet's true fur colours with the same deep, saturated, high-contrast treatment as the reference: rich mid-tones, dark inky shadows, magenta-violet reflected light\. Never pale or washed out\./);
   assert.match(NEON_NIGHTS_PROMPT, /Do not copy any lettering from the reference signs\./);
   assert.match(NEON_NIGHTS_PROMPT, /recognisable likeness of the uploaded photo: the same species and breed, the exact face, face shape, fur colours and markings, eye colour, ear shape and expression/);
