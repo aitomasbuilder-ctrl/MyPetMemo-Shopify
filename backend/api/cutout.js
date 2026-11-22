@@ -11,9 +11,9 @@
 // Published runs of this same export peak at several gigabytes, past any
 // Vercel function size.
 //
-// The route therefore uses the bundled U^2-Net portable model (u2netp, 4.5 MB,
-// Apache-2.0) at 320×320. A measured run stays under about 400 MB. CUTOUT_MODEL_URL
-// is not read: a Blob URL of the 214 MB file must not be loaded again.
+// The route uses the bundled Silueta model (U²-Net, Apache-2.0, 320×320). A
+// measured run stays under about 700 MB, then a guided filter sharpens the
+// matte at the photo's own size. CUTOUT_MODEL_URL is not read.
 // Each cut-out is cached in Blob under the photo's sha256.
 const crypto = require('node:crypto');
 const fs = require('node:fs');
@@ -21,9 +21,13 @@ const path = require('node:path');
 const sharp = require('sharp');
 const { cors, send, limiter, clientIp } = require('../lib/http');
 const { trimAlpha } = require('../lib/alpha-trim');
+const { refineMatte } = require('../lib/matte-refine');
 
 const MAX_UPLOAD = 15 * 1024 * 1024;
-const MODEL_FILE = path.join(__dirname, '..', 'models', 'u2netp.onnx');
+// Silueta is the smaller U²-Net (Apache-2.0, 320 px). BiRefNet at 1024 is killed
+// at 2048 MB; this file stays near 700 MB, and a full-resolution guided filter
+// then pulls the matte onto the photo's edges.
+const MODEL_FILE = path.join(__dirname, '..', 'models', 'silueta.onnx');
 const MEAN = [0.485, 0.456, 0.406];
 const STD = [0.229, 0.224, 0.225];
 const allow = limiter({ max: Number(process.env.CUTOUTS_PER_HOUR || 20), windowMs: 3600e3 });
@@ -35,22 +39,58 @@ function hardenAlpha(a) {
   return x < 0 ? 0 : x > 1 ? 1 : x;
 }
 
+/** Backdrop colour beside each fringe pixel, so a two-tone photo does not paint a grey halo. */
+function localBackdrop(rgb, width, height, soft) {
+  const n = width * height;
+  const rad = Math.max(8, Math.min(28, Math.round(Math.max(width, height) / 80)));
+  const wr = new Float32Array(n), wg = new Float32Array(n), wb = new Float32Array(n), ww = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    if (soft[i] < 0.12) {
+      wr[i] = rgb[i * 3]; wg[i] = rgb[i * 3 + 1]; wb[i] = rgb[i * 3 + 2]; ww[i] = 1;
+    }
+  }
+  const box = (src) => {
+    const I = new Float64Array((width + 1) * (height + 1));
+    const stride = width + 1;
+    for (let y = 0; y < height; y++) {
+      let row = 0;
+      for (let x = 0; x < width; x++) {
+        row += src[y * width + x];
+        I[(y + 1) * stride + x + 1] = I[y * stride + x + 1] + row;
+      }
+    }
+    const out = new Float32Array(n);
+    for (let y = 0; y < height; y++) {
+      const y0 = Math.max(0, y - rad), y1 = Math.min(height - 1, y + rad);
+      for (let x = 0; x < width; x++) {
+        const x0 = Math.max(0, x - rad), x1 = Math.min(width - 1, x + rad);
+        out[y * width + x] = (I[(y1 + 1) * stride + x1 + 1] - I[y0 * stride + x1 + 1] - I[(y1 + 1) * stride + x0] + I[y0 * stride + x0]);
+      }
+    }
+    return out;
+  };
+  return { r: box(wr), g: box(wg), b: box(wb), w: box(ww) };
+}
+
 /** Pull the backdrop colour out of the fur fringe, then apply the hardened matte. */
 function cleanEdges(rgb, width, height, soft) {
-  let br = 0, bg = 0, bb = 0, bn = 0;
   const n = width * height;
+  let br = 0, bg = 0, bb = 0, bn = 0;
   for (let i = 0; i < n; i++) {
     if (soft[i] < 0.15) { br += rgb[i * 3]; bg += rgb[i * 3 + 1]; bb += rgb[i * 3 + 2]; bn++; }
   }
   if (!bn) { br = bg = bb = 255; bn = 1; }
   br /= bn; bg /= bn; bb /= bn;
+  const local = n > 1 ? localBackdrop(rgb, width, height, soft) : null;
   const out = Buffer.alloc(n * 4);
   for (let i = 0; i < n; i++) {
     const a = soft[i];
     const hard = hardenAlpha(a);
     let r = rgb[i * 3], g = rgb[i * 3 + 1], b = rgb[i * 3 + 2];
+    let lr = br, lg = bg, lb = bb;
+    if (local && local.w[i] > 8) { lr = local.r[i] / local.w[i]; lg = local.g[i] / local.w[i]; lb = local.b[i] / local.w[i]; }
     if (a > 0.02 && a < 0.98) {
-      r = (r - (1 - a) * br) / a; g = (g - (1 - a) * bg) / a; b = (b - (1 - a) * bb) / a;
+      r = (r - (1 - a) * lr) / a; g = (g - (1 - a) * lg) / a; b = (b - (1 - a) * lb) / a;
     }
     const clamp = v => v < 0 ? 0 : v > 255 ? 255 : Math.round(v);
     out[i * 4] = clamp(r); out[i * 4 + 1] = clamp(g); out[i * 4 + 2] = clamp(b); out[i * 4 + 3] = Math.round(hard * 255);
@@ -156,7 +196,10 @@ async function inferMatte(image, { modelPath = MODEL_FILE } = {}) {
 
 async function applyMatte(image, soft) {
   const { data, info } = await sharp(image).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-  const rgba = cleanEdges(data, info.width, info.height, soft);
+  const matte = Math.min(info.width, info.height) >= 64
+    ? refineMatte(data, info.width, info.height, soft)
+    : soft;
+  const rgba = cleanEdges(data, info.width, info.height, matte);
   return sharp(rgba, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer();
 }
 

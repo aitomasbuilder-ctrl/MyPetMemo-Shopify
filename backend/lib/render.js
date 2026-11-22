@@ -159,9 +159,9 @@ async function renderDesign({ design, artwork, backgroundImage, width, height, f
 const TEE_LINE = 0.46;
 const TEE_SPAN = 0.58;
 const TEE_STROKE = 0.0033;
-const TEE_SPIKE = 0.070;
+const TEE_SPIKE = 0.080;
 const TEE_PET_H = 2.5 * TEE_SPIKE;
-const TEE_SIDE_MIN = 0.16;
+const TEE_SIDE_MIN = 0.145;
 const TEE_PET_GAP = 0.016;
 const TEE_TAPER = 0.022;
 const TEE_NAME_GAP = 0.014;
@@ -258,7 +258,9 @@ async function petBox(buf) {
     }
   }
   if (maxx < 0) return null;
-  const footTop = maxy - Math.max(1, Math.round((maxy - miny + 1) * 0.1));
+  // Only the lowest rows. The body just above the toes is wider, and stopping
+  // the line there leaves a gap beside the paws.
+  const footTop = maxy - Math.max(1, Math.round((maxy - miny + 1) * 0.03));
   let fx0 = w, fx1 = -1;
   for (let y = footTop; y <= maxy; y++) {
     const row = y * w * c;
@@ -323,7 +325,7 @@ async function renderTee({ design, pets = [], width, height }) {
     const rh = Math.max(1, Math.round(p.sh * p.s));
     const left = Math.round(cursor);
     // The bottom row of the resized pet is the line, so the feet stand on it.
-    const top = Math.round(lineY) - rh;
+    const top = Math.round(lineY + stroke * 0.35) - rh;
     const buf = await sharp(p.buffer).resize(rw, rh, { fit: 'fill' }).png().toBuffer();
     const sx = rw / p.sw;
     p.buf = buf;
@@ -342,16 +344,17 @@ async function renderTee({ design, pets = [], width, height }) {
     parts.push(`<path d="${taperCap(split.tip, split.base, stroke)}" fill="${ink}"/>`);
     parts.push(`<path d="${pathOf(split.rest)}" fill="none" stroke="${ink}" stroke-width="${stroke.toFixed(2)}" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="8"/>`);
   };
-  const tuck = Math.max(4, 0.012 * W);
+  const into = p => Math.max(0.02 * W, (p.footR - p.footL) * 0.28);
   if (!placed.length) {
     addTrace(mapEcg(LEFT_ECG, x0, (x0 + x1) / 2, lineY, spike).concat(mapEcg(RIGHT_ECG, (x0 + x1) / 2, x1, lineY, spike).slice(1)), true);
   } else {
-    addTrace(mapEcg(LEFT_ECG, x0, placed[0].footL + tuck, lineY, spike), true);
+    addTrace(mapEcg(LEFT_ECG, x0, placed[0].footL + into(placed[0]), lineY, spike), true);
     for (let i = 0; i < placed.length - 1; i++) {
-      const a = placed[i].footR - tuck, b = placed[i + 1].footL + tuck;
+      const a = placed[i].footR - into(placed[i]), b = placed[i + 1].footL + into(placed[i + 1]);
       if (b - a > 1) parts.push(`<path d="M${a.toFixed(2)} ${lineY.toFixed(2)} L${b.toFixed(2)} ${lineY.toFixed(2)}" fill="none" stroke="${ink}" stroke-width="${stroke.toFixed(2)}" stroke-linecap="butt"/>`);
     }
-    addTrace(mapEcg(RIGHT_ECG, placed[placed.length - 1].footR - tuck, x1, lineY, spike), false);
+    const last = placed[placed.length - 1];
+    addTrace(mapEcg(RIGHT_ECG, last.footR - into(last), x1, lineY, spike), false);
   }
   const layers = [{ input: Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">${parts.join('')}</svg>`), left: 0, top: 0 }];
   for (const p of placed) layers.push({ input: p.buf, left: p.left, top: p.top });

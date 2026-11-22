@@ -2,11 +2,25 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const sharp = require('sharp');
+const { guidedFilter } = require('../lib/matte-refine');
 const handler = require('../api/cutout');
 const { hardenAlpha, cleanEdges, upsampleMatte } = require('../api/cutout');
 
 const resOf = () => ({ headers: {}, statusCode: 200, setHeader(k, v) { this.headers[k] = v; }, end(b) { this.body = JSON.parse(b); } });
 const req = ip => ({ method: 'POST', headers: { 'x-forwarded-for': ip } });
+
+test('matte: a hard edge in the photo pulls a soft mask onto that edge', () => {
+  const w = 40, h = 8;
+  const guide = new Float32Array(w * h);
+  const alpha = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    guide[y * w + x] = x < 20 ? 0.05 : 0.95;
+    alpha[y * w + x] = x / (w - 1);
+  }
+  const q = guidedFilter(guide, alpha, w, h, 5, 1e-4);
+  assert.ok(q[4 * w + 6] < 0.4, `left of the edge ${q[4 * w + 6]}`);
+  assert.ok(q[4 * w + 32] > 0.6, `right of the edge ${q[4 * w + 32]}`);
+});
 
 test('cutout: a resized matte stays one channel, so the subject is not turned into stripes', async () => {
   const small = Buffer.alloc(4 * 4, 255);
