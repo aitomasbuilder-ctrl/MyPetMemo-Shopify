@@ -110,11 +110,10 @@ function neonNightsStyleImage() {
   return neonNightsReference;
 }
 
-const NEON_NIGHTS_PROMPT = [
-  'Identify the exact species and breed of the pet in the first image (e.g. Shiba Inu, tabby cat) and draw THAT breed: its own head shape, muzzle length, ear shape, coat length and texture, and markings. If the pet is short-coated, keep it short-coated. The second image only shows the drawing technique; its dog\'s breed, fluffy coat and face shape must NOT appear.',
-  'Correct anatomy: exactly one head, exactly two ears, two eyes, one nose, one mouth. No duplicated ears or features, no extra limbs. The sunglasses sit on the face; the ears stay above or behind them and are not repeated.',
-  'Render the pet\'s true fur colours with the same deep, saturated, high-contrast treatment as the reference: rich mid-tones, dark inky shadows, magenta-violet reflected light. Never pale or washed out.',
-  'The second image is a STYLE REFERENCE ONLY: match its rendering style, colour palette, lighting, linework, level of fur detail, composition (pet large, three-quarter view, body running off the bottom edge), sunglasses-and-gold-chain styling and background mood as closely as possible. Do not copy any lettering from the reference signs.',
+// The approved Neon Nights look, described in words. The style-reference photo is
+// technique only; these lines are what keep the framing, ink and street when that
+// photo is left out.
+const NEON_NIGHTS_LOOK = [
   'Hand-drawn digital poster illustration in a premium graphic-novel / high-end print style.',
   'The pet is a three-quarter view, chest-up, large and filling the frame, with a happy expression (for dogs, mouth open with tongue out if it suits the photo).',
   'The pet\'s body continues naturally down and out of the bottom edge of the frame. Shoulders and chest are cropped by the frame edge, never ending in a point, a cut-out shape, a sticker outline or a fade. The pet sits in the street scene, lit by the sunset and the neon, not pasted on top of it.',
@@ -124,7 +123,10 @@ const NEON_NIGHTS_PROMPT = [
   'Keep the pet\'s true fur colours, but render them deep and rich, with warm burnt-orange or deep shadows and magenta-purple reflected light on the shaded side.',
   'Very high contrast, deep saturated colours, inky dark purples in the shadows.',
   'Background: a deep violet and electric magenta sky with streaky clouds, a blazing orange sunset glow low on the horizon, black palm tree silhouettes on both sides, and a neon city street with intense pink and violet glow and a dark wet reflective road.',
-  'Building signs are plain glowing neon tubes and rectangles with no characters or symbols.',
+  'Building signs are plain glowing neon tubes and rectangles with no characters or symbols.'
+];
+const NEON_NIGHTS_ANATOMY = 'Correct anatomy: exactly one head, exactly two ears, two eyes, one nose, one mouth. No duplicated ears or features, no extra limbs. The sunglasses sit on the face; the ears stay above or behind them and are not repeated.';
+const NEON_NIGHTS_CLOSING = [
   'The pet must stay a recognisable likeness of the uploaded photo: the same species and breed, the exact face, face shape, fur colours and markings, eye colour, ear shape and expression. Do not replace it with a different or generic animal.',
   'Keep the pet\'s exact face, fur colours and markings clear.',
   'The scene fills the entire canvas edge to edge. No poster frame, no border, no mat, no white margin and no blank strip on any side.',
@@ -133,6 +135,27 @@ const NEON_NIGHTS_PROMPT = [
   'This must be an original artwork: no logos, no brand marks and no trademarked typography.',
   'No letters, no words, and no numbers anywhere in the image. No text, no signature, no watermark.',
   SCENE_NO_LETTERING
+];
+
+const NEON_NIGHTS_PROMPT = [
+  'Draw the animal in the photo labelled THE PET TO DRAW. Identify its exact species and breed (for example Shiba Inu, beagle, Labrador or tabby cat) and draw THAT breed: its own head shape, muzzle length, ear shape, coat length and texture, and markings. If the pet is short-coated, keep it short-coated. Do not replace it with the dog in the style reference.',
+  'The photo labelled STYLE REFERENCE (technique only) is not an animal to draw. Do not copy its dog, breed, face, fluffy coat, expression, pose, framing or composition. Its dog\'s breed, fluffy coat and face shape must NOT appear unless they are already in THE PET TO DRAW.',
+  NEON_NIGHTS_ANATOMY,
+  'Render the pet\'s true fur colours deep, saturated and high-contrast: rich mid-tones, dark inky shadows, magenta-violet reflected light. Never pale or washed out.',
+  'Use the style reference for technique only: hand-inked linework, colour palette, lighting, level of fur detail, sunglasses-and-gold-chain styling and the neon-street mood. Do not copy any lettering from the reference signs. Do not match the reference picture\'s composition.',
+  ...NEON_NIGHTS_LOOK,
+  ...NEON_NIGHTS_CLOSING
+].join(' ');
+
+// Used once, and only after a near-copy of the style reference was detected.
+// The reference image is not sent with this prompt, so it must not point at one.
+const NEON_NIGHTS_IDENTITY_RETRY_PROMPT = [
+  'Draw only the animal in the photo labelled THE PET TO DRAW. That photo is the only image. There is no style-reference picture and no other animal to copy.',
+  'Identify its exact species and breed and draw THAT breed: its own head shape, muzzle length, ear shape, coat length and texture, and markings. If the pet is short-coated, keep it short-coated. Do not substitute a generic fluffy golden retriever. A cream, yellow or Labrador-type dog stays the dog in the photo: its own muzzle, ear set, coat length and markings.',
+  NEON_NIGHTS_ANATOMY,
+  'Render the pet\'s true fur colours deep, saturated and high-contrast: rich mid-tones, dark inky shadows, magenta-violet reflected light. Never pale or washed out.',
+  ...NEON_NIGHTS_LOOK,
+  ...NEON_NIGHTS_CLOSING
 ].join(' ');
 
 /** Art styles the service paints. `background` tells the storefront how to cut the pet out. */
@@ -177,13 +200,18 @@ async function generatePortrait(photo, opts = {}) {
   const model = opts.model || modelFor(styleName, env);
   const doFetch = opts.fetchImpl || fetch;
   const style = styleFor(styleName);
+  const neon = styleName === 'neon-nights';
+  // omitStyleReference is the one retry after a near-copy of the style image.
+  // The portrait handler asks for it; the reference bytes are left out.
+  const omitReference = neon && opts.omitStyleReference === true;
   const requestParts = [
-    { text: style.prompt },
-    { inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } }
+    { text: omitReference ? NEON_NIGHTS_IDENTITY_RETRY_PROMPT : style.prompt }
   ];
-  // generateContent accepts text and images in one parts list. Neon Nights: prompt, pet photo,
-  // a technique-only label, then the style reference. Other styles stay prompt plus one photo.
-  if (styleName === 'neon-nights') {
+  // The pet and the style image are labelled separately so the model cannot treat
+  // the reference dog as the animal to draw. Other styles stay prompt plus one photo.
+  if (neon) requestParts.push({ text: 'THE PET TO DRAW:' });
+  requestParts.push({ inline_data: { mime_type: photo.mimeType, data: photo.image.toString('base64') } });
+  if (neon && !omitReference) {
     requestParts.push(
       { text: 'STYLE REFERENCE (technique only):' },
       { inline_data: { mime_type: 'image/jpeg', data: neonNightsStyleImage().toString('base64') } }
@@ -217,4 +245,4 @@ async function generatePortrait(photo, opts = {}) {
   return { image: Buffer.from(out.data, 'base64'), mimeType: out.mimeType || out.mime_type || 'image/png' };
 }
 
-module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT, SCENE_NO_LETTERING, STYLES, styleFor, modelFor, CHROMA, DEFAULT_MODEL };
+module.exports = { generatePortrait, PortraitError, PROMPT, WATERCOLOR_PROMPT, MOONLIGHT_PROMPT, CHRISTMAS_PROMPT, NORTHERN_NIGHT_PROMPT, NEON_NIGHTS_PROMPT, NEON_NIGHTS_IDENTITY_RETRY_PROMPT, SCENE_NO_LETTERING, STYLES, styleFor, modelFor, CHROMA, DEFAULT_MODEL };
