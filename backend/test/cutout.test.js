@@ -3,10 +3,17 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const sharp = require('sharp');
 const handler = require('../api/cutout');
-const { hardenAlpha, cleanEdges } = require('../api/cutout');
+const { hardenAlpha, cleanEdges, upsampleMatte } = require('../api/cutout');
 
 const resOf = () => ({ headers: {}, statusCode: 200, setHeader(k, v) { this.headers[k] = v; }, end(b) { this.body = JSON.parse(b); } });
 const req = ip => ({ method: 'POST', headers: { 'x-forwarded-for': ip } });
+
+test('cutout: a resized matte stays one channel, so the subject is not turned into stripes', async () => {
+  const small = Buffer.alloc(4 * 4, 255);
+  const up = await upsampleMatte(small, 4, 4, 9, 6);
+  assert.equal(up.length, 54);
+  assert.ok(up.every(v => v === 255));
+});
 
 test('cutout: the matte is hardened and the fur edge loses the backdrop colour', () => {
   assert.equal(hardenAlpha(0), 0);
@@ -20,10 +27,9 @@ test('cutout: the matte is hardened and the fur edge loses the backdrop colour',
   assert.ok(out[0] < 20 && out[3] === 128, `cleaned pixel ${Array.from(out)}`);
 });
 
-test('cutout: a missing model URL fails clearly, and a cached photo is not run again', async () => {
-  delete process.env.CUTOUT_MODEL_URL;
+test('cutout: a missing model file fails clearly, and a cached photo is not run again', async () => {
   const missing = resOf();
-  await handler(req('10.8.1.1'), missing, {});
+  await handler(req('10.8.1.1'), missing, { modelPath: '/tmp/no-such-cutout-model.onnx' });
   assert.equal(missing.statusCode, 503);
   assert.equal(missing.body.code, 'cutout_not_configured');
 
@@ -52,4 +58,28 @@ test('cutout: a missing model URL fails clearly, and a cached photo is not run a
   await handler(req('10.8.1.4'), limited, { ...deps, allow: () => false });
   assert.equal(limited.statusCode, 429);
   assert.equal(limited.body.code, 'rate_limited');
+});
+
+test('cutout: transparent padding is cropped to the subject, with a small margin', async () => {
+  const image = await sharp({ create: { width: 30, height: 24, channels: 3, background: '#224466' } }).png().toBuffer();
+  const soft = new Float32Array(30 * 24);
+  for (let y = 6; y < 18; y++) for (let x = 8; x < 20; x++) soft[y * 30 + x] = 1;
+  const mem = new Map();
+  const out = resOf();
+  await handler(req('10.8.2.1'), out, {
+    image,
+    infer: async () => soft,
+    cacheGet: async sha => mem.get(sha) || null,
+    cachePut: async (sha, png) => { mem.set(sha, { png, url: `https://blob.example/${sha}.png` }); return `https://blob.example/${sha}.png`; }
+  });
+  assert.equal(out.statusCode, 200);
+  const png = Buffer.from(out.body.image.slice('data:image/png;base64,'.length), 'base64');
+  const meta = await sharp(png).metadata();
+  assert.ok(meta.width >= 14 && meta.width <= 18, `trimmed width ${meta.width}`);
+  assert.ok(meta.height >= 14 && meta.height <= 18, `trimmed height ${meta.height}`);
+  const { data, info } = await sharp(png).raw().toBuffer({ resolveWithObject: true });
+  const corner = data[3];
+  const mid = data[((info.height >> 1) * info.width + (info.width >> 1)) * 4 + 3];
+  assert.equal(corner, 0, 'the margin stays transparent');
+  assert.ok(mid > 200, 'the subject is kept');
 });
