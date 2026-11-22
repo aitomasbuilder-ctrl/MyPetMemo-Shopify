@@ -40,10 +40,17 @@ const str = (v, re, field) => {
   return s;
 };
 
+/** Public Vercel Blob URLs are https://<store>.public.blob.vercel-storage.com/... */
+function isBlobHost(hostname) {
+  return /^[a-z0-9-]+\.public\.blob\.vercel-storage\.com$/.test(hostname);
+}
+
 function allowedHost(url, hosts) {
   let u;
   try { u = new URL(url); } catch { return false; }
-  return u.protocol === 'https:' && hosts.includes(u.hostname.toLowerCase());
+  if (u.protocol !== 'https:') return false;
+  const host = u.hostname.toLowerCase();
+  return hosts.includes(host) || isBlobHost(host);
 }
 
 function defaultHosts(env = process.env) {
@@ -227,4 +234,4 @@ function verify(token, key = secret()) {
   return { design, id: designId(design) };
 }
 
-module.exports = { normalise, sign, verify, designId, allowedHost, defaultHosts, DesignError, VERSION, inkForColor, TEE_FONT };
+module.exports = { normalise, sign, verify, designId, allowedHost, isBlobHost, defaultHosts, DesignError, VERSION, inkForColor, TEE_FONT };

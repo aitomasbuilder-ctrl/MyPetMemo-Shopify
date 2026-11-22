@@ -41,6 +41,9 @@ test('tee: ink follows the shirt colour, and the name uses the script font', () 
   assert.throws(() => design.normalise(teeInput({ pets: [] }), { hosts }), e => e.code === 'pets_count');
   assert.throws(() => design.normalise(teeInput({ pets: [pet(sha), pet(sha), pet(sha), pet(sha)] }), { hosts }), e => e.code === 'pets_count');
   assert.throws(() => design.normalise(teeInput({ pets: [{ url: 'https://evil.example/a.png', sha256: sha }] }), { hosts }), e => e.code === 'pet_host');
+  const fromBlob = design.normalise(teeInput({ pets: [{ url: 'https://store123.public.blob.vercel-storage.com/cutouts/a.png', sha256: sha }] }), { hosts });
+  assert.equal(fromBlob.pets[0].url, 'https://store123.public.blob.vercel-storage.com/cutouts/a.png');
+  assert.throws(() => design.normalise(teeInput({ pets: [{ url: 'https://evil.public.blob.vercel-storage.com.evil.example/a.png', sha256: sha }] }), { hosts }), e => e.code === 'pet_host');
   const three = design.normalise(teeInput({ pets: [pet(sha), pet(sha, 'https://cdn.shopify.com/b.png'), pet(sha, 'https://cdn.shopify.com/c.png')] }), { hosts });
   assert.equal(three.pets.length, 3);
 });
@@ -108,7 +111,9 @@ test('tee: the pet stands on the line, and one spike sits on each side', async (
   }), { hosts });
   const one = await renderTee({ design: d(1), pets: [await swatch(200, 30, 40)], width: 480, height: 640 });
   assert.ok(Math.abs(one.lineY - TEE_LINE * 640) < 0.01);
-  assert.ok(Math.abs(one.petHeight - TEE_PET_H * 480) < 1.5, `pet height ${one.petHeight}`);
+  const quarter = 0.25 * 0.58 * 480;
+  assert.ok(one.placements[0].width <= quarter + 2, `pet wider than a quarter of the line ${one.placements[0].width}`);
+  assert.ok(one.petHeight > 70 && one.petHeight <= TEE_PET_H * 480 + 1, `pet height ${one.petHeight}`);
   const foot = await pixel(one.buffer, 240, Math.round(one.lineY) - 4);
   assert.ok(foot.px[0] > 150 && foot.px[3] > 200, `the pet stands on the line ${foot.px}`);
   const above = Math.round(one.lineY - 0.72 * TEE_SPIKE * 480);
