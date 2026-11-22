@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const sharp = require('sharp');
 const design = require('../lib/design');
-const { renderTee, TEE_LINE, TEE_NAME_SIZE } = require('../lib/render');
+const { renderTee, TEE_LINE, TEE_NAME_SIZE, TEE_SPIKE, TEE_PET_H, teeProbe } = require('../lib/render');
 const { catalog } = require('../lib/printify-catalog');
 
 const hosts = ['cdn.shopify.com'];
@@ -53,7 +53,7 @@ async function pixel(buf, x, y) {
   return { px: Array.from(data.slice(o, o + info.channels)), info };
 }
 
-function linePixel(W) { return { x: Math.round(0.07 * W), y: Math.round(TEE_LINE * W) }; }
+function linePixel(W, H) { return teeProbe(W, H); }
 
 test('tee: the print is a transparent PNG at the print size and 300 dpi', async () => {
   const d = design.normalise(teeInput({ ink: undefined, color: 'White', name: { text: 'Bo' } }), { hosts });
@@ -69,7 +69,7 @@ test('tee: the print is a transparent PNG at the print size and 300 dpi', async 
   assert.equal(meta.hasAlpha, true);
   const corner = await pixel(file.buffer, 2, 2);
   assert.equal(corner.px[3], 0, 'the shirt shows through the empty canvas');
-  const at = linePixel(400);
+  const at = linePixel(400, 520);
   const ink = await pixel(file.buffer, at.x, at.y);
   assert.ok(ink.px[3] > 100 && ink.px[0] < 40, `dark ink on the line ${ink.px}`);
 });
@@ -77,7 +77,7 @@ test('tee: the print is a transparent PNG at the print size and 300 dpi', async 
 test('tee: white ink on a dark shirt, and the name shrinks to fit', async () => {
   const dark = design.normalise(teeInput({ color: 'Black', name: { text: 'Bo' } }), { hosts });
   const file = await renderTee({ design: dark, pets: [await swatch(20, 20, 20)], width: 400, height: 520 });
-  const at = linePixel(400);
+  const at = linePixel(400, 520);
   const ink = await pixel(file.buffer, at.x, at.y);
   assert.ok(ink.px[0] > 240 && ink.px[3] > 100, `white ink ${ink.px}`);
   const short = await renderTee({ design: dark, pets: [await swatch(20, 20, 20)], width: 600, height: 780 });
@@ -88,27 +88,66 @@ test('tee: white ink on a dark shirt, and the name shrinks to fit', async () => 
   assert.ok(fitted.nameSize > 0);
 });
 
-test('tee: one, two or three pets, with the centre pet in front', async () => {
-  const d = (n, text = 'Mila') => design.normalise(teeInput({
+async function colorBox(buf, match) {
+  const { data, info } = await sharp(buf).raw().toBuffer({ resolveWithObject: true });
+  let minx = info.width, miny = info.height, maxx = -1, maxy = -1, n = 0;
+  for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
+    const o = (y * info.width + x) * info.channels;
+    if (match(data[o], data[o + 1], data[o + 2], data[o + 3])) {
+      n++;
+      if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
+    }
+  }
+  return n ? { minx, miny, maxx, maxy, h: maxy - miny + 1, w: maxx - minx + 1 } : null;
+}
+
+test('tee: the pet stands on the line, and one spike sits on each side', async () => {
+  const d = (n, text = 'Luna') => design.normalise(teeInput({
     color: 'White', name: { text },
     pets: Array.from({ length: n }, (_, i) => pet(sha, `https://cdn.shopify.com/p${i}.png`))
   }), { hosts });
   const one = await renderTee({ design: d(1), pets: [await swatch(200, 30, 40)], width: 480, height: 640 });
-  const mid = await pixel(one.buffer, 240, Math.round(TEE_LINE * 480) - 8);
-  assert.ok(mid.px[0] > 150 && mid.px[3] > 200, `the single pet sits on the line ${mid.px}`);
-  const two = await renderTee({ design: d(2), pets: [await swatch(220, 20, 20), await swatch(20, 20, 220)], width: 480, height: 640 });
-  assert.equal(two.width, 480);
-  const red = design.normalise(teeInput({ color: 'Olive', name: { text: 'Mila' }, pets: [pet(sha), pet(sha, 'https://cdn.shopify.com/b.png'), pet(sha, 'https://cdn.shopify.com/c.png')] }), { hosts });
-  const three = await renderTee({
-    design: red,
-    pets: [await swatch(220, 10, 10), await swatch(10, 10, 220), await swatch(10, 180, 10)],
-    width: 480, height: 640
-  });
-  // Overlap of the left pet and the centre pet belongs to the centre pet.
-  const gap0 = 0.36 * 480, slot = (0.64 - 0.36) * 480 / 3;
-  const between = Math.round(gap0 + slot);
-  const over = await pixel(three.buffer, between, Math.round(TEE_LINE * 480) - 6);
-  assert.ok(over.px[2] > 150 && over.px[0] < 80, `centre pet is in front ${over.px}`);
+  assert.ok(Math.abs(one.lineY - TEE_LINE * 640) < 0.01);
+  assert.ok(Math.abs(one.petHeight - TEE_PET_H * 480) < 1.5, `pet height ${one.petHeight}`);
+  const foot = await pixel(one.buffer, 240, Math.round(one.lineY) - 4);
+  assert.ok(foot.px[0] > 150 && foot.px[3] > 200, `the pet stands on the line ${foot.px}`);
+  const above = Math.round(one.lineY - 0.72 * TEE_SPIKE * 480);
+  const { data, info } = await sharp(one.buffer).raw().toBuffer({ resolveWithObject: true });
+  const runs = [];
+  let run = null;
+  let gap = 0;
+  for (let x = 0; x < info.width; x++) {
+    const o = (above * info.width + x) * info.channels;
+    const ink = data[o + 3] > 80 && data[o] < 50;
+    if (ink) {
+      if (!run) run = { x0: x, x1: x };
+      else run.x1 = x;
+      gap = 0;
+    } else if (run && gap < 3) gap++;
+    else if (run) { runs.push(run); run = null; gap = 0; }
+  }
+  if (run) runs.push(run);
+  const spikes = runs.filter(r => r.x1 - r.x0 < 40);
+  assert.equal(spikes.length, 2, `one spike on each side, runs ${JSON.stringify(runs)}`);
+  assert.ok(spikes[0].x1 < 240 && spikes[1].x0 > 240);
+  assert.ok(one.nameCx > 240, `the name sits slightly right of centre ${one.nameCx}`);
+});
+
+test('tee: two pets share a height, so a wide pet stays as tall as a narrow one', async () => {
+  const d = design.normalise(teeInput({
+    color: 'White', name: { text: 'Milo & Luna' },
+    pets: [pet(sha), pet(sha, 'https://cdn.shopify.com/b.png')]
+  }), { hosts });
+  const tall = await sharp({ create: { width: 24, height: 90, channels: 4, background: { r: 210, g: 30, b: 30, alpha: 1 } } }).png().toBuffer();
+  const wide = await sharp({ create: { width: 90, height: 24, channels: 4, background: { r: 30, g: 30, b: 210, alpha: 1 } } }).png().toBuffer();
+  const file = await renderTee({ design: d, pets: [tall, wide], width: 640, height: 820 });
+  const red = await colorBox(file.buffer, (r, g, b, a) => a > 200 && r > 150 && b < 80);
+  const blue = await colorBox(file.buffer, (r, g, b, a) => a > 200 && b > 150 && r < 80);
+  assert.ok(red && blue, 'both pets are drawn');
+  assert.ok(Math.abs(red.h - blue.h) <= 2, `shared height red ${red.h} blue ${blue.h}`);
+  assert.ok(blue.w > red.w * 2, `the wide pet keeps its shape ${blue.w} vs ${red.w}`);
+  assert.ok(Math.abs(red.maxy - blue.maxy) <= 2, 'both stand on the same line');
+  assert.ok(red.maxx < blue.minx, 'they sit side by side');
 });
 
 function teeFetch(calls = []) {
