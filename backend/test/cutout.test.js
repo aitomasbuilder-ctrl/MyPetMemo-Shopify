@@ -74,6 +74,42 @@ test('cutout: a missing model file fails clearly, and a cached photo is not run 
   assert.equal(limited.body.code, 'rate_limited');
 });
 
+test('cutout: a small disconnected scrap is removed and a second pet is kept', async () => {
+  const { dropSpecks } = require('../lib/alpha-trim');
+  const w = 40, h = 30;
+  const raw = Buffer.alloc(w * h * 4);
+  const paint = (x0, y0, bw, bh) => {
+    for (let y = y0; y < y0 + bh; y++) for (let x = x0; x < x0 + bw; x++) {
+      const i = (y * w + x) * 4;
+      raw[i] = 200; raw[i + 1] = 40; raw[i + 2] = 40; raw[i + 3] = 255;
+    }
+  };
+  paint(2, 2, 16, 20);
+  paint(24, 4, 12, 18);
+  paint(38, 28, 1, 1);
+  const png = await sharp(raw, { raw: { width: w, height: h, channels: 4 } }).png().toBuffer();
+  const out = await dropSpecks(png);
+  const { data, info } = await sharp(out).raw().toBuffer({ resolveWithObject: true });
+  const alpha = (x, y) => data[(y * info.width + x) * 4 + 3];
+  assert.ok(alpha(8, 8) > 200, 'the first pet stays');
+  assert.ok(alpha(28, 10) > 200, 'the second pet stays');
+  assert.equal(alpha(38, 28), 0, 'the scrap is gone');
+});
+
+test('cutout: a blob outage still returns the picture', async () => {
+  const image = await sharp({ create: { width: 8, height: 8, channels: 3, background: '#224466' } }).png().toBuffer();
+  const out = resOf();
+  await handler(req('10.8.3.1'), out, {
+    image,
+    infer: async () => new Float32Array(64).fill(1),
+    cacheGet: async () => { throw new Error('No blob credentials found'); },
+    cachePut: async () => { throw new Error('No blob credentials found'); }
+  });
+  assert.equal(out.statusCode, 200);
+  assert.equal(out.body.url, null);
+  assert.match(out.body.image, /^data:image\/png;base64,/);
+});
+
 test('cutout: transparent padding is cropped to the subject, with a small margin', async () => {
   const image = await sharp({ create: { width: 30, height: 24, channels: 3, background: '#224466' } }).png().toBuffer();
   const soft = new Float32Array(30 * 24);

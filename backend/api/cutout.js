@@ -20,7 +20,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const sharp = require('sharp');
 const { cors, send, limiter, clientIp } = require('../lib/http');
-const { trimAlpha } = require('../lib/alpha-trim');
+const { trimAlpha, dropSpecks } = require('../lib/alpha-trim');
 const { refineMatte } = require('../lib/matte-refine');
 
 const MAX_UPLOAD = 15 * 1024 * 1024;
@@ -203,6 +203,13 @@ async function applyMatte(image, soft) {
   return sharp(rgba, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer();
 }
 
+function safeError(err) {
+  const name = err && err.name ? String(err.name).slice(0, 40) : 'Error';
+  let message = err && err.message ? String(err.message) : '';
+  message = message.replace(/vercel_blob_[a-z0-9_]+/gi, '[token]').replace(/\b[A-Za-z0-9_-]{32,}\b/g, '[redacted]');
+  return { name, message: message.slice(0, 180) };
+}
+
 async function blobGet(sha, fetchImpl) {
   const { list } = require('@vercel/blob');
   const found = await list({ prefix: `cutouts/${sha}.png` });
@@ -230,17 +237,20 @@ async function handler(req, res, deps = {}) {
     const sha = sha256(image);
     const fetchImpl = deps.fetchImpl || fetch;
     const cacheGet = deps.cacheGet || (s => blobGet(s, fetchImpl));
-    const hit = await cacheGet(sha);
+    let hit = null;
+    try { hit = await cacheGet(sha); } catch (err) { console.error('cutout cache read', safeError(err).message); }
     if (hit) return send(res, 200, { image: `data:image/png;base64,${hit.png.toString('base64')}`, url: hit.url, sha256: sha, cached: true });
     const soft = await (deps.infer || inferMatte)(image, { modelPath });
-    const png = await trimAlpha(await applyMatte(image, soft));
+    const png = await trimAlpha(await dropSpecks(await applyMatte(image, soft)));
     const cachePut = deps.cachePut || blobPut;
-    const url = await cachePut(sha, png);
+    let url = null;
+    try { url = await cachePut(sha, png); } catch (err) { console.error('cutout cache write', safeError(err).message); }
     return send(res, 200, { image: `data:image/png;base64,${png.toString('base64')}`, url, sha256: sha, cached: false });
   } catch (err) {
     if (err && err.status) return send(res, err.status, { code: err.code || 'bad_request', message: err.message });
-    console.error('cutout failed', err);
-    return send(res, 500, { code: 'server_error', message: 'The cut-out service had a hiccup. Please try again.' });
+    const detail = safeError(err);
+    console.error('cutout failed', detail.name, detail.message);
+    return send(res, 500, { code: 'server_error', message: 'The cut-out service had a hiccup. Please try again.', detail });
   }
 }
 

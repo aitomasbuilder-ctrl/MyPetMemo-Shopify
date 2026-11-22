@@ -307,6 +307,11 @@ async function renderTee({ design, pets = [], width, height }) {
   }
   let ph = TEE_PET_H * W;
   const gap = boxes.length > 1 ? TEE_PET_GAP * W : 0;
+  // No single pet wider than about a quarter of the line, so a wide corgi
+  // does not tower over a narrower cat that shares its height.
+  const quarter = 0.25 * span;
+  const widest = boxes.reduce((m, b) => Math.max(m, ph * (b.sw / b.sh)), 0);
+  if (widest > quarter) ph *= quarter / widest;
   const natural = boxes.reduce((sum, b) => sum + ph * (b.sw / b.sh), 0) + gap * Math.max(0, boxes.length - 1);
   const budget = Math.max(1, span - 2 * TEE_SIDE_MIN * W);
   if (natural > budget) ph *= budget / natural;
