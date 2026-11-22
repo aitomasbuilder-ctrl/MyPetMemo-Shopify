@@ -209,6 +209,33 @@ test('portrait: a thick bar near the time budget is cropped without a second cal
   assert.ok(!(bottom[0] > 230 && bottom[1] > 230 && bottom[2] > 230), `budget path should still crop the bar ${bottom}`);
 });
 
+test('portrait: a 20px white strip on the left is trimmed and does not cause another call', async () => {
+  const w = 400, h = 533, strip = 20;
+  const raw = Buffer.alloc(w * h * 3);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const o = (y * w + x) * 3;
+      if (x < strip) raw[o] = raw[o + 1] = raw[o + 2] = 250;
+      else {
+        raw[o] = 80 + (x * 3 + y) % 120;
+        raw[o + 1] = 20 + (x + y * 5) % 80;
+        raw[o + 2] = 90 + (x * 7 + y * 2) % 140;
+      }
+    }
+  }
+  const barred = await sharp(raw, { raw: { width: w, height: h, channels: 3 } }).png().toBuffer();
+  let calls = 0;
+  const res = await call('neon-nights', null, {
+    ip: '10.9.9.17',
+    generate: async () => { calls++; return { image: barred, mimeType: 'image/png' }; }
+  });
+  assert.strictEqual(calls, 1);
+  assert.strictEqual(res.statusCode, 200);
+  const left = await edge(pngOf(res), 0, 200);
+  assert.deepStrictEqual([left[3], left[4]], [w, h]);
+  assert.ok(!(left[0] > 230 && left[1] > 230 && left[2] > 230), `20px left strip should be gone ${left}`);
+});
+
 test('portrait: watercolor keeps a thick white bar and is not retried', async () => {
   const barred = await bottomBar(0.24);
   let calls = 0;

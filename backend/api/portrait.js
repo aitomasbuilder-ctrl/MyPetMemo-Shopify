@@ -7,6 +7,7 @@
 const sharp = require('sharp');
 const { generatePortrait, PortraitError, STYLES, styleFor } = require('../lib/portrait-ai');
 const { trimSceneBorder, thickSceneBar, cropThickSceneBorder } = require('../lib/scene-trim');
+const { referenceDistance } = require('../lib/reference-copy');
 const { cors, send, limiter, clientIp } = require('../lib/http');
 
 const MAX_UPLOAD = 15 * 1024 * 1024;
@@ -15,6 +16,40 @@ const allow = limiter({ max: Number(process.env.PORTRAITS_PER_HOUR || 20), windo
 const PORTRAIT_BUDGET_MS = 60000;
 const RETRY_CALL_MS = 10000;
 const RETRY_TAIL_MS = 8000;
+// pet-studio.js shows `message` and a Retry button for every status except 422 and 413.
+const REFERENCE_COPY_MESSAGE = 'We couldn’t lock onto your pet this time. Please try again.';
+
+function elapsedMs(started, deps) {
+  return Number.isFinite(deps.elapsed) ? deps.elapsed : Date.now() - started;
+}
+
+function withinBudget(started, deps) {
+  return elapsedMs(started, deps) + RETRY_CALL_MS + RETRY_TAIL_MS <= PORTRAIT_BUDGET_MS;
+}
+
+function round1(n) {
+  return Math.round(n * 10) / 10;
+}
+
+/** Crop a blank edge. A bar too thick to crop becomes the existing retryable border error. */
+async function settleSceneBorder(source, style, log) {
+  source = (await trimSceneBorder(source)).buffer;
+  const still = await thickSceneBar(source);
+  if (!still) return source;
+  const cropped = await cropThickSceneBorder(source);
+  const detail = barDetail(style, still);
+  if (!cropped) {
+    log('scene border rejected', detail);
+    throw new PortraitError('border', 'The portrait came back with a blank strip along the edge. Please try again.', 502);
+  }
+  log('scene border crop', detail);
+  return cropped.buffer;
+}
+
+function rejectReferenceCopy(log, score, extra) {
+  log('neon reference copy rejected', { score: round1(score), ...extra });
+  throw new PortraitError('reference_copy', REFERENCE_COPY_MESSAGE, 503);
+}
 
 function barDetail(style, bar) {
   return {
@@ -55,15 +90,31 @@ async function handler(req, res, deps = {}) {
   try {
     const { style, ...photo } = await readPhoto(req);
     const generate = deps.generate || generatePortrait;
+    const scene = styleFor(style).background === 'scene';
+    const budget = () => withinBudget(started, deps);
     let art = await generate(photo, { style });
     let source = art.image;
-    // Scene styles are the whole blanket. A thick blank edge is regenerated once, then trimmed.
-    if (styleFor(style).background === 'scene') {
+    let identityRetried = false;
+    // Neon Nights can echo the style-reference dog. Detect that on the model output
+    // and, when there is time, draw once more without the reference image.
+    // A blank-edge retry still happens for a portrait that is not a copy.
+    // The check runs again after the edge trim: a white strip can hide a copy.
+    if (style === 'neon-nights') {
+      const verdict = await referenceDistance(source);
+      if (verdict && verdict.copy) {
+        log('neon reference copy', { score: round1(verdict.score) });
+        if (!budget()) rejectReferenceCopy(log, verdict.score, { reason: 'budget' });
+        art = await generate(photo, { style, omitStyleReference: true });
+        source = art.image;
+        identityRetried = true;
+      }
+    }
+    if (!identityRetried && scene) {
       const thick = await thickSceneBar(source);
       if (thick) {
-        const elapsed = Number.isFinite(deps.elapsed) ? deps.elapsed : Date.now() - started;
+        const elapsed = elapsedMs(started, deps);
         const detail = barDetail(style, thick);
-        if (elapsed + RETRY_CALL_MS + RETRY_TAIL_MS <= PORTRAIT_BUDGET_MS) {
+        if (budget()) {
           log('scene border retry', detail);
           art = await generate(photo, { style });
           source = art.image;
@@ -71,17 +122,20 @@ async function handler(req, res, deps = {}) {
           log('scene border retry skipped', { ...detail, elapsed, reason: 'budget' });
         }
       }
-      source = (await trimSceneBorder(source)).buffer;
-      const still = await thickSceneBar(source);
-      if (still) {
-        const cropped = await cropThickSceneBorder(source);
-        const detail = barDetail(style, still);
-        if (!cropped) {
-          log('scene border rejected', detail);
-          throw new PortraitError('border', 'The portrait came back with a blank strip along the edge. Please try again.', 502);
+    }
+    if (scene) source = await settleSceneBorder(source, style, log);
+    if (style === 'neon-nights') {
+      const verdict = await referenceDistance(source);
+      if (verdict && verdict.copy) {
+        if (!identityRetried && budget()) {
+          log('neon reference copy', { score: round1(verdict.score) });
+          art = await generate(photo, { style, omitStyleReference: true });
+          source = await settleSceneBorder(art.image, style, log);
+          const again = await referenceDistance(source);
+          if (again && again.copy) rejectReferenceCopy(log, again.score);
+        } else {
+          rejectReferenceCopy(log, verdict.score, identityRetried ? {} : { reason: 'budget' });
         }
-        log('scene border crop', detail);
-        source = cropped.buffer;
       }
     }
     const png = await sharp(source).png().toBuffer();
