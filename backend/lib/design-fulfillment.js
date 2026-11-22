@@ -5,6 +5,7 @@
 // Digital portraits skip Printify: they are rendered at the approved file size (300 dpi) for download.
 const sharp = require('sharp');
 const { renderDesign, renderTee, sha256 } = require('./render');
+const { renderSock, SOCK_W, SOCK_H } = require('./sock-render');
 const { allowedHost, defaultHosts } = require('./design');
 const { upscaleArtwork } = require('./upscale');
 
@@ -43,6 +44,10 @@ async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetc
   const deadline = Date.now() + UPSCALE_BUDGET_MS();
   for (const item of items) {
     if (item.kind !== 'design') { out.push(item); continue; }
+    if (item.design.family === 'socks') {
+      out.push(await prepareSocks(order, item, { catalog, put, fetchImpl, hosts }));
+      continue;
+    }
     let mapping = null, area, printful = null;
     if (item.digital) {
       area = { width: item.design.print.w, height: item.design.print.h };
@@ -93,6 +98,56 @@ async function prepareDesignItems(order, items, { catalog, put, fetchImpl = fetc
   return out;
 }
 
+// Both sock legs, at the catalog size. Nothing here runs before the order is paid.
+async function prepareSocks(order, item, { catalog, put, fetchImpl, hosts }) {
+  if (!catalog.printAreas) throw new Error('sock_print_areas_unavailable');
+  const mapping = await catalog.variantForSku(item.sku);
+  if (!mapping.is_enabled) throw new Error(`printify_variant_disabled:${item.sku}`);
+  const legs = (await catalog.printAreas(mapping))
+    .filter(area => area.position === 'left_leg' || area.position === 'right_leg')
+    .sort((a, b) => (a.position < b.position ? -1 : 1));
+  if (legs.length !== 2) throw new Error('sock_print_areas_incomplete');
+  for (const area of legs) {
+    if (area.width !== SOCK_W || area.height !== SOCK_H) throw new Error(`sock_print_size:${area.position}:${area.width}x${area.height}`);
+  }
+  const pets = [];
+  for (const pet of item.design.pets) {
+    const buf = await download(pet.url, { fetchImpl, hosts, label: 'artwork' });
+    if (sha256(buf) !== pet.sha256) throw new Error('artwork_does_not_match_approved_design');
+    pets.push(buf);
+  }
+  const files = [];
+  for (const area of legs) {
+    const side = area.position === 'left_leg' ? 'left' : 'right';
+    const file = await renderSock({ pets, side, width: area.width, height: area.height });
+    const url = await put(`print-files/${order.id}/${item.line_id}-${item.design_id}-${area.position}.png`, file.buffer, 'image/png');
+    const head = await fetchImpl(url, { method: 'HEAD' });
+    const length = Number(head.headers && head.headers.get ? head.headers.get('content-length') : NaN);
+    if (!head.ok || (Number.isFinite(length) && length !== file.buffer.length)) throw new Error('print_file_upload_unverified');
+    files.push({ position: area.position, url, sha256: file.sha256, width: file.width, height: file.height, bytes: file.buffer.length });
+  }
+  return {
+    ...item,
+    blueprint_id: mapping.blueprint_id,
+    print_provider_id: mapping.print_provider_id,
+    printify_variant_id: mapping.printify_variant_id,
+    position: files[0].position,
+    print_file_url: files[0].url,
+    print_files: files.map(file => ({ position: file.position, url: file.url })),
+    production: {
+      design_id: item.design_id,
+      width: files[0].width,
+      height: files[0].height,
+      sha256: files.map(file => file.sha256).join(','),
+      bytes: files.reduce((sum, file) => sum + file.bytes, 0),
+      artwork_check: 'sha256',
+      upscaled: false,
+      url: files[0].url,
+      files: files.map(file => ({ position: file.position, url: file.url, sha256: file.sha256, width: file.width, height: file.height }))
+    }
+  };
+}
+
 // Turns a rendered print file 90° (Printful's blanket file is the other way round from the design).
 async function rotated(file) {
   const img = sharp(file.buffer).rotate(90);
@@ -100,4 +155,4 @@ async function rotated(file) {
   return { ...file, buffer, width: file.height, height: file.width, sha256: sha256(buffer) };
 }
 
-module.exports = { prepareDesignItems, checkArtwork, petPrintWidth };
+module.exports = { prepareDesignItems, checkArtwork, petPrintWidth, prepareSocks };

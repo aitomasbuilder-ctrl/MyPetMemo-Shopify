@@ -36,7 +36,7 @@ function designLine(line, p, reasons, { verify, hosts }) {
   const d = checked.design;
   if (String(d.variant_id) !== String(line.variant_id)) reasons.push(`design_variant_mismatch:${line.id}`);
   if (String(d.product_id) !== String(line.product_id)) reasons.push(`design_product_mismatch:${line.id}`);
-  if (d.family === 'tee') {
+  if (d.family === 'tee' || d.family === 'socks') {
     for (const pet of d.pets || []) if (!design.allowedHost(pet.url, hosts)) reasons.push(`pet_host_not_allowed:${line.id}`);
   } else if (!p._artwork) reasons.push(`artwork_missing:${line.id}`);
   else if (!design.allowedHost(p._artwork, hosts)) reasons.push(`artwork_host_not_allowed:${line.id}`);

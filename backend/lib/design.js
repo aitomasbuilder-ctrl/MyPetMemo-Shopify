@@ -15,7 +15,7 @@ const ID = /^\d{1,20}$/;
 const NAME_MAX = 24;
 const CAPTION_MAX = 32;   // per line (year, dates or a short message under the name)
 const CAPTION_LINES = 4;   // dates and message, each may wrap once on star and heart ornaments
-const FAMILIES = new Set(['blanket', 'ornament', 'mug', 'portrait', 'tee']);
+const FAMILIES = new Set(['blanket', 'ornament', 'mug', 'portrait', 'tee', 'socks']);
 const TEE_FONT = 'dancingscript';
 // White ink disappears on a light shirt, dark ink on a dark one. The variant colour decides.
 const TEE_WHITE_INK = new Set(['navy', 'brown', 'black', 'military green']);
@@ -43,7 +43,12 @@ const str = (v, re, field) => {
 function allowedHost(url, hosts) {
   let u;
   try { u = new URL(url); } catch { return false; }
-  return u.protocol === 'https:' && hosts.includes(u.hostname.toLowerCase());
+  if (u.protocol !== 'https:') return false;
+  const host = u.hostname.toLowerCase();
+  if (hosts.includes(host)) return true;
+  // Cut-out heads are stored on this project's Vercel Blob. The file name is the photo hash.
+  const blob = host.endsWith('.public.blob.vercel-storage.com') || host.endsWith('.blob.vercel-storage.com');
+  return blob && /^\/(sock-heads|cutouts)\/[a-z0-9]+\.png$/i.test(u.pathname);
 }
 
 function defaultHosts(env = process.env) {
@@ -140,6 +145,23 @@ function normaliseTeeName(n) {
   return { text, font: TEE_FONT };
 }
 
+function normaliseSocks(input, hosts) {
+  const list = Array.isArray(input.pets) ? input.pets : [];
+  if (list.length < 1 || list.length > 4) throw new DesignError('pets_count', 'Choose one, two, three or four pets.');
+  const pets = list.map((p, i) => {
+    if (!p || !allowedHost(p.url, hosts)) throw new DesignError('pet_host', 'pet artwork must come from the store');
+    return { url: String(p.url), sha256: str(String(p.sha256 || '').toLowerCase(), SHA, `pets.${i}.sha256`) };
+  });
+  return {
+    v: VERSION,
+    family: 'socks',
+    product_id: str(input.product_id, ID, 'product_id'),
+    variant_id: str(input.variant_id, ID, 'variant_id'),
+    sku: String(input.sku || '').slice(0, 64),
+    pets
+  };
+}
+
 function normaliseTee(input, hosts) {
   const list = Array.isArray(input.pets) ? input.pets : [];
   if (list.length < 1 || list.length > 3) throw new DesignError('pets_count', 'Choose one, two or three pets.');
@@ -166,6 +188,7 @@ function normalise(input, { hosts = defaultHosts() } = {}) {
   if (!input || typeof input !== 'object') throw new DesignError('design_missing');
   const family = FAMILIES.has(input.family) ? input.family : 'blanket';
   if (family === 'tee') return normaliseTee(input, hosts);
+  if (family === 'socks') return normaliseSocks(input, hosts);
   const a = input.artwork || {};
   const shape = family === 'ornament' ? (SHAPES.has(input.shape) ? input.shape : 'circle') : undefined;
   const caption = normaliseCaption(input.caption);

@@ -25,7 +25,7 @@ function client({ token = process.env.PRINTIFY_TOKEN, shopId = process.env.PRINT
         print_provider_id: i.print_provider_id || config.printify.print_provider_id,
         blueprint_id: i.blueprint_id || config.printify.blueprint_id,
         variant_id: i.printify_variant_id,
-        print_areas: { [i.position || config.printify.print_position]: i.print_file_url },
+        print_areas: printAreasFor(i, config),
         quantity: i.quantity
       })),
       shipping_method: 1,
@@ -35,6 +35,18 @@ function client({ token = process.env.PRINTIFY_TOKEN, shopId = process.env.PRINT
     sendToProduction: id => call('POST', `/shops/${shopId}/orders/${id}/send_to_production.json`),
     getOrder: id => call('GET', `/shops/${shopId}/orders/${id}.json`)
   };
+}
+
+function printAreasFor(item, config) {
+  if (Array.isArray(item.print_files) && item.print_files.length) {
+    const areas = {};
+    for (const file of item.print_files) {
+      if (!file || !file.position || !file.url) throw new Error('print_file_missing');
+      areas[file.position] = file.url;
+    }
+    return areas;
+  }
+  return { [item.position || config.printify.print_position]: item.print_file_url };
 }
 
 function shippingAddress(order) {

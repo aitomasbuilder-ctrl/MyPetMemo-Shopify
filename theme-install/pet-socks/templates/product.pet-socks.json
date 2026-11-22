@@ -1,0 +1,11 @@
+{
+  "sections": {
+    "main": {
+      "type": "pet-face-socks",
+      "settings": {
+        "api_base": "https://mypetmemo-shopify.vercel.app"
+      }
+    }
+  },
+  "order": ["main"]
+}

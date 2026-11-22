@@ -60,6 +60,18 @@ function catalog({ token = process.env.PRINTIFY_TOKEN, shopId = process.env.PRIN
     return { position: p.position, width: Math.round(p.width), height: Math.round(p.height) };
   }
 
+  // Every placeholder on the variant. Socks need left_leg and right_leg, not only the first.
+  async function printAreas(mapping) {
+    await printArea(mapping);
+    const k = `${mapping.blueprint_id}/${mapping.print_provider_id}`;
+    const list = placeholders.get(k).get(mapping.printify_variant_id) || [];
+    const areas = list.filter(p => p && p.width > 0 && p.height > 0).map(p => ({
+      position: p.position, width: Math.round(p.width), height: Math.round(p.height)
+    }));
+    if (!areas.length) throw new Error(`print_area_unknown:${mapping.printify_variant_id}`);
+    return areas;
+  }
+
   const providerCountry = new Map();
   async function countryOf(id) {
     if (!providerCountry.has(id)) {
@@ -138,7 +150,7 @@ function catalog({ token = process.env.PRINTIFY_TOKEN, shopId = process.env.PRIN
     return mapping;
   }
 
-  return { variantForSku, printArea, regionalVariant };
+  return { variantForSku, printArea, printAreas, regionalVariant };
 }
 
 const EU = new Set(['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE']);
