@@ -46,10 +46,31 @@ function allowedHost(url, hosts) {
   return u.protocol === 'https:' && hosts.includes(u.hostname.toLowerCase());
 }
 
+/**
+ * Public cut-out URLs are https://<storeId>.public.blob.vercel-storage.com/...
+ * Only the store id already configured for this deployment is accepted.
+ * BLOB_STORE_ID is the id; BLOB_READ_WRITE_TOKEN is vercel_blob_rw_<storeId>_...
+ */
+function configuredBlobHosts(env = process.env) {
+  const hosts = [];
+  const add = raw => {
+    let id = String(raw || '').trim();
+    if (id.startsWith('store_')) id = id.slice('store_'.length);
+    if (/^[a-z0-9]+$/i.test(id)) hosts.push(`${id.toLowerCase()}.public.blob.vercel-storage.com`);
+  };
+  add(env.BLOB_STORE_ID);
+  const token = String(env.BLOB_READ_WRITE_TOKEN || '');
+  const parts = token.split('_');
+  if (parts[0] === 'vercel' && parts[1] === 'blob' && parts[2] === 'rw') add(parts[3]);
+  return [...new Set(hosts)];
+}
+
 function defaultHosts(env = process.env) {
-  return String(env.ALLOWED_ASSET_HOSTS || 'cdn.shopify.com,mypetmemo.com,www.mypetmemo.com')
+  const hosts = String(env.ALLOWED_ASSET_HOSTS || 'cdn.shopify.com,mypetmemo.com,www.mypetmemo.com')
     .split(',').map(h => h.trim().toLowerCase()).filter(Boolean)
-    .concat(env.SHOPIFY_SHOP_DOMAIN ? [env.SHOPIFY_SHOP_DOMAIN.toLowerCase()] : []);
+    .concat(env.SHOPIFY_SHOP_DOMAIN ? [String(env.SHOPIFY_SHOP_DOMAIN).trim().toLowerCase()] : []);
+  for (const host of configuredBlobHosts(env)) if (!hosts.includes(host)) hosts.push(host);
+  return hosts;
 }
 
 function normaliseBackground(bg, hosts) {
@@ -227,4 +248,4 @@ function verify(token, key = secret()) {
   return { design, id: designId(design) };
 }
 
-module.exports = { normalise, sign, verify, designId, allowedHost, defaultHosts, DesignError, VERSION, inkForColor, TEE_FONT };
+module.exports = { normalise, sign, verify, designId, allowedHost, defaultHosts, configuredBlobHosts, DesignError, VERSION, inkForColor, TEE_FONT };
