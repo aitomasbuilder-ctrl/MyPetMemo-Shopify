@@ -1,0 +1,88 @@
+{%- liquid
+  assign lang = request.locale.iso_code | downcase
+  assign lt = false
+  if lang == 'lt'
+    assign lt = true
+  endif
+  assign variant = product.selected_or_first_available_variant
+-%}
+<section class="mpm-socks" data-mpm-socks>
+  <div class="mpm-socks__grid">
+    <div class="mpm-socks__stage" data-stage>
+      {%- if product.featured_image -%}
+        <img data-stock src="{{ product.featured_image | image_url: width: 1200 }}" alt="{% if lt %}Pavyzdys: auksaspalvis retriveris{% else %}Sample: golden retriever{% endif %}" width="1200" height="1500">
+      {%- endif -%}
+      <p class="mpm-socks__status" data-status role="status">
+        {%- if lt -%}Auksinis retriveris yra pavyzdys. Įkelkite nuotrauką ir pamatysite savo augintinį.{%- else -%}The golden retriever is the sample. Upload a photo to see your pet.{%- endif -%}
+      </p>
+    </div>
+    <div class="mpm-socks__panel">
+      <p class="mpm-socks__kicker">{% if lt %}Kojinės su augintinio veidu{% else %}Pet face socks{% endif %}</p>
+      <h1>{{ product.title | escape }}</h1>
+      <p class="mpm-socks__price">{{ variant.price | money }}</p>
+      <p class="mpm-socks__lead">
+        {%- if lt -%}
+          Įkelkite nuo vienos iki keturių nuotraukų. Iškerpame kiekvieną snukutį ir išdėstome jį ant abiejų kojinių.
+        {%- else -%}
+          Upload one to four photos. We cut out each face and tile it across both socks.
+        {%- endif -%}
+      </p>
+      <ul class="mpm-socks__photos" data-photos></ul>
+      <label class="mpm-socks__file">
+        <span data-file-label>{% if lt %}Įkelti augintinių nuotraukas{% else %}Upload pet photos{% endif %}</span>
+        <input data-file type="file" accept="image/*" multiple>
+      </label>
+      <p class="mpm-socks__hint">{% if lt %}Geriausiai tinka ryški snukučio nuotrauka. Vienas augintinis nuotraukoje.{% else %}A clear photo of the face works best. One pet per photo.{% endif %}</p>
+      <p class="mpm-socks__error" data-error role="alert"></p>
+      <button class="mpm-socks__buy" type="button" data-buy disabled>
+        {% if lt %}Pridėti į krepšelį{% else %}Add to cart{% endif %}
+      </button>
+      <p class="mpm-socks__note">{% if lt %}Spaudos failai sukuriami po apmokėjimo iš šių nuotraukų.{% else %}The print files are made after you pay, from these photos.{% endif %}</p>
+    </div>
+  </div>
+  <script type="application/json" data-mpm-socks-config>
+    {
+      "api": {{ section.settings.api_base | json }},
+      "productId": {{ product.id | json }},
+      "variantId": {{ variant.id | json }},
+      "sku": {{ variant.sku | json }},
+      "cartAdd": {{ routes.cart_add_url | json }},
+      "cart": {{ routes.cart_url | json }},
+      "maxPets": 4,
+      "strings": {
+        "upload": {% if lt %}"Įkelti augintinių nuotraukas"{% else %}"Upload pet photos"{% endif %},
+        "add": {% if lt %}"Pridėti kitą augintinį"{% else %}"Add another pet"{% endif %},
+        "full": {% if lt %}"Galima iki 4 augintinių"{% else %}"Up to 4 pets"{% endif %},
+        "remove": {% if lt %}"Pašalinti"{% else %}"Remove"{% endif %},
+        "cutting": {% if lt %}"Kerpamas snukutis {n}…"{% else %}"Cutting out face {n}…"{% endif %},
+        "ready": {% if lt %}"Taip atrodys kojinės."{% else %}"This is how the socks will look."{% endif %},
+        "adding": {% if lt %}"Pridedama į krepšelį…"{% else %}"Adding to cart…"{% endif %},
+        "fail": {% if lt %}"Nepavyko iškirpti šios nuotraukos. Pabandykite kitą."{% else %}"We couldn’t cut out that photo. Please try another."{% endif %},
+        "tooMany": {% if lt %}"Galima iki 4 nuotraukų. Panaudotos pirmosios."{% else %}"You can add up to 4 photos. The first ones were used."{% endif %},
+        "cartFail": {% if lt %}"Nepavyko pridėti į krepšelį. Bandykite dar kartą."{% else %}"We couldn’t add this to your cart. Please try again."{% endif %},
+        "designId": {% if lt %}"Dizaino ID"{% else %}"Design ID"{% endif %},
+        "pets": {% if lt %}"Augintiniai"{% else %}"Pets"{% endif %},
+        "preview": {% if lt %}"Dizaino peržiūra"{% else %}"Design preview"{% endif %}
+      }
+    }
+  </script>
+</section>
+{{ 'pet-socks.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'sock-pattern.js' | asset_url }}"></script>
+<script src="{{ 'pet-socks.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Pet face socks",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "api_base",
+      "label": "Personalization API",
+      "default": "https://mypetmemo-shopify.vercel.app"
+    }
+  ],
+  "presets": [{ "name": "Pet face socks" }]
+}
+{% endschema %}

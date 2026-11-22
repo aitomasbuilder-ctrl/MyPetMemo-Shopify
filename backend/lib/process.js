@@ -31,7 +31,8 @@ async function processPaidOrder(order, { store, printify, printful, prepare, del
     const lines = Object.fromEntries(items.map(i => [String(i.line_id), {
       kind: i.kind, printify_variant_id: i.printify_variant_id, print_file_url: i.print_file_url,
       ...(i.fulfiller === 'printful' ? { fulfiller: 'printful', printful_variant_id: i.printful_variant_id } : {}),
-      ...(i.production ? { design_id: i.production.design_id, size: `${i.production.width}x${i.production.height}`, sha256: i.production.sha256, artwork_check: i.production.artwork_check } : {})
+      ...(i.print_files ? { print_files: i.print_files } : {}),
+      ...(i.production ? { design_id: i.production.design_id, size: `${i.production.width}x${i.production.height}`, sha256: i.production.sha256, artwork_check: i.production.artwork_check, ...(i.production.files ? { files: i.production.files } : {}) } : {})
     }]));
     const physical = items.filter(i => !i.digital), digital = items.filter(i => i.digital);
     if (digital.length) {
