@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const sharp = require('sharp');
 const design = require('../lib/design');
-const { renderTee, TEE_LINE, TEE_NAME_SIZE, TEE_SPIKE, TEE_PET_H, teeProbe } = require('../lib/render');
+const { renderTee, TEE_LINE, TEE_SPAN, TEE_NAME_SIZE, TEE_SPIKE, TEE_PET_H, TEE_BEATS, TEE_PET_WIDTH_MAX, teeProbe, heartbeatPoints } = require('../lib/render');
 const { catalog } = require('../lib/printify-catalog');
 
 const hosts = ['cdn.shopify.com'];
@@ -41,6 +41,7 @@ test('tee: ink follows the shirt colour, and the name uses the script font', () 
   assert.throws(() => design.normalise(teeInput({ pets: [] }), { hosts }), e => e.code === 'pets_count');
   assert.throws(() => design.normalise(teeInput({ pets: [pet(sha), pet(sha), pet(sha), pet(sha)] }), { hosts }), e => e.code === 'pets_count');
   assert.throws(() => design.normalise(teeInput({ pets: [{ url: 'https://evil.example/a.png', sha256: sha }] }), { hosts }), e => e.code === 'pet_host');
+  assert.throws(() => design.normalise(teeInput({ pets: [{ url: 'https://evil.public.blob.vercel-storage.com/cutouts/a.png', sha256: sha }] }), { hosts }), e => e.code === 'pet_host');
   const three = design.normalise(teeInput({ pets: [pet(sha), pet(sha, 'https://cdn.shopify.com/b.png'), pet(sha, 'https://cdn.shopify.com/c.png')] }), { hosts });
   assert.equal(three.pets.length, 3);
 });
@@ -101,36 +102,65 @@ async function colorBox(buf, match) {
   return n ? { minx, miny, maxx, maxy, h: maxy - miny + 1, w: maxx - minx + 1 } : null;
 }
 
-test('tee: the pet stands on the line, and one spike sits on each side', async () => {
+function peaksOn(points, lineY, spike, x0, x1) {
+  const spikes = [];
+  const dips = [];
+  const bumps = [];
+  for (let i = 1; i < points.length - 1; i++) {
+    const p = points[i];
+    if (p.x < x0 || p.x > x1) continue;
+    const prev = points[i - 1].y, next = points[i + 1].y;
+    if (p.y < prev && p.y < next && p.y < lineY - 0.75 * spike) spikes.push(p);
+    if (p.y > prev && p.y > next && p.y > lineY + 0.25 * spike) dips.push(p);
+    if (p.y < prev && p.y < next && p.y < lineY - 0.08 * spike && p.y > lineY - 0.35 * spike) bumps.push(p);
+  }
+  return { spikes, dips, bumps };
+}
+
+test('tee: the pet is small, stands on a long line, and each side repeats the beat', async () => {
   const d = (n, text = 'Luna') => design.normalise(teeInput({
     color: 'White', name: { text },
     pets: Array.from({ length: n }, (_, i) => pet(sha, `https://cdn.shopify.com/p${i}.png`))
   }), { hosts });
-  const one = await renderTee({ design: d(1), pets: [await swatch(200, 30, 40)], width: 480, height: 640 });
-  assert.ok(Math.abs(one.lineY - TEE_LINE * 640) < 0.01);
-  assert.ok(Math.abs(one.petHeight - TEE_PET_H * 480) < 1.5, `pet height ${one.petHeight}`);
-  const foot = await pixel(one.buffer, 240, Math.round(one.lineY) - 4);
+  const W = 720, H = 960;
+  const one = await renderTee({ design: d(1), pets: [await swatch(200, 30, 40)], width: W, height: H });
+  assert.ok(TEE_LINE <= 0.36, 'the design sits high on the chest');
+  assert.ok(TEE_SPAN >= 0.78, 'the line spans most of the chest');
+  assert.equal(TEE_BEATS, 2);
+  assert.ok(Math.abs(one.lineY - TEE_LINE * H) < 0.01);
+  assert.ok(Math.abs(one.petHeight - TEE_PET_H * W) < 1.5, `pet height ${one.petHeight}`);
+  assert.ok(one.petHeight < 0.22 * TEE_SPAN * W, 'the pet is small next to the line');
+  const place = one.placements[0];
+  assert.ok(place.width <= TEE_PET_WIDTH_MAX * TEE_SPAN * W + 2);
+  const foot = await pixel(one.buffer, Math.round((place.left + place.left + place.width) / 2), Math.round(one.lineY) - 3);
   assert.ok(foot.px[0] > 150 && foot.px[3] > 200, `the pet stands on the line ${foot.px}`);
-  const above = Math.round(one.lineY - 0.72 * TEE_SPIKE * 480);
+  const trace = heartbeatPoints({ width: W, height: H, footL: place.footL, footR: place.footR });
+  for (let i = 1; i < trace.points.length; i++) assert.ok(trace.points[i].x >= trace.points[i - 1].x - 0.01, 'one continuous stroke');
+  const under = trace.points.some((p, i) => {
+    const q = trace.points[i + 1];
+    return q && Math.abs(p.y - one.lineY) < 0.01 && Math.abs(q.y - one.lineY) < 0.01 && p.x <= place.footL + 1 && q.x >= place.footR - 1;
+  });
+  assert.ok(under, 'the line continues under the feet');
+  const left = peaksOn(trace.points, one.lineY, TEE_SPIKE * W, trace.x0, place.left);
+  const right = peaksOn(trace.points, one.lineY, TEE_SPIKE * W, place.left + place.width, trace.x1);
+  assert.equal(left.spikes.length, TEE_BEATS, `left spikes ${left.spikes.length}`);
+  assert.equal(right.spikes.length, TEE_BEATS, `right spikes ${right.spikes.length}`);
+  assert.equal(left.dips.length, TEE_BEATS);
+  assert.equal(right.dips.length, TEE_BEATS);
+  assert.ok(left.bumps.length >= TEE_BEATS && right.bumps.length >= TEE_BEATS, 'a small bump sits on each beat');
+  const petMid = place.left + place.width / 2;
+  assert.ok(one.nameCx > petMid && one.nameCx < petMid + 0.08 * W, `the name sits slightly right of the pet ${one.nameCx}`);
+  const above = Math.round(one.lineY - 0.72 * TEE_SPIKE * W);
   const { data, info } = await sharp(one.buffer).raw().toBuffer({ resolveWithObject: true });
-  const runs = [];
-  let run = null;
-  let gap = 0;
+  let leftInk = 0, rightInk = 0;
   for (let x = 0; x < info.width; x++) {
     const o = (above * info.width + x) * info.channels;
-    const ink = data[o + 3] > 80 && data[o] < 50;
-    if (ink) {
-      if (!run) run = { x0: x, x1: x };
-      else run.x1 = x;
-      gap = 0;
-    } else if (run && gap < 3) gap++;
-    else if (run) { runs.push(run); run = null; gap = 0; }
+    if (data[o + 3] > 80 && data[o] < 50) {
+      if (x < place.left - 2) leftInk++;
+      else if (x > place.left + place.width + 2) rightInk++;
+    }
   }
-  if (run) runs.push(run);
-  const spikes = runs.filter(r => r.x1 - r.x0 < 40);
-  assert.equal(spikes.length, 2, `one spike on each side, runs ${JSON.stringify(runs)}`);
-  assert.ok(spikes[0].x1 < 240 && spikes[1].x0 > 240);
-  assert.ok(one.nameCx > 240, `the name sits slightly right of centre ${one.nameCx}`);
+  assert.ok(leftInk > 2 && rightInk > 2, `ink of the tall spikes is drawn on both sides ${leftInk}/${rightInk}`);
 });
 
 test('tee: two pets share a height, so a wide pet stays as tall as a narrow one', async () => {
@@ -148,6 +178,63 @@ test('tee: two pets share a height, so a wide pet stays as tall as a narrow one'
   assert.ok(blue.w > red.w * 2, `the wide pet keeps its shape ${blue.w} vs ${red.w}`);
   assert.ok(Math.abs(red.maxy - blue.maxy) <= 2, 'both stand on the same line');
   assert.ok(red.maxx < blue.minx, 'they sit side by side');
+  assert.ok(red.w <= TEE_PET_WIDTH_MAX * TEE_SPAN * 640 + 2, `wide pet stays within the line ${red.w}`);
+  assert.ok(blue.w <= TEE_PET_WIDTH_MAX * TEE_SPAN * 640 + 2, `wide pet stays within the line ${blue.w}`);
+});
+
+test('tee: /api/designs accepts only the store blob host, and rejects every other host', async () => {
+  const { EventEmitter } = require('node:events');
+  const approve = require('../api/designs');
+  const prev = {
+    secret: process.env.DESIGN_SIGNING_SECRET,
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+    store: process.env.BLOB_STORE_ID,
+    hosts: process.env.ALLOWED_ASSET_HOSTS
+  };
+  process.env.DESIGN_SIGNING_SECRET = 'k'.repeat(40);
+  process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_abcstore_notasecretvalue';
+  delete process.env.BLOB_STORE_ID;
+  delete process.env.ALLOWED_ASSET_HOSTS;
+  const own = 'abcstore.public.blob.vercel-storage.com';
+  assert.deepEqual(design.configuredBlobHosts(), [own]);
+  const call = async url => {
+    const body = JSON.stringify({ design: teeInput({ color: 'White', pets: [{ url, sha256: sha }] }) });
+    const req = new EventEmitter();
+    req.method = 'POST';
+    req.headers = { origin: 'https://mypetmemo.com', 'x-forwarded-for': '9.9.9.9' };
+    req[Symbol.asyncIterator] = async function* () { yield Buffer.from(body); };
+    const res = { headers: {}, statusCode: 200, setHeader(k, v) { this.headers[k] = v; }, end(b) { this.body = b; } };
+    await approve(req, res);
+    return { status: res.statusCode, json: JSON.parse(res.body) };
+  };
+  try {
+    const ok = await call(`https://${own}/cutouts/a.png`);
+    assert.equal(ok.status, 200, JSON.stringify(ok.json));
+    assert.equal(ok.json.design.pets[0].url, `https://${own}/cutouts/a.png`);
+    const shop = await call('https://cdn.shopify.com/pet.png');
+    assert.equal(shop.status, 200);
+    const mine = await call('https://www.mypetmemo.com/pet.png');
+    assert.equal(mine.status, 200);
+    for (const url of [
+      'https://evil.example/a.png',
+      'https://otherstore.public.blob.vercel-storage.com/cutouts/a.png',
+      'https://abcstore.public.blob.vercel-storage.com.evil.example/a.png',
+      'http://abcstore.public.blob.vercel-storage.com/a.png'
+    ]) {
+      const rejected = await call(url);
+      assert.equal(rejected.status, 400, url);
+      assert.equal(rejected.json.error, 'pet_host', url);
+    }
+    process.env.BLOB_STORE_ID = 'store_fromenv1';
+    assert.ok(design.configuredBlobHosts().includes('fromenv1.public.blob.vercel-storage.com'));
+    const fromStore = await call('https://fromenv1.public.blob.vercel-storage.com/cutouts/a.png');
+    assert.equal(fromStore.status, 200);
+  } finally {
+    for (const [key, value] of Object.entries({ DESIGN_SIGNING_SECRET: prev.secret, BLOB_READ_WRITE_TOKEN: prev.token, BLOB_STORE_ID: prev.store, ALLOWED_ASSET_HOSTS: prev.hosts })) {
+      if (value == null) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 });
 
 function teeFetch(calls = []) {

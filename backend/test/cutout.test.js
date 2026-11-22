@@ -97,3 +97,54 @@ test('cutout: transparent padding is cropped to the subject, with a small margin
   assert.equal(corner, 0, 'the margin stays transparent');
   assert.ok(mid > 200, 'the subject is kept');
 });
+
+test('cutout: a small disconnected scrap is removed and a second pet is kept', async () => {
+  const { dropSpecks } = require('../lib/alpha-trim');
+  const w = 40, h = 30;
+  const raw = Buffer.alloc(w * h * 4);
+  const paint = (x0, y0, bw, bh) => {
+    for (let y = y0; y < y0 + bh; y++) for (let x = x0; x < x0 + bw; x++) {
+      const i = (y * w + x) * 4;
+      raw[i] = 200; raw[i + 1] = 40; raw[i + 2] = 40; raw[i + 3] = 255;
+    }
+  };
+  paint(2, 2, 16, 20);
+  paint(24, 4, 12, 18);
+  paint(36, 26, 3, 3);
+  const png = await sharp(raw, { raw: { width: w, height: h, channels: 4 } }).png().toBuffer();
+  const out = await dropSpecks(png);
+  const { data, info } = await sharp(out).raw().toBuffer({ resolveWithObject: true });
+  const alpha = (x, y) => data[(y * info.width + x) * 4 + 3];
+  assert.ok(alpha(8, 8) > 200, 'the first pet stays');
+  assert.ok(alpha(28, 10) > 200, 'the second pet stays');
+  assert.equal(alpha(37, 27), 0, 'the scrap is gone');
+});
+
+test('cutout: a blob outage still returns the picture', async () => {
+  const image = await sharp({ create: { width: 8, height: 8, channels: 3, background: '#224466' } }).png().toBuffer();
+  const out = resOf();
+  await handler(req('10.8.3.1'), out, {
+    image,
+    infer: async () => new Float32Array(64).fill(1),
+    cacheGet: async () => { throw new Error('No blob credentials found'); },
+    cachePut: async () => { throw new Error('vercel_blob_rw_store_secretvalue rejected'); }
+  });
+  assert.equal(out.statusCode, 200);
+  assert.equal(out.body.url, null);
+  assert.equal(out.body.detail, undefined);
+  assert.match(out.body.image, /^data:image\/png;base64,/);
+});
+
+test('cutout: the wasm runtime files are real and listed for the function bundle', () => {
+  const fs = require('node:fs');
+  const { ORT_MJS, ORT_WASM } = require('../api/cutout');
+  assert.ok(ORT_MJS.endsWith('ort-wasm-simd-threaded.mjs'));
+  assert.ok(ORT_WASM.endsWith('ort-wasm-simd-threaded.wasm'));
+  assert.ok(fs.statSync(ORT_MJS).size > 1000);
+  assert.ok(fs.statSync(ORT_WASM).size > 1_000_000);
+  const vercel = require('../vercel.json');
+  const inc = vercel.functions['api/cutout.js'].includeFiles;
+  assert.match(inc, /ort-wasm-simd-threaded\.mjs/);
+  assert.match(inc, /ort-wasm-simd-threaded\.wasm/);
+  assert.equal(inc.includes('{wasm,mjs}'), false);
+});

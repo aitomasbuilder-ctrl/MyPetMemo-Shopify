@@ -155,52 +155,79 @@ async function renderDesign({ design, artwork, backgroundImage, width, height, f
 }
 
 // Heartbeat tee, matched to the heybalu Herzschlag layout.
-// TEE_LINE is a fraction of the print height (mid-chest). Every other length is a fraction of the print width.
-const TEE_LINE = 0.46;
-const TEE_SPAN = 0.58;
-const TEE_STROKE = 0.0033;
-const TEE_SPIKE = 0.080;
-const TEE_PET_H = 2.5 * TEE_SPIKE;
-const TEE_SIDE_MIN = 0.145;
-const TEE_PET_GAP = 0.016;
-const TEE_TAPER = 0.022;
-const TEE_NAME_GAP = 0.014;
-const TEE_NAME_SIZE = 0.034;
-const TEE_NAME_WIDTH = 0.40;
-const TEE_NAME_SHIFT = 0.020;
+// TEE_LINE is a fraction of the print height (high on the chest). Every other length is a fraction of the print width.
+const TEE_LINE = 0.30;
+const TEE_SPAN = 0.84;
+const TEE_STROKE = 0.00215;
+const TEE_SPIKE = 0.056;
+const TEE_PET_H = 2.05 * TEE_SPIKE;
+const TEE_BEATS = 2;
+const TEE_SIDE_MIN = 0.24;
+const TEE_LEAD = 0.042;
+const TEE_FOOT_PAD = 0.052;
+const TEE_PET_GAP = 0.018;
+const TEE_TAPER = 0.016;
+const TEE_NAME_GAP = 0.009;
+const TEE_NAME_SIZE = 0.024;
+const TEE_NAME_WIDTH = 0.26;
+const TEE_NAME_SHIFT = 0.030;
+const TEE_PET_WIDTH_MAX = 0.22;
 const TEE_INK = { dark: '#1c1a17', white: '#ffffff' };
 
-// t goes from the outer tip (0) to the pet's feet (1) on the left, and from the feet (0) to the outer tip (1) on the right.
-// y is a multiple of the spike height; negative is above the line. One sharp peak on each side — not a heart, not an M.
-const LEFT_ECG = [
+// One complex, t across the beat. y is a multiple of the spike height; negative is above the line.
+// Small bump, tall sharp spike, dip, small bump — then it repeats.
+const BEAT = [
   [0.00, 0],
+  [0.08, 0],
+  [0.16, -0.15],
   [0.24, 0],
-  [0.30, -0.15],
-  [0.36, 0],
-  [0.41, 0.16],
-  [0.47, -1.00],
-  [0.53, 0.36],
-  [0.59, 0],
-  [0.66, -0.20],
+  [0.29, 0.07],
+  [0.36, -1.00],
+  [0.43, 0.42],
+  [0.51, 0],
+  [0.62, -0.18],
   [0.76, 0],
   [1.00, 0]
 ];
-const RIGHT_ECG = [
-  [0.00, 0],
-  [0.22, 0],
-  [0.30, -0.14],
-  [0.37, 0.14],
-  [0.44, -0.88],
-  [0.51, 0.30],
-  [0.58, 0],
-  [0.66, -0.16],
-  [0.78, 0],
-  [1.00, 0]
-];
 
-function mapEcg(motif, x0, x1, lineY, spike) {
-  const span = x1 - x0;
-  return motif.map(([t, y]) => ({ x: x0 + t * span, y: lineY + y * spike }));
+function repeatedBeats(x0, x1, lineY, spike, beats) {
+  const width = x1 - x0;
+  if (!(width > 1)) return [{ x: x0, y: lineY }, { x: x1, y: lineY }];
+  const pts = [];
+  for (let i = 0; i < beats; i++) {
+    for (const [t, y] of BEAT) {
+      const x = x0 + ((i + t) / beats) * width;
+      const last = pts[pts.length - 1];
+      if (last && Math.abs(last.x - x) < 0.05) continue;
+      pts.push({ x, y: lineY + y * spike });
+    }
+  }
+  return pts;
+}
+
+/** One continuous polyline: flat tail, beats, baseline through the feet, beats, flat tail. */
+function heartbeatPoints({ width, height, footL, footR }) {
+  const W = width, H = height;
+  const lineY = TEE_LINE * H;
+  const spike = TEE_SPIKE * W;
+  const span = TEE_SPAN * W;
+  const x0 = (W - span) / 2;
+  const x1 = x0 + span;
+  const lead = Math.min(TEE_LEAD * W, span * 0.12);
+  const mid = (x0 + x1) / 2;
+  const pad = TEE_FOOT_PAD * W;
+  const minBeat = spike * 2.5;
+  const leftEnd = footL == null ? mid : Math.max(x0 + lead + minBeat, Math.min(mid, footL - pad));
+  const rightStart = footR == null ? mid : Math.min(x1 - lead - minBeat, Math.max(mid, footR + pad));
+  const left = repeatedBeats(x0 + lead, Math.max(x0 + lead + 2, leftEnd), lineY, spike, TEE_BEATS);
+  const right = repeatedBeats(Math.min(x1 - lead - 2, rightStart), x1 - lead, lineY, spike, TEE_BEATS);
+  const points = [{ x: x0, y: lineY }, ...left];
+  const tail = points[points.length - 1];
+  if (rightStart > tail.x + 0.5) points.push({ x: rightStart, y: lineY });
+  const join = points[points.length - 1];
+  points.push(...right.filter((p, i) => i > 0 || Math.abs(p.x - join.x) > 0.5));
+  points.push({ x: x1, y: lineY });
+  return { points, lineY, spike, x0, x1, span };
 }
 
 function pathOf(points) {
@@ -235,10 +262,11 @@ function teeNameSize(text, font, W) {
   return size;
 }
 
-/** A point on the full-weight flat tail, left of the QRS. */
+/** A point on the full-weight flat tail, left of the first beat. */
 function teeProbe(W, H) {
-  const x0 = (W - TEE_SPAN * W) / 2;
-  return { x: Math.round(x0 + 0.032 * W), y: Math.round(TEE_LINE * H) };
+  const span = TEE_SPAN * W;
+  const x0 = (W - span) / 2;
+  return { x: Math.round(x0 + TEE_LEAD * W * 0.45), y: Math.round(TEE_LINE * H) };
 }
 
 /** Tight opaque box. The bottom edge is the feet, with no padding under them. */
@@ -258,9 +286,17 @@ async function petBox(buf) {
     }
   }
   if (maxx < 0) return null;
-  // Only the lowest rows. The body just above the toes is wider, and stopping
-  // the line there leaves a gap beside the paws.
-  const footTop = maxy - Math.max(1, Math.round((maxy - miny + 1) * 0.03));
+  // A faint fringe below the toes would lift the animal off the line. The feet
+  // are the lowest row that is actually solid.
+  let footY = maxy;
+  for (let y = maxy; y >= miny; y--) {
+    let solid = 0;
+    const row = y * w * c;
+    for (let x = minx; x <= maxx; x++) if (data[row + x * c + 3] > 80) solid++;
+    if (solid >= 3) { footY = y; break; }
+  }
+  maxy = footY;
+  const footTop = maxy - Math.max(1, Math.round((maxy - miny + 1) * 0.04));
   let fx0 = w, fx1 = -1;
   for (let y = footTop; y <= maxy; y++) {
     const row = y * w * c;
@@ -287,19 +323,16 @@ async function petBox(buf) {
 }
 
 /**
- * Transparent print file for the heartbeat tee. The whole animal stands on the line,
- * which runs into the feet. Pets share one height. A QRS sits on each side of them.
+ * Transparent print file for the heartbeat tee. The animal is small and stands on
+ * the line. The line is one stroke: two beats on the left, through the feet, two beats on the right.
  */
 async function renderTee({ design, pets = [], width, height }) {
   const W = Math.round(width), H = Math.round(height);
   if (!(W > 0 && H > 0)) throw new Error('print_size_missing');
   const ink = TEE_INK[design.ink] || TEE_INK.dark;
   const lineY = TEE_LINE * H;
-  const stroke = Math.max(1, TEE_STROKE * W);
-  const spike = TEE_SPIKE * W;
+  const stroke = Math.max(1.15, TEE_STROKE * W);
   const span = TEE_SPAN * W;
-  const x0 = (W - span) / 2;
-  const x1 = x0 + span;
   const boxes = [];
   for (const pet of pets) {
     const box = await petBox(pet);
@@ -307,6 +340,9 @@ async function renderTee({ design, pets = [], width, height }) {
   }
   let ph = TEE_PET_H * W;
   const gap = boxes.length > 1 ? TEE_PET_GAP * W : 0;
+  const widthAt = h => boxes.reduce((m, b) => Math.max(m, h * (b.sw / b.sh)), 0);
+  const cap = TEE_PET_WIDTH_MAX * span;
+  if (widthAt(ph) > cap) ph *= cap / widthAt(ph);
   const natural = boxes.reduce((sum, b) => sum + ph * (b.sw / b.sh), 0) + gap * Math.max(0, boxes.length - 1);
   const budget = Math.max(1, span - 2 * TEE_SIDE_MIN * W);
   if (natural > budget) ph *= budget / natural;
@@ -325,7 +361,7 @@ async function renderTee({ design, pets = [], width, height }) {
     const rh = Math.max(1, Math.round(p.sh * p.s));
     const left = Math.round(cursor);
     // The bottom row of the resized pet is the line, so the feet stand on it.
-    const top = Math.round(lineY + stroke * 0.35) - rh;
+    const top = Math.round(lineY + stroke * 0.85) - rh;
     const buf = await sharp(p.buffer).resize(rw, rh, { fit: 'fill' }).png().toBuffer();
     const sx = rw / p.sw;
     p.buf = buf;
@@ -337,25 +373,25 @@ async function renderTee({ design, pets = [], width, height }) {
     p.footR = left + (p.fx1 + 1) * sx;
     cursor += p.pw + gap;
   }
+  const into = p => Math.max(0.012 * W, (p.footR - p.footL) * 0.22);
+  const footL = placed.length ? placed[0].footL + into(placed[0]) : null;
+  const footR = placed.length ? placed[placed.length - 1].footR - into(placed[placed.length - 1]) : null;
+  const trace = heartbeatPoints({ width: W, height: H, footL, footR });
   const parts = [];
-  const addTrace = (points, taperStart) => {
+  const addStroke = points => {
     if (points.length < 2 || points[points.length - 1].x - points[0].x < 2) return;
-    const split = splitOuter(points, TEE_TAPER * W, taperStart);
-    parts.push(`<path d="${taperCap(split.tip, split.base, stroke)}" fill="${ink}"/>`);
-    parts.push(`<path d="${pathOf(split.rest)}" fill="none" stroke="${ink}" stroke-width="${stroke.toFixed(2)}" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="8"/>`);
-  };
-  const into = p => Math.max(0.02 * W, (p.footR - p.footL) * 0.28);
-  if (!placed.length) {
-    addTrace(mapEcg(LEFT_ECG, x0, (x0 + x1) / 2, lineY, spike).concat(mapEcg(RIGHT_ECG, (x0 + x1) / 2, x1, lineY, spike).slice(1)), true);
-  } else {
-    addTrace(mapEcg(LEFT_ECG, x0, placed[0].footL + into(placed[0]), lineY, spike), true);
-    for (let i = 0; i < placed.length - 1; i++) {
-      const a = placed[i].footR - into(placed[i]), b = placed[i + 1].footL + into(placed[i + 1]);
-      if (b - a > 1) parts.push(`<path d="M${a.toFixed(2)} ${lineY.toFixed(2)} L${b.toFixed(2)} ${lineY.toFixed(2)}" fill="none" stroke="${ink}" stroke-width="${stroke.toFixed(2)}" stroke-linecap="butt"/>`);
+    let rest = points;
+    const taper = TEE_TAPER * W;
+    if (rest[rest.length - 1].x - rest[0].x > taper * 4) {
+      const left = splitOuter(rest, taper, true);
+      const right = splitOuter(left.rest, taper, false);
+      parts.push(`<path d="${taperCap(left.tip, left.base, stroke)}" fill="${ink}"/>`);
+      parts.push(`<path d="${taperCap(right.tip, right.base, stroke)}" fill="${ink}"/>`);
+      rest = right.rest;
     }
-    const last = placed[placed.length - 1];
-    addTrace(mapEcg(RIGHT_ECG, last.footR - into(last), x1, lineY, spike), false);
-  }
+    parts.push(`<path d="${pathOf(rest)}" fill="none" stroke="${ink}" stroke-width="${stroke.toFixed(2)}" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="8"/>`);
+  };
+  addStroke(trace.points);
   const layers = [{ input: Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">${parts.join('')}</svg>`), left: 0, top: 0 }];
   for (const p of placed) layers.push({ input: p.buf, left: p.left, top: p.top });
   let nameSize = 0;
@@ -381,4 +417,4 @@ async function renderTee({ design, pets = [], width, height }) {
   };
 }
 
-module.exports = { renderDesign, renderTee, sha256, NAME_BASELINE, NAME_STROKE, CAPTION_LINE, fittedNameSize, isSceneDesign, SCENE_NAME_COLORS, SCENE_NAME_MAX_WIDTH, SCENE_SCRIPT_SIZE, SCENE_SCRIPT_SIZE_FROM, TEE_LINE, TEE_SPAN, TEE_STROKE, TEE_SPIKE, TEE_PET_H, TEE_NAME_GAP, TEE_NAME_SIZE, TEE_NAME_WIDTH, TEE_NAME_SHIFT, teeProbe };
+module.exports = { renderDesign, renderTee, sha256, NAME_BASELINE, NAME_STROKE, CAPTION_LINE, fittedNameSize, isSceneDesign, SCENE_NAME_COLORS, SCENE_NAME_MAX_WIDTH, SCENE_SCRIPT_SIZE, SCENE_SCRIPT_SIZE_FROM, TEE_LINE, TEE_SPAN, TEE_STROKE, TEE_SPIKE, TEE_PET_H, TEE_BEATS, TEE_NAME_GAP, TEE_NAME_SIZE, TEE_NAME_WIDTH, TEE_NAME_SHIFT, TEE_PET_WIDTH_MAX, teeProbe, heartbeatPoints };
