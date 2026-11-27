@@ -30,6 +30,6 @@
   </span>
   <span class="rd-card__body">
     <span class="rd-card__title">{{ title | escape }}</span>
-    <span class="rd-card__price">{% if item.price_varies %}{{ 'common.from' | t }} {% endif %}{{ item.price_min | money }}</span>
+    <span class="rd-card__price">{% if item.price_varies %}{{ 'common.from' | t }} {% endif %}{{ item.price_min | money }}{% if item.compare_at_price_min > item.price_min %} <s class="rd-card__compare" style="font-weight:400;opacity:.6;margin-left:.35em">{{ item.compare_at_price_min | money }}</s>{% endif %}</span>
   </span>
 </a>
