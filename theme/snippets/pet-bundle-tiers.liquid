@@ -1,0 +1,98 @@
+{% doc %}
+  Ornament quantity ladder ("buy more, save more"). The percentages must match the automatic
+  discounts in Shopify admin (Discounts: "Ornament bundle: N+ = P% off"); this snippet only shows them.
+  @param {object} product - the product on the page
+  @param {string} tiers - comma-separated qty:percent pairs, e.g. "2:20,3:30,5:35,10:40"
+{% enddoc %}
+{%- liquid
+  assign lt = false
+  if request.locale.iso_code == 'lt'
+    assign lt = true
+  endif
+  assign base = product.selected_or_first_available_variant.price
+  assign in_cart = 0
+  for item in cart.items
+    if item.product.type == product.type
+      assign in_cart = in_cart | plus: item.quantity
+    endif
+  endfor
+  assign next_count = in_cart | plus: 1
+  assign pairs = tiers | remove: ' ' | split: ','
+  assign active_qty = 1
+  assign next_qty = 0
+  assign next_pct = 0
+  assign best_pct = 0
+  for pair in pairs
+    assign q = pair | split: ':' | first | plus: 0
+    assign p = pair | split: ':' | last | plus: 0
+    if next_count >= q
+      assign active_qty = q
+    endif
+    if in_cart >= q
+      assign best_pct = p
+    endif
+    if next_qty == 0 and in_cart < q
+      assign next_qty = q
+      assign next_pct = p
+    endif
+  endfor
+-%}
+<div class="mpb" data-bundle-tiers>
+  <p class="mpb__title">{% render 'rd-t', en: 'Buy more, save more', lt: 'Pirkite daugiau – sutaupykite' %}</p>
+  <p class="mpb__sub">{% render 'rd-t', en: 'Mix any pets, names and shapes. The discount is added automatically in the cart.', lt: 'Derinkite skirtingus augintinius, vardus ir formas. Nuolaida pritaikoma automatiškai krepšelyje.' %}</p>
+  <ul class="mpb__list">
+    <li class="mpb__row{% if active_qty == 1 %} is-active{% endif %}">
+      <span class="mpb__qty">{% if lt %}1 žaisliukas{% else %}1 ornament{% endif %}</span>
+      <span class="mpb__price">{{ base | money }}</span>
+      <span class="mpb__save"></span>
+    </li>
+    {%- for pair in pairs -%}
+      {%- liquid
+        assign q = pair | split: ':' | first | plus: 0
+        assign p = pair | split: ':' | last | plus: 0
+        assign off = base | times: p | divided_by: 100
+        assign each = base | minus: off
+        assign m10 = q | modulo: 10
+        assign m100 = q | modulo: 100
+        assign lt_word = 'žaisliukų'
+        if m10 == 1 and m100 != 11
+          assign lt_word = 'žaisliukas'
+        elsif m10 >= 2 and m100 < 10
+          assign lt_word = 'žaisliukai'
+        elsif m10 >= 2 and m100 > 20
+          assign lt_word = 'žaisliukai'
+        endif
+      -%}
+      <li class="mpb__row{% if active_qty == q %} is-active{% endif %}">
+        <span class="mpb__qty">{% if lt %}{{ q }} {{ lt_word }}{% else %}{{ q }} ornaments{% endif %}</span>
+        <span class="mpb__price"><s>{{ base | money }}</s> {{ each | money }} <small>{% if lt %}/ vnt.{% else %}each{% endif %}</small></span>
+        <span class="mpb__save">−{{ p }}%</span>
+      </li>
+    {%- endfor -%}
+  </ul>
+  {%- if in_cart > 0 -%}
+    <p class="mpb__cart">
+      {%- if next_qty > 0 -%}
+        {%- assign need = next_qty | minus: in_cart -%}
+        {%- if lt -%}Krepšelyje jau: {{ in_cart }}. Pridėkite dar {{ need }} – ir kiekvienam bus −{{ next_pct }}%.{%- else -%}You have {{ in_cart }} in your cart. Add {{ need }} more for {{ next_pct }}% off each.{%- endif -%}
+      {%- else -%}
+        {%- if lt -%}Pasiekta didžiausia nuolaida: −{{ best_pct }}% kiekvienam.{%- else -%}Best price unlocked: {{ best_pct }}% off each.{%- endif -%}
+      {%- endif -%}
+    </p>
+  {%- endif -%}
+</div>
+<style>
+  .mpb{margin:18px 0 20px;padding:16px 16px 12px;border:1px solid rgba(40,40,40,.18);background:#fff}
+  .mpb__title{margin:0 0 4px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:14px}
+  .mpb__sub{margin:0 0 12px;font-size:14px;opacity:.75;line-height:1.4}
+  .mpb__list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+  .mpb__row{display:grid;grid-template-columns:1fr auto 52px;align-items:center;gap:10px;padding:10px 12px;border:1px solid rgba(40,40,40,.12);font-size:15px}
+  .mpb__row.is-active{border:2px solid var(--rd-cta,#2d6a57);padding:9px 11px;background:rgba(45,106,87,.06)}
+  .mpb__qty{font-weight:500}
+  .mpb__price{text-align:right;white-space:nowrap}
+  .mpb__price s{opacity:.5;margin-right:4px;font-size:13px}
+  .mpb__price small{opacity:.65;font-size:12px}
+  .mpb__save{justify-self:end;font-weight:600;color:var(--rd-cta,#2d6a57)}
+  .mpb__cart{margin:10px 0 0;font-size:14px;font-weight:500;color:var(--rd-cta,#2d6a57)}
+  @media (max-width:420px){.mpb__row{grid-template-columns:1fr auto 44px;gap:6px;font-size:14px}.mpb__price s{display:none}}
+</style>
